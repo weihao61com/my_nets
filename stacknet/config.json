@@ -1,0 +1,17 @@
+{
+    "batch_size": "1000",
+    "_tr1": "../p_files/chess_tr20_2.p",
+    "_tr2": "../p_files/fire_tr20_2.p",
+    "tr3": "../p_files/heads_tr20_2.p",
+    "tr4": "../p_files/office_tr20_2.p",
+    "tr5": "../p_files/pumpkin_tr20_2.p",
+    "tr6": "../p_files/redkitchen_tr20_2.p",
+    "_tr7": "../p_files/stair_tr20_2.p",
+    "te": "../p_files/heads_te20_2.p",
+    "net": "heads_20",
+    "_retrain": "heads_20",
+    "netTest": "heads_20",
+    "feature": "30",
+    "lr": "1e-4",
+    "num_output": "3"
+}

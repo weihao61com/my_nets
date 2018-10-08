@@ -1,0 +1,18 @@
+Median error  3.571760301910164 m  and  5.474396651686298 degrees.
+Median error  3.3337718289286786 m  and  12.522856262303932 degrees.
+Median error  10.459411896804319 m  and  19.063000840903733 degrees.
+Median error  4.110580398423396 m  and  5.221725657884539 degrees.
+
+Median error  3.921374884940167 m  and  4.753087643664779 degrees.
+Median error  3.6863745230672604 m  and  10.560855295565903 degrees.
+Median error  6.654142238339309 m  and  12.544351427855183 degrees.
+Median error  4.200478947423678 m  and  6.681492330269712 degrees.
+
+/home/weihao/posenet/posenet/data/KingsCollege 0 1220
+/home/weihao/posenet/posenet/data/ShopFacade 1 231
+/home/weihao/posenet/posenet/data/StMarysChurch 2 1487
+/home/weihao/posenet/posenet/data/OldHospital 3 895
+
+
+Median error  0.5172660092970844 m  and  8.382190074771746 degrees.
+Median error  0.4257371046940516 m  and  2.2821550067735306 degrees.

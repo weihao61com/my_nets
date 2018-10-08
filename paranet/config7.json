@@ -1,0 +1,10 @@
+{
+    "batch_size": "75",
+    "directory": "/home/weihao/posenet/posenet/data7",
+    "_directory": "/Users/weihao/PY/I7",
+    "training_dataset": "TrainSplit.txt",
+    "testing_dataset": "TestSplit.txt",
+    "_retrain": "/home/weihao/posenet/I7/Net0_2/PNet",
+    "netFile": "/home/weihao/posenet/I7",
+    "rep" :"-1"
+}

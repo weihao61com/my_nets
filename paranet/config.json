@@ -1,0 +1,9 @@
+{
+    "batch_size": "75",
+    "directory": "/home/weihao/posenet/posenet/data",
+    "training_dataset": "dataset_train.txt",
+    "testing_dataset": "dataset_test.txt",
+    "_retrain": "/home/weihao/posenet/PoseNet3.ckpt",
+    "netFile": "/home/weihao/posenet",
+    "rep" :"-1"
+}

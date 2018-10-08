@@ -1,0 +1,8 @@
+{
+    "batch_size": "75",
+    "directory": "/home/weihao/posenet/posenet/data/StMarysChurch/",
+    "training_dataset": "dataset_train.txt",
+    "testing_dataset": "dataset_test.txt",
+    "netFile": "/home/weihao/posenet/StPoseNet.ckpt"
+
+}

@@ -1,0 +1,279 @@
+import numpy as np
+import cv2
+from utils import image_resize
+from pose_ana import *
+
+STAGE_FIRST_FRAME = 0
+STAGE_SECOND_FRAME = 1
+STAGE_DEFAULT_FRAME = 2
+kMinNumFeature = 1500
+
+lk_params = dict(winSize=(21, 21),
+                 # maxLevel = 3,
+                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01))
+
+
+def featureTracking(image_ref, image_cur, px_ref):
+    kp2, st, err = cv2.calcOpticalFlowPyrLK(image_ref, image_cur, px_ref, None, **lk_params)  # shape: [k,2] [k,1] [k,1]
+
+    st = st.reshape(st.shape[0])
+    kp1 = px_ref[st == 1]
+    kp2 = kp2[st == 1]
+
+    return kp1, kp2
+
+
+_EPS = 0.0001
+
+
+def rot2Euler(M):
+    s2 = np.sqrt(M[0, 0] * M[0, 0] + M[1, 0] * M[1, 0])
+
+    if s2 > _EPS:
+        ax = np.arctan2(M[2, 1], M[2, 2])
+        az = np.arctan2(M[1, 0], M[0, 0])
+        if np.abs(np.sin(ax)) > 0.5:
+            ay = np.arctan2(-M[2, 0], M[2, 1] / np.sin(ax))
+        else:
+            ay = np.arctan2(-M[2, 0], M[2, 2] / np.cos(ax))
+    else:
+        ax = np.arctan2(-M[1, 2], M[1, 1])
+        ay = np.arctan2(-M[2, 0], s2)
+        az = 0.0
+
+    #if ax < -np.pi / 2:
+    #    ax += np.pi
+
+    return np.array([ax, ay, az]) * 180.0 / np.pi
+
+def get_location(line):
+    ss = line.strip().split()
+    x = float(ss[3])
+    y = float(ss[7])
+    z = float(ss[11])
+    return np.array([x,y,z])
+
+
+class VisualOdometry2:
+    def __init__(self, cam, sf):
+        self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=50)  # or pass empty dictionary
+        self.matcher = cv2.FlannBasedMatcher(index_params, search_params)
+        self.cam = cam
+        self.feature = None
+        self.id = -1
+        self.sift_feature = sf
+
+    def get_feature(self, pose, scale=0):
+        try:
+            #print pose.filename
+            img = cv2.imread(pose.filename)
+        except:
+            raise Exception("failed load file {}".format(pose.filename))
+
+        if scale>1:
+            img = image_resize(img, scale)
+        fs = self.sift_feature.get_sift_feature(img)
+
+        # fs = self.detector.detectAndCompute(img, None)
+        # print pose.filename, len(fs[1])
+        return fs
+
+
+    def get_match_point(self, curent_feature):
+        matches = self.matcher.knnMatch(self.feature[1], curent_feature[1], k=2)
+        pts2 = []
+        pts1 = []
+        # ratio test as per Lowe's paper
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.8 * n.distance:
+                pts2.append(self.feature[0][m.queryIdx].pt)
+                pts1.append(curent_feature[0][m.trainIdx].pt)
+        return np.array(pts1), np.array(pts2)
+
+    def get_features(self, id1, pose1, pose2):
+
+        self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+        if id1 != self.id:
+            self.id = id1
+            self.feature = self.get_feature(pose1)
+
+        feature = self.get_feature(pose2)
+        px_new, px_last = self.get_match_point(feature)
+        if px_new.shape[0] > 10:
+            self.features = np.concatenate((px_new, px_last), 1)
+            self.truth = rotationMatrixToEulerAngles(self.pose_R)
+        else:
+            self.features = None
+
+    def get_features_inline(self, id1, pose1, pose2):
+
+        self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+        if id1 != self.id:
+            self.id = id1
+            self.feature = self.get_feature(pose1)
+
+        feature = self.get_feature(pose2)
+        px_new, px_last = self.get_match_point(feature)
+        self.truth = rotationMatrixToEulerAngles(self.pose_R)
+
+        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                       method=cv2.RANSAC, prob=0.999, threshold=10.0)
+        #mh, R, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+        px1 = []
+        px2 = []
+        for a in range(len(mask)):
+            if mask[a] > 0:
+                px1.append(px_new[a])
+                px2.append(px_last[a])
+        px1 = np.array(px1)
+        px2 = np.array(px2)
+        self.features = np.concatenate((px1, px2), 1)
+
+
+    def process(self, id1, pose1, id2, pose2, scale=1):
+
+        self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+        if id1 != self.id:
+            self.id = id1
+            self.feature = self.get_feature(pose1)
+
+        feature = self.get_feature(pose2, scale)
+
+        px_new, px_last = self.get_match_point(feature)
+        self.matches = len(px_new)
+        # print self.matches
+        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                       method=cv2.RANSAC, prob=0.999, threshold=10.0)
+        mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+
+        self.inline = mh
+        self.R = R
+        self.t = t
+        self.m1 = np.mean(mask)
+        self.m2 = np.mean(mask0)
+        # print id1, mh, self.matches, len(feature[1]), len(self.feature[1])
+        #print R
+
+        #print id1, mh, len(px_new)
+        #raise Exception()
+
+class VisualOdometry:
+
+    def __init__(self, cam, annotations):
+        self.frame_stage = 0
+        self.cam = cam
+        self.new_frame = None
+        self.last_frame = None
+        self.cur_R = None
+        self.cur_dR = None
+        self.cur_t = None
+        self.px_ref = None
+        self.px_cur = None
+        self.focal = cam.fx
+        self.pp = (cam.cx, cam.cy)
+        self.trueX, self.trueY, self.trueZ = 0, 0, 0
+        self.detector = cv2.FastFeatureDetector_create(threshold=25, nonmaxSuppression=True)
+        self.mx = cam.mx
+        self.matches = 0
+        if type(annotations) is str:
+            with open(annotations) as f:
+                self.annotations = f.readlines()
+        else:
+            self.annotations = annotations
+
+        self.detector = cv2.xfeatures2d.SIFT_create()
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=50)  # or pass empty dictionary
+        self.matcher = cv2.FlannBasedMatcher(index_params, search_params)
+
+    def getAbsoluteScale(self, frame_id):  # specialized for KITTI odometry dataset
+        loc_prev = get_location(self.annotations[frame_id - 1]) - self.true_loc0
+        #ss = self.annotations[frame_id - 1].strip().split()
+        #x_prev = float(ss[3]) - self.trueX0
+        #y_prev = float(ss[7]) - self.trueY0
+        #z_prev = float(ss[11]) - self.trueZ0
+        locs = get_location(self.annotations[frame_id]) - self.true_loc0
+        #ss = self.annotations[frame_id].strip().split()
+        # x = float(ss[3]) - self.trueX0
+        #y = float(ss[7]) - self.trueY0
+        #z = float(ss[11]) - self.trueZ0
+        self.trueX, self.trueY, self.trueZ = locs[0], locs[1], locs[2]
+        return np.linalg.norm(loc_prev-locs)
+
+    def processFirstFrame(self, frame_id):
+        self.px_ref = self.detector.detect(self.new_frame)
+        self.px_ref = np.array([x.pt for x in self.px_ref], dtype=np.float32)
+        self.frame_stage = STAGE_SECOND_FRAME
+        self.true_loc0 = get_location(self.annotations[frame_id])
+
+    def processSecondFrame(self, frame_id):
+        self.px_ref, self.px_cur = featureTracking(self.last_frame, self.new_frame, self.px_ref)
+
+        #E, mask = cv2.findEssentialMat(self.px_cur, self.px_ref, focal=self.focal, pp=self.pp, method=cv2.RANSAC, prob=0.999, threshold=1.0)
+        #_, self.cur_R, self.cur_t, mask = cv2.recoverPose(E, self.px_cur, self.px_ref, focal=self.focal, pp = self.pp)
+        E, mask = cv2.findEssentialMat(self.px_cur, self.px_ref,
+                                       cameraMatrix=self.mx, method=cv2.RANSAC,
+                                       prob=0.999, threshold=1.0)
+        mh, self.cur_dR, self.cur_t, mask = cv2.recoverPose(E, self.px_cur, self.px_ref,
+                                                          cameraMatrix=self.mx)
+        self.matches = mh
+
+        self.cur_R = self.cur_dR
+        self.frame_stage = STAGE_DEFAULT_FRAME
+        self.px_ref = self.px_cur
+        self.true_loc = get_location(self.annotations[frame_id]) - self.true_loc0
+
+        # ss = self.annotations[frame_id].strip().split()
+        # x = float(ss[3]) - self.trueX0
+        # y = float(ss[7]) - self.trueY0
+        # z = float(ss[11]) - self.trueZ0
+        # self.trueX, self.trueY, self.trueZ = x, y, z
+
+    def get_match_point(self, last_frame, curent_frame):
+        f1 = self.detector.detectAndCompute(last_frame, None)
+        f2 = self.detector.detectAndCompute(curent_frame, None)
+
+        matches = self.matcher.knnMatch(f1[1], f2[1], k=2)
+
+        pts2 = []
+        pts1 = []
+        # ratio test as per Lowe's paper
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.8 * n.distance:
+                pts2.append(f2[0][m.trainIdx].pt)
+                pts1.append(f1[0][m.queryIdx].pt)
+        return np.array(pts1), np.array(pts2)
+
+
+    def processFrame(self, frame_id):
+        px_last, px_new = self.get_match_point(self.last_frame, self.new_frame)
+
+        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.mx,
+                                       method=cv2.RANSAC, prob=0.999, threshold=1.0)
+        mh, self.cur_dR, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.mx)
+        self.matches = mh
+
+        absolute_scale = self.getAbsoluteScale(frame_id)
+        if absolute_scale > 0.1:
+            self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
+            self.cur_R = self.cur_dR.dot(self.cur_R)
+        if (self.px_ref.shape[0] < kMinNumFeature):
+            self.px_cur = self.detector.detect(self.new_frame)
+            self.px_cur = np.array([x.pt for x in self.px_cur], dtype=np.float32)
+        self.px_ref = self.px_cur
+
+    def update(self, img, frame_id):
+        assert (img.ndim == 2 and img.shape[0] == self.cam.height and img.shape[
+            1] == self.cam.width), "Frame: provided image has not the same size as the camera model or image is not grayscale"
+        self.new_frame = img
+        if (self.frame_stage == STAGE_DEFAULT_FRAME):
+            self.processFrame(frame_id)
+        elif (self.frame_stage == STAGE_SECOND_FRAME):
+            self.processSecondFrame(frame_id)
+        elif (self.frame_stage == STAGE_FIRST_FRAME):
+            self.processFirstFrame(frame_id)
+        self.last_frame = self.new_frame

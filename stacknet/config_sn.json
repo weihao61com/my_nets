@@ -1,0 +1,10 @@
+{
+    "batch_size": "75",
+    "directory": "/home/weihao/posenet/my_nets/stacknet",
+    "training_dataset": "c2_tr.p",
+    "testing_dataset": "c2.p",
+    "netFile": "/home/weihao/posenet/output_stk",
+    "_retrain": "/home/weihao/posenet/output_stk_md/PNet",
+    "netTest": "/home/weihao/posenet/output_stk",
+    "stack":  "50"
+}
