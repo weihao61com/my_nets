@@ -1,7 +1,9 @@
-import sys
+# import os
+import tensorflow as tf
 from fc_dataset import *
 
-sys.path.append( '..')
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils
 
 HOME = '/home/weihao/Projects/Posenet/'
