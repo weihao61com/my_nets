@@ -6,7 +6,7 @@ this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils
 
-HOME = '/home/weihao/Projects/Posenet/'
+HOME = '/home/weihao/Projects/'
 
 if __name__ == '__main__':
     config_file = "config.json"

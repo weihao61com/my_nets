@@ -9,9 +9,9 @@
     "_tr6": "p_files/redkitchen_tr20_2.p",
     "_tr7": "p_files/stairs_tr20_2.p",
     "net": "heads_20",
-    "_retrain": "chess_20",
+    "retrain": "heads_20",
     "netTest": "heads_20",
     "feature": "20",
-    "lr": "1e-3",
+    "lr": "1e-4",
     "num_output": "3"
 }
