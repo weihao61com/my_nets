@@ -2,12 +2,18 @@ from scipy import stats
 from matplotlib.figure import figaspect
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+
 
 filename = '/home/weihao/tmp/r.txt'
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 
-da = np.loadtxt(filename, usecols = (1,2,3))
+usecols = (1,2,3)
+if len(sys.argv)>1:
+    usecols = map(int, sys.argv[1].split(','))
+
+da = np.loadtxt(filename, usecols = usecols)
 print 'max', max(da[:, 0])
 
 da[:, 0] = da[:, 0] - max(da[:, 0])
