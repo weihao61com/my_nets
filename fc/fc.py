@@ -1,10 +1,12 @@
 import sys
 from fc_dataset import *
+import tensorflow as tf
+import datetime
 
 sys.path.append( '..')
 from utils import Utils
 
-HOME = '/home/weihao/Projects/Posenet/'
+HOME = '/home/weihao/Projects/'
 
 if __name__ == '__main__':
 

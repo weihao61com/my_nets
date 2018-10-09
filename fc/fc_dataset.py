@@ -1,14 +1,9 @@
-import numpy as np
-import random
-import tensorflow as tf
-import cv2
-import datetime
 import sys
 import Queue
-import copy
-import time
+import os
 
-sys.path.append('..')
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils
 from o2_load import *
 from network import Network
