@@ -91,7 +91,11 @@ class VisualOdometry2:
             if m.distance < 0.8 * n.distance:
                 pts2.append(self.feature[0][m.queryIdx].pt)
                 pts1.append(curent_feature[0][m.trainIdx].pt)
-        return np.array(pts1), np.array(pts2)
+
+        pts1 = np.array(pts1)
+        pts2 = np.array(pts2)
+
+        return pts1, pts2
 
     def get_features(self, id1, pose1, pose2):
 
@@ -118,19 +122,22 @@ class VisualOdometry2:
         feature = self.get_feature(pose2)
         px_new, px_last = self.get_match_point(feature)
         self.truth = rotationMatrixToEulerAngles(self.pose_R)
+        if px_new.shape[0] > 10:
 
-        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
-                                       method=cv2.RANSAC, prob=0.999, threshold=10.0)
-        #mh, R, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
-        px1 = []
-        px2 = []
-        for a in range(len(mask)):
-            if mask[a] > 0:
-                px1.append(px_new[a])
-                px2.append(px_last[a])
-        px1 = np.array(px1)
-        px2 = np.array(px2)
-        self.features = np.concatenate((px1, px2), 1)
+            E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                           method=cv2.RANSAC, prob=0.999, threshold=10.0)
+            #mh, R, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+            px1 = []
+            px2 = []
+            for a in range(len(mask)):
+                if mask[a] > 0:
+                    px1.append(px_new[a])
+                    px2.append(px_last[a])
+            px1 = np.array(px1)
+            px2 = np.array(px2)
+            self.features = np.concatenate((px1, px2), 1)
+        else:
+            self.features = None
 
 
     def process(self, id1, pose1, id2, pose2, scale=1):

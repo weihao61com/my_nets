@@ -29,7 +29,7 @@ if __name__ == '__main__':
         if key.startswith(data_type):
             te_data.append(HOME + js[key])
 
-    netFile = HOME + '/' + js['netTest'] + '/fc'
+    netFile = HOME + js['netTest'] + '/fc'
     batch_size = int(js['batch_size'])
     feature_len = int(js['feature'])
     num_output = int(js["num_output"])
@@ -53,17 +53,17 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            nt = 0
             te_pre_data = te_set.prepare(rd=False)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)
+                ids = b[2]
                 for a in range(len(result)):
+                    nt = ids[a]
                     if not nt in rst:
-                        rst[nt] = []
+                        rst[ids[a]] = []
                     rst[nt].append(result[a])
                     truth[nt] = b[1][a]
-                    nt += 1
 
         fp = open('/home/weihao/tmp/test.csv', 'w')
         d = []
@@ -78,8 +78,8 @@ if __name__ == '__main__':
             #fp.write('{},{},{},{},{},{},{}\n'.
             #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))
             if random.random()<0.1:
-                fp.write('{},{},{}\n'.
-                     format(t[0], mm[0], r))
+                fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
             d.append(r)
         fp.close()
         md = np.median(d)

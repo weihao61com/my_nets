@@ -30,6 +30,7 @@ class DataSet:
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
+        self.id = None
 
     def get_next(self, rd=False, num_output=3):
         self.load_next_data()
@@ -68,6 +69,7 @@ class DataSet:
     def prepare(self, rd=True, num_output=3):
         pre_data = []
         self.reshuffle_data()
+        self.id = 0
         for d in self.data:
             pre_data.append(self.create_bucket(d, num_output))
         if rd:
@@ -77,22 +79,25 @@ class DataSet:
     def create_bucket(self, data, num_output):
         outputs = []
         inputs = []
+        ids = []
         sz_in = data[0][0].shape
-        #np.random.shuffle(data)
 
         for d in data:
             input = d[0]
-            while len(input) < self.nPar:
+            num = int(np.ceil(len(input)/float(self.nPar)))
+            length = num*self.nPar
+            while len(input) < length: #self.nPar:
                 input= np.concatenate((input, input))
+            input = input[:length]
             for a in range(0, len(input), self.nPar):
                 it = input[a:a+self.nPar]
-                if len(it)<self.nPar:
-                    break
                 truth = d[1][:num_output]
                 inputs.append(it.reshape(self.nPar * sz_in[1]))
                 outputs.append(truth.reshape(num_output))
+                ids.append(self.id)
+            self.id += 1
 
-        return np.array(inputs), np.array(outputs)
+        return np.array(inputs), np.array(outputs), ids
 
     def create_bucket_cnn(self, data, num_output):
         outputs = []
