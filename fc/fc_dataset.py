@@ -84,10 +84,13 @@ class DataSet:
             input = d[0]
             while len(input) < self.nPar:
                 input= np.concatenate((input, input))
-            input = input[:self.nPar]
-            truth = d[1][:num_output]
-            inputs.append(input.reshape(self.nPar * sz_in[1]))
-            outputs.append(truth.reshape(num_output))
+            for a in range(0, len(input), self.nPar):
+                it = input[a:a+self.nPar]
+                if len(it)<self.nPar:
+                    break
+                truth = d[1][:num_output]
+                inputs.append(it.reshape(self.nPar * sz_in[1]))
+                outputs.append(truth.reshape(num_output))
 
         return np.array(inputs), np.array(outputs)
 
