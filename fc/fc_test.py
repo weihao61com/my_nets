@@ -29,7 +29,7 @@ if __name__ == '__main__':
         if key.startswith(data_type):
             te_data.append(HOME + js[key])
 
-    netFile = HOME + js['netTest'] + '/fc'
+    netFile = HOME + 'NNs/' + js['netTest'] + '/fc'
     batch_size = int(js['batch_size'])
     feature_len = int(js['feature'])
     num_output = int(js["num_output"])

@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 
-filename = '/Users/weihao/tmp/r.txt'
+filename = '/home/weihao/tmp/r.txt'
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 usecols = (1,2,3)

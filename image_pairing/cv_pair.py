@@ -26,10 +26,10 @@ mode = 'Test'
 location = "{}/datasets/indoors/{}".format(project_dir, key)
 pose_file = "{}Split.txt".format(mode)
 poses_dic, cam = load_indoor_7_poses(location, pose_file)
-output_file = '{}/tmp/{}_{}_{}_lmeds.csv'.format(project_dir, key, mode, range2)
+output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, range2)
 filename = None #'{}/p_files/{}_{}{}_2.p'.format(project_dir, mode, key, range2)
 
-print location, pose_file
+print location, pose_file, cam.fx
 
 for p in poses_dic:
     print p, len(poses_dic[p])
@@ -50,6 +50,8 @@ with open(output_file, 'w') as fp:
         #poses = pose_realign(poses_dic[seq])
         poses = poses_dic[seq]
         for img_id1 in poses:
+            #if img_id1 != 440:
+            #    continue
             for img_id2 in poses:
                 if range1 <= abs(img_id2-img_id1) <=range2:
                     vo.process(img_id1, poses[img_id1], img_id2, poses[img_id2])
@@ -87,7 +89,7 @@ with open(output_file, 'w') as fp:
                         ns[:,3] = a1+a3
                         data.append([ns, vo.truth * 180 / np.pi])
                     nt += 1
-                    if nt%1000==0:
+                    if nt%100==0:
                         print nt, img_id1, datetime.datetime.now() - t0
 
 

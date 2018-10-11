@@ -25,7 +25,7 @@ def load_indoor_7_poses(location, pose_file):
                 p = Pose(line, location, f, data=2)
                 poses[folder_id][p.id] = p
 
-    focal = 700.0
+    focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
     # cam = PinholeCamera(480.0, 640.0, focal, focal, 240.0, 320.0)
 

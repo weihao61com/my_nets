@@ -19,7 +19,7 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, batch_size=500, npar=50):
+    def __init__(self, dataset, batch_size=500, npar=50, cache=True):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
@@ -27,6 +27,8 @@ class DataSet:
         self.nPar = npar
         self.data = None
         self.verbose = True
+        self.cache = cache
+        self.memories = {}
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
@@ -49,7 +51,14 @@ class DataSet:
         if self.index == len(self.dataset):
             self.verbose = False
             self.index = 0
-        data = load_data(self.dataset[self.index], self.verbose)
+        if self.index in self.memories:
+            data = self.memories[self.index]
+        else:
+            data = load_data(self.dataset[self.index], self.verbose)
+
+        if self.cache:
+            self.memories[self.index] = data
+
         self.data = []
         for a in range(0, len(data), self.batch_size):
             b = a + self.batch_size

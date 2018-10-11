@@ -155,24 +155,24 @@ class VisualOdometry2:
         self.matches = len(px_new)
 
         if len(px_new) > 10:
-            with open('tmp.p', 'w') as fp:
-                pickle.dump((pose1.filename, pose2.filename, self.cam.mx), fp)
-
-            os.system('python process2.py')
-
-            with open('tmp.p', 'r') as fp:
-                mh, R, t, m1, m2 =pickle.load(fp)
+            # with open('tmp.p', 'w') as fp:
+            #     pickle.dump((pose1.filename, pose2.filename, self.cam.mx), fp)
+            # os.system('python process2.py')
+            # with open('tmp.p', 'r') as fp:
+            #     mh, R, t, m1, m2 =pickle.load(fp)
 
             # print self.matches
-            #E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
-            #                               method= cv2.RANSAC) # cv2.RANSAC)
+            E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                           method= cv2.RANSAC) # cv2.RANSAC)LMEDS
             #, prob=0.999, threshold=10.0)
-            #mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+            mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+            m1 = np.mean(mask)
+            m2 = np.mean(mask0)/255.0
 
             self.inline = mh
             self.R = R
             self.t = t
-            self.m1 = m1, #np.mean(mask)
+            self.m1 = m1 #np.mean(mask)
             self.m2 = m2 #np.mean(mask0)/255.0
 
             self.features = np.concatenate((px_new, px_last), 1)

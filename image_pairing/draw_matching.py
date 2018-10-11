@@ -65,7 +65,7 @@ def draw_matching(img_name_pair, scale):
     print mh
     print R
     print np.reshape(t,(3))
-    print rotationMatrixToEulerAngles(R)*180/3.1416
+    print rotationMatrixToEulerAngles(R)*180/3.1416, rotationMatrixToEulerAngles(R)
 
 
 import sys
@@ -77,8 +77,8 @@ if len(sys.argv)>1:
 #                 '/Users/weihao/Projects/posenet/data/OldHospital/seq1/frame00002.png')
 #img_name_pair = ('/Users/weihao/PY/I7/office/seq-05/frame-000273.color.png',
 #                 '/Users/weihao/PY/I7/office/seq-05/frame-000272.color.png')
-img_name_pair = ('/home/weihao/Projects/indoor/heads/seq-02/frame-000513.color.png',
-                 '/home/weihao/Projects/indoor/heads/seq-02/frame-000532.color.png')
+img_name_pair = ('/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000440.color.png',
+                 '/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000425.color.png')
 #img_name_pair = ('/home/weihao/Projects/cambridge/OldHospital/seq1/frame00001.png',
 #                 '/home/weihao/Projects/cambridge/OldHospital/seq1/frame00002.png')
 draw_matching(img_name_pair, scale)
