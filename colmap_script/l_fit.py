@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 
-filename = '/home/weihao/tmp/r.txt'
+filename = '/Users/weihao/tmp/r.txt'
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 usecols = (1,2,3)
@@ -16,7 +16,8 @@ da = np.loadtxt(filename, usecols=usecols)
 
 print 'max', max(da[:, 0])
 
-da[:, 0] = da[:, 0] - max(da[:, 0])
+#da[:, 0] = da[:, 0] - max(da[:, 0])
+mx = max(da[:, 0])
 #print da
 slope, intercept, r_value, p_value, std_err = stats.linregress(da[:, 0], da[:, 1])
 pre1 = da[:, 0] *slope + intercept
@@ -34,4 +35,5 @@ ax1.plot(da[:, 0], pre2, color='blue', linewidth=3)
 
 print slope, intercept
 print slope1, intercept1
+print pre1[-1], pre2[-1]
 plt.show()
