@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 for a in range(len(result)):
                     nt = ids[a]
                     if not nt in rst:
-                        rst[ids[a]] = []
+                        rst[nt] = []
                     rst[nt].append(result[a])
                     truth[nt] = b[1][a]
 

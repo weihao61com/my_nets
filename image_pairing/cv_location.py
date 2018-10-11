@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 from utils import image_resize
 from pose_ana import *
+import pickle
+import os
 
 STAGE_FIRST_FRAME = 0
 STAGE_SECOND_FRAME = 1
@@ -56,7 +58,7 @@ def get_location(line):
 
 class VisualOdometry2:
     def __init__(self, cam, sf):
-        self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
+        #self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
         FLANN_INDEX_KDTREE = 1
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)  # or pass empty dictionary
@@ -145,29 +147,41 @@ class VisualOdometry2:
         self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
         if id1 != self.id:
             self.id = id1
-            self.feature = self.get_feature(pose1)
+        self.feature = self.get_feature(pose1)
 
         feature = self.get_feature(pose2, scale)
 
         px_new, px_last = self.get_match_point(feature)
         self.matches = len(px_new)
-        # print self.matches
-        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
-                                       method=cv2.RANSAC, prob=0.999, threshold=10.0)
-        mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
 
-        self.inline = mh
-        self.R = R
-        self.t = t
-        self.m1 = np.mean(mask)
-        self.m2 = np.mean(mask0)
-        # print id1, mh, self.matches, len(feature[1]), len(self.feature[1])
-        #print R
+        if len(px_new) > 10:
+            with open('tmp.p', 'w') as fp:
+                pickle.dump((pose1.filename, pose2.filename, self.cam.mx), fp)
 
-        #print id1, mh, len(px_new)
-        #raise Exception()
+            os.system('python process2.py')
 
-class VisualOdometry:
+            with open('tmp.p', 'r') as fp:
+                mh, R, t, m1, m2 =pickle.load(fp)
+
+            # print self.matches
+            #E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+            #                               method= cv2.RANSAC) # cv2.RANSAC)
+            #, prob=0.999, threshold=10.0)
+            #mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+
+            self.inline = mh
+            self.R = R
+            self.t = t
+            self.m1 = m1, #np.mean(mask)
+            self.m2 = m2 #np.mean(mask0)/255.0
+
+            self.features = np.concatenate((px_new, px_last), 1)
+            self.truth = rotationMatrixToEulerAngles(self.pose_R)
+
+        else:
+            print("No match {}: {} {}".format(self.matches, id1, id2))
+
+class VisualOdometry_Not:
 
     def __init__(self, cam, annotations):
         self.frame_stage = 0

@@ -25,7 +25,7 @@ if __name__ == '__main__':
         if key.startswith('te'):
             te_data.append(HOME + js['te'])
 
-    netFile = HOME + js['net'] + '/fc'
+    netFile = HOME + 'NNs/' + js['net'] + '/fc'
     batch_size = int(js['batch_size'])
     feature_len = int(js['feature'])
     lr = float(js['lr'])
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     renetFile = None
     if 'retrain' in js:
-        renetFile = HOME + '/' + js['retrain'] + '/fc'
+        renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
     net_type = "fc"
     if 'net_type' in js:
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 5
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])

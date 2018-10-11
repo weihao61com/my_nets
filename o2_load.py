@@ -59,15 +59,6 @@ def load_data(filename, verbose = True, max_len=1e6):
             data = pickle.load(fp)
             for d in data:
                 avg_param += len(d[0])
-                # for a in d[0]:
-                #     b0 = a[0]-a[2]
-                #     b1 = a[0]+a[2]
-                #     b2 = a[1]-a[3]
-                #     b3 = a[1]+a[3]
-                #     a[0] = b0
-                #     a[1] = b1
-                #     a[2] = b2
-                #     a[3] = b3
             length = len(data)
             avg_param /= length
             if length>max_len:
