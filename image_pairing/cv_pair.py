@@ -27,9 +27,9 @@ location = "{}/datasets/indoors/{}".format(project_dir, key)
 pose_file = "{}Split.txt".format(mode)
 poses_dic, cam = load_indoor_7_poses(location, pose_file)
 output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, range2)
-filename = None #'{}/p_files/{}_{}{}_2.p'.format(project_dir, mode, key, range2)
+filename = '{}/p_files/{}_{}{}_2.p'.format(project_dir, mode, key, range2)
 
-print location, pose_file, cam.fx
+print location, pose_file, 'focal', cam.fx
 
 for p in poses_dic:
     print p, len(poses_dic[p])
