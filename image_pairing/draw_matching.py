@@ -6,7 +6,7 @@ from utils import SiftFeature, image_resize, rotationMatrixToEulerAngles
 
 
 def draw_matching(img_name_pair, scale):
-    sf = SiftFeature(1000)
+    sf = SiftFeature(4000)
     print img_name_pair[0]
     img0 = cv2.imread(img_name_pair[0])
     feat0 = sf.get_sift_feature(img0)
@@ -77,8 +77,13 @@ if len(sys.argv)>1:
 #                 '/Users/weihao/Projects/posenet/data/OldHospital/seq1/frame00002.png')
 #img_name_pair = ('/Users/weihao/PY/I7/office/seq-05/frame-000273.color.png',
 #                 '/Users/weihao/PY/I7/office/seq-05/frame-000272.color.png')
+<<<<<<< Updated upstream
 img_name_pair = ('/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000440.color.png',
                  '/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000425.color.png')
+=======
+img_name_pair = ('/Users/weihao/Downloads/images/FLYINGOVERNORWAY_1_FC.jpg',
+                 '/Users/weihao/Downloads/images/FLYINGOVERNORWAY_200199_FC.jpg')
+>>>>>>> Stashed changes
 #img_name_pair = ('/home/weihao/Projects/cambridge/OldHospital/seq1/frame00001.png',
 #                 '/home/weihao/Projects/cambridge/OldHospital/seq1/frame00002.png')
 draw_matching(img_name_pair, scale)
