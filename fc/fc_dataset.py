@@ -93,7 +93,7 @@ class DataSet:
 
         for d in data:
             input = d[0]
-            num = 5 #int(np.ceil(len(input)/float(self.nPar)))
+            num = 10 #int(np.ceil(len(input)/float(self.nPar)))
             length = num*self.nPar
             while len(input) < length: #self.nPar:
                 input= np.concatenate((input, input))

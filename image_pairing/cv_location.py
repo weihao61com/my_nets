@@ -147,7 +147,7 @@ class VisualOdometry2:
         self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
         if id1 != self.id:
             self.id = id1
-        self.feature = self.get_feature(pose1)
+            self.feature = self.get_feature(pose1)
 
         feature = self.get_feature(pose2, scale)
 
@@ -174,6 +174,14 @@ class VisualOdometry2:
             self.t = t
             self.m1 = m1 #np.mean(mask)
             self.m2 = m2 #np.mean(mask0)/255.0
+
+            #p1 = []
+            #p2 = []
+            #for a in range(len(mask0)):
+            #    if mask0[a] > 0:
+            #        p1.append(px_new[a])
+            #        p2.append(px_last[a])
+            #self.features = np.concatenate((np.array(p1), np.array(p2)), 1)
 
             self.features = np.concatenate((px_new, px_last), 1)
             self.truth = rotationMatrixToEulerAngles(self.pose_R)

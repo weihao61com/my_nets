@@ -21,13 +21,13 @@ range2 = 15
 #pose_file = '00'
 #poses_dic, cam = load_kitty_poses(location, pose_file)
 
-key = 'chess'  #office" #heads
+key = 'pumpkin'  #office" #heads
 mode = 'Train'
 location = "{}/datasets/indoors/{}".format(project_dir, key)
 pose_file = "{}Split.txt".format(mode)
 poses_dic, cam = load_indoor_7_poses(location, pose_file)
 output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, range2)
-filename = '{}/p_files/{}_{}{}_2.p'.format(project_dir, mode, key, range2)
+filename = '{}/p_files/{}_{}_{}_{}_2.p'.format(project_dir, mode, key, range1, range2)
 
 print location, pose_file, 'focal', cam.fx
 
@@ -50,8 +50,8 @@ with open(output_file, 'w') as fp:
         #poses = pose_realign(poses_dic[seq])
         poses = poses_dic[seq]
         for img_id1 in poses:
-            #if img_id1 != 440:
-            #    continue
+            #if img_id1 >100:
+            #    break
             for img_id2 in poses:
                 if range1 <= abs(img_id2-img_id1) <=range2:
                     vo.process(img_id1, poses[img_id1], img_id2, poses[img_id2])
@@ -87,6 +87,10 @@ with open(output_file, 'w') as fp:
                         ns[:,1] = a1-a3
                         ns[:,2] = a0+a2
                         ns[:,3] = a1+a3
+                        #if img_id1 == 0:
+                        #    for b in range(len(ns)):
+                        #        print ns[b]
+                        # data.append([ns, vo.truth * 180 / np.pi])
                         data.append([ns, vo.truth * 180 / np.pi])
                     # if img_id1==0:
                     #     for a in range(len(vo.mask1)):
