@@ -177,6 +177,8 @@ class VisualOdometry2:
 
             self.features = np.concatenate((px_new, px_last), 1)
             self.truth = rotationMatrixToEulerAngles(self.pose_R)
+            self.mask1 = mask
+            self.mask2 = mask0
 
         else:
             print("No match {}: {} {}".format(self.matches, id1, id2))

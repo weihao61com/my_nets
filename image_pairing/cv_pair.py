@@ -21,8 +21,8 @@ range2 = 15
 #pose_file = '00'
 #poses_dic, cam = load_kitty_poses(location, pose_file)
 
-key = 'heads'  #office" #heads
-mode = 'Test'
+key = 'chess'  #office" #heads
+mode = 'Train'
 location = "{}/datasets/indoors/{}".format(project_dir, key)
 pose_file = "{}Split.txt".format(mode)
 poses_dic, cam = load_indoor_7_poses(location, pose_file)
@@ -88,6 +88,11 @@ with open(output_file, 'w') as fp:
                         ns[:,2] = a0+a2
                         ns[:,3] = a1+a3
                         data.append([ns, vo.truth * 180 / np.pi])
+                    # if img_id1==0:
+                    #     for a in range(len(vo.mask1)):
+                    #         print ns[a,0], ns[a,1], ns[a,2], ns[a,3],\
+                    #             vo.mask1[a][0], vo.mask2[a][0]
+
                     nt += 1
                     if nt%100==0:
                         print nt, img_id1, datetime.datetime.now() - t0

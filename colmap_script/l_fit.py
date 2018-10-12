@@ -12,6 +12,9 @@ usecols = (1,2,3)
 if len(sys.argv)>1:
     usecols = map(int, sys.argv[1].split(','))
 
+if len(sys.argv)>2:
+    filename = sys.argv[2]
+
 da = np.loadtxt(filename, usecols=usecols)
 
 print 'max', max(da[:, 0])

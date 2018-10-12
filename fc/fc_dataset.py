@@ -262,10 +262,11 @@ class sNet1(Network):
 class sNet3_stage(Network):
 
     def setup(self):
-        nodes = [1024, 64]
+        nodes = [2048, 256, 32]
         (self.feed('data').
          fc(nodes[0], name='fc1_stage').
          fc(nodes[1], name='fc2_stage').
+         fc(nodes[3], name='fc2_stage').
          fc(3, relu=False, name='output_stage'))
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
@@ -273,10 +274,11 @@ class sNet3_stage(Network):
 class sNet3(Network):
 
     def setup(self):
-        nodes = [2048,256]
+        nodes = [2048, 256, 32]
         (self.feed('data').
-         fc(nodes[0], name='fc2').
-         fc(nodes[1], name='fc3').
+         fc(nodes[0], name='fc1').
+         fc(nodes[1], name='fc2').
+         fc(nodes[2], name='fc3').
          fc(3, relu=False, name='output'))
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
