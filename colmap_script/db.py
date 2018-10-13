@@ -182,7 +182,7 @@ class Colmap_DB:
             #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
             #    Utils.rotationMatrixToEulerAngles(R)
             angles = Utils.rotationMatrixToEulerAngles(R)
-            data.append(img0.name, img1.name, angles, pts1, pts2)
+            data.append((img0.name, img1.name, angles, pts1, pts2))
 
         with open(filename, 'w') as fp:
             pickle.dump(data, fp)
@@ -208,9 +208,9 @@ class Colmap_DB:
             self.imagelist[p[0]].add_descriptor(p)
 
 
-if __name__ == "__main__":
-    db = '/home/weihao/Projects/colmap_features/proj1/proj1.db'
-    output = '/home/weihao/Projects/colmap_features/proj1/pairs.p'
+def process_db(project_dir):
+    db = '{}/colmap_features/proj1/proj1.db'.format(project_dir)
+    output = '{}/colmap_features/proj1/pairs.p'.format(project_dir)
 
     c = Colmap_DB(db)
 
@@ -222,3 +222,7 @@ if __name__ == "__main__":
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
     c.get_relative_poses(cam.mx, output)
+
+if __name__ == "__main__":
+    project_dir = '/home/weihao/Projects'
+    process_db(project_dir)
