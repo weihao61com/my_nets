@@ -8,7 +8,7 @@ def camera_params(data):
 
 def get_rows(conn, table_name):
     c = conn.cursor()
-    print '\ttable', table_name
+    print '\n\ttable', table_name
     cameras = c.execute('select * from {}'.format(table_name))
     c_names = list(map(lambda x: x[0], cameras.description))
     for name in c_names:
@@ -31,47 +31,39 @@ def view_cameras_table(conn):
             break
 
 def get_data(data, fmt):
-    ft = "<{}{}".format(len(data)/4, fmt)
+    length = 4
+    if fmt=='d':
+        length = 8
+    ft = "<{}{}".format(len(data)/length, fmt)
     d = struct.unpack(ft, data)
     return d
 
-def view_data_table(conn, table_name, fmt):
+def view_data_table(conn, table_name, id=None, fmt=None):
     rows = get_rows(conn, table_name)
-
-    nt = 0
-    for row in rows:
-        length = int(row[1])
-        print'\t', nt, row, len(row[3])/length
-        data = get_data(row[3], fmt)
-        print '\t', data[:6]
-        nt += 1
-        if nt>5:
-            break
-
-
-def view_table(conn, table_name):
-    rows = get_rows(conn, table_name)
-    nt = 0
-    for row in rows:
-        print'\t', nt, row
-        nt += 1
-        if nt>5:
-            break
+    if id is not None:
+        nt = 0
+        for row in rows:
+            print('\t{}'.format(row))
+            if fmt is not None:
+                data1 = get_data(row[id], fmt)
+                print('\t{}'.format(data1[:12]))
+            nt += 1
+            if nt>5:
+                break
 
 
 if __name__ == "__main__":
-    db = '/Users/weihao/Downloads/proj1.db'
+    db = '/home/weihao/Projects/colmap_features/proj1/proj1.db'
     conn = sqlite3.connect(db)
-    # c = conn.cursor()
     res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
     for name in res:
         print name[0]
 
-    view_cameras_table(conn)
-    # view_table(conn, 'sqlite_sequence')
-    view_table(conn, 'images')
-    view_data_table(conn, 'keypoints', 'f')
-    #view_data_table(conn, 'descriptors', 'I')
-    #view_data_table(conn, 'matches')
-    #view_table(conn, 'inlier_matches')
+    view_data_table(conn, 'cameras', 4, 'd')
+    view_data_table(conn, 'sqlite_sequence')
+    view_data_table(conn, 'images',3, None)
+    view_data_table(conn, 'keypoints', 3, 'd')
+    view_data_table(conn, 'descriptors', 3, 'I')
+    view_data_table(conn, 'matches',1)
+    view_data_table(conn, 'inlier_matches',1)
 
