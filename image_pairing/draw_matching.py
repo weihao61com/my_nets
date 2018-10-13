@@ -25,7 +25,7 @@ def draw_matching(img_name_pair, scale):
     feat1 = sf.get_sift_feature(img1)
 
     sz = img0.shape
-    focal = 719
+    focal = 525
 
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
@@ -63,10 +63,12 @@ def draw_matching(img_name_pair, scale):
 
     pts1 = np.array(pts1)
     pts2 = np.array(pts2)
-
+    #for p in range(len(pts1)):
+    #    print pts1[p][0], pts1[p][1], pts2[p][0], pts2[p][1]
     print 'Good Match', len(pts1), 'out of', len(matches)
+    print mx
     E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx,
-                               method=cv2.RANSAC, prob=0.00999, threshold=10.0)
+                                   method = cv2.RANSAC, prob = 0.999, threshold = 10.0)
     #print E
     #print mx
     mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
@@ -88,8 +90,8 @@ if len(sys.argv)>1:
 #                 '/Users/weihao/PY/I7/office/seq-05/frame-000272.color.png')
 img_name_pair = ('/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000440.color.png',
                  '/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000425.color.png')
-img_name_pair = ('/home/weihao/Projects/colmap_features/proj1/images/frame-000000.color.png',
-                 '/home/weihao/Projects/colmap_features/proj1/images/frame-000001.color.png')
+img_name_pair = ('/home/weihao/Projects/colmap_features/proj1/images/frame-000610.color.png',
+                 '/home/weihao/Projects/colmap_features/proj1/images/frame-000625.color.png')
 #img_name_pair = ('/home/weihao/Projects/cambridge/OldHospital/seq1/frame00001.png',
 #                 '/home/weihao/Projects/cambridge/OldHospital/seq1/frame00002.png')
 draw_matching(img_name_pair, scale)

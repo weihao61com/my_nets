@@ -4,7 +4,12 @@ from sortedcontainers import SortedDict
 import numpy as np
 import math
 import cv2
+import os
+import sys
+import pickle
 
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils, PinholeCamera
 
 def camera_params(data):
@@ -77,7 +82,7 @@ class KeyPoint:
 def image_ids(pair_id):
     image_id2 = pair_id % 2147483647
     image_id1 = (pair_id - image_id2) / 2147483647
-    return int(image_id1-1), int(image_id2-1)
+    return int(image_id1), int(image_id2)
 
 
 class ImageFeature:
@@ -87,15 +92,20 @@ class ImageFeature:
         self.key_points = SortedDict()
 
     def add_key_point(self, p):
-        data = get_data(p[3], 'f')
         length = int(p[1])
         width = int(p[2])
-        kps = np.array(data).reshape((length, width))
+        if length>0:
+            data = get_data(p[3], 'f')
 
-        id = 0
-        for kp in kps:
-            self.key_points[id] = KeyPoint(kp)
-            id += 1
+            kps = np.array(data).reshape((length, width))
+
+            id = 0
+            for kp in kps:
+                self.key_points[id] = KeyPoint(kp)
+                id += 1
+        else:
+            print p
+            raise Exception()
             #print kp[0], kp[1], kp[2], kp[3], kp[4], kp[5]
         #print ('\n')
         #print len(data)
@@ -116,7 +126,7 @@ class Colmap_DB:
     def __init__(self, db_name, verbose=False):
         self.name = db_name
         self.imagelist = SortedDict()
-        self.matches = []
+        self.matches = dict()
 
         if verbose:
             conn = sqlite3.connect(db_name)
@@ -136,19 +146,46 @@ class Colmap_DB:
         conn = sqlite3.connect(self.name)
         rows = get_rows(conn, 'matches', False)
         for row in rows:
-            self.matches.append(image_ids(long(row[0])))
+            length = int(row[1])
+            width = int(row[2])
+            data = np.array(get_data(row[3], 'I')).reshape((length, width))
+            self.matches[image_ids(long(row[0]))] = data
         print 'Total match', len(self.matches)
 
-    def get_relative_poses(self, mx):
-        for match in self.matches:
+    def get_relative_poses(self, mx, filename):
+
+        data = []
+        for imgs in self.matches:
+            match = self.matches[imgs]
+            pts1 = []
+            pts2 = []
+            img0 = self.imagelist[imgs[0]]
+            img1 = self.imagelist[imgs[1]]
+            for m in match:
+                kp0 = img0.key_points[m[0]]
+                kp1 = img1.key_points[m[1]]
+                pts2.append([kp0.x, kp0.y])
+                pts1.append([kp1.x, kp1.y])
+
+            pts1 = np.array(pts1)
+            pts2 = np.array(pts2)
+            #for p in range(len(pts1)):
+            #    print pts1[p][0], pts1[p][1],pts2[p][0], pts2[p][1]
+            #print pts1.shape, pts2.shape
+            #print mx
             E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx,
-                                           method=cv2.RANSAC, prob=0.00999, threshold=10.0)
+                                           method=cv2.RANSAC, prob=0.9999, threshold=10.0)
             mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
-            print mh
-            print R
-            print np.reshape(t, (3))
-            print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
-                Utils.rotationMatrixToEulerAngles(R)
+            #print mh
+            #print R
+            #print np.reshape(t, (3))
+            #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
+            #    Utils.rotationMatrixToEulerAngles(R)
+            angles = Utils.rotationMatrixToEulerAngles(R)
+            data.append(img0.name, img1.name, angles, pts1, pts2)
+
+        with open(filename, 'w') as fp:
+            pickle.dump(data, fp)
 
     def get_image_list(self):
         conn = sqlite3.connect(self.name)
@@ -173,6 +210,8 @@ class Colmap_DB:
 
 if __name__ == "__main__":
     db = '/home/weihao/Projects/colmap_features/proj1/proj1.db'
+    output = '/home/weihao/Projects/colmap_features/proj1/pairs.p'
+
     c = Colmap_DB(db)
 
     c.get_image_list()
@@ -182,4 +221,4 @@ if __name__ == "__main__":
 
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
-    c.get_relative_poses(cam.mx)
+    c.get_relative_poses(cam.mx, output)

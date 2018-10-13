@@ -4,7 +4,7 @@ import sys
 from cv_location import VisualOdometry2
 # from visual_odometry import VisualOdometry
 from imagery_utils import SiftFeature, pose_realign
-from utils import Utils
+# from utils import Utils
 from pose_ana import *
 import datetime
 import pickle
@@ -21,8 +21,8 @@ range2 = 15
 #location = '/home/weihao/Projects/kitty_dataset'
 #pose_file = '00'
 #poses_dic, cam = load_kitty_poses(location, pose_file)
-
-key = 'pumpkin'  #office" #heads
+project_dir = '/home/weihao/Projects'
+key = 'heads'  #office" #heads
 mode = 'Train'
 location = "{}/datasets/indoors/{}".format(project_dir, key)
 pose_file = "{}Split.txt".format(mode)

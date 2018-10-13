@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from utils import image_resize
+from imagery_utils import image_resize
 from pose_ana import *
 import pickle
 import os
@@ -9,6 +9,10 @@ STAGE_FIRST_FRAME = 0
 STAGE_SECOND_FRAME = 1
 STAGE_DEFAULT_FRAME = 2
 kMinNumFeature = 1500
+
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
+from utils import Utils, PinholeCamera
 
 lk_params = dict(winSize=(21, 21),
                  # maxLevel = 3,
@@ -110,7 +114,7 @@ class VisualOdometry2:
         px_new, px_last = self.get_match_point(feature)
         if px_new.shape[0] > 10:
             self.features = np.concatenate((px_new, px_last), 1)
-            self.truth = rotationMatrixToEulerAngles(self.pose_R)
+            self.truth = Utils.rotationMatrixToEulerAngles(self.pose_R)
         else:
             self.features = None
 
@@ -123,7 +127,7 @@ class VisualOdometry2:
 
         feature = self.get_feature(pose2)
         px_new, px_last = self.get_match_point(feature)
-        self.truth = rotationMatrixToEulerAngles(self.pose_R)
+        self.truth = Utils.rotationMatrixToEulerAngles(self.pose_R)
         if px_new.shape[0] > 10:
 
             E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
@@ -184,7 +188,7 @@ class VisualOdometry2:
             #self.features = np.concatenate((np.array(p1), np.array(p2)), 1)
 
             self.features = np.concatenate((px_new, px_last), 1)
-            self.truth = rotationMatrixToEulerAngles(self.pose_R)
+            self.truth = Utils.rotationMatrixToEulerAngles(self.pose_R)
             self.mask1 = mask
             self.mask2 = mask0
 
