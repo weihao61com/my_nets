@@ -23,20 +23,20 @@ def get_truth(poses_dic, image1, image2):
     pid1, id1 = get_ids(image1)
     pid2, id2 = get_ids(image2)
 
-    if abs(id1-id2)==15:
-        pose1 = poses_dic[pid1][id1]
-        pose2 = poses_dic[pid2][id2]
-        R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+    #if abs(id1-id2)==15:
+    pose1 = poses_dic[pid1][id1]
+    pose2 = poses_dic[pid2][id2]
+    R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
 
-        return Utils.rotationMatrixToEulerAngles(R)
-    return None
+    return Utils.rotationMatrixToEulerAngles(R)
+    #return None
 
 if __name__ == "__main__":
     key = 'heads'  # office" #heads
-    mode = 'Train'
+    mode = 'Test'
     project_dir = '/home/weihao/Projects'
 
-    run_colmap(project_dir, key, mode)
+    # run_colmap(project_dir, key, mode)
 
     process_db(project_dir)
 
@@ -55,6 +55,8 @@ if __name__ == "__main__":
     h2 = cam.cy
     fp = open(output_file, 'w')
     rs = []
+
+    print len(data)
 
     for d in data:
         image1 = d[0]
@@ -75,15 +77,24 @@ if __name__ == "__main__":
             features.append((a1+a3)/h2/2-1)
             features = np.array(features)
             output.append([features, truth*180/np.pi])
+            features = []
+            features.append((a2-a0)/w2)
+            features.append((a0+a2)/w2/2-1)
+            features.append((a3-a0)/h2)
+            features.append((a1+a3)/h2/2-1)
+            features = np.array(features)
+            output.append([features, -truth*180/np.pi])
 
             dr = truth - angles
             r0 = np.linalg.norm(dr) * 180 / np.pi
             rs.append(r0)
 
-            fp.write('{},{},{},{},{},{},{},{},{}'.
+            fp.write('{},{},{},{},{},{},{},{},{}\n'.
                      format(image1,image2,
                             angles[0], angles[1], angles[2],
                             truth[0], truth[1], truth[2], r0))
+
+
     fp.close()
     print "output", output_file, filename
     print 'median', len(rs), np.median(rs)

@@ -148,8 +148,12 @@ class Colmap_DB:
         for row in rows:
             length = int(row[1])
             width = int(row[2])
-            data = np.array(get_data(row[3], 'I')).reshape((length, width))
-            self.matches[image_ids(long(row[0]))] = data
+            if int(row[1]) > 10:
+                data = np.array(get_data(row[3], 'I')).reshape((length, width))
+                self.matches[image_ids(long(row[0]))] = data
+            else:
+                pass
+                # print image_ids(long(row[0])), row
         print 'Total match', len(self.matches)
 
     def get_relative_poses(self, mx, filename):

@@ -5,7 +5,7 @@ import shutil
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/../image_pairing'.format(this_file_path))
 from pose_ana import load_indoor_7_poses
-
+MAX_image = 2000
 
 def copy_images(poses_dic, image_path):
     if os.path.exists(image_path):
@@ -20,9 +20,9 @@ def copy_images(poses_dic, image_path):
             basename = os.path.basename(pose.filename)
             shutil.copy(pose.filename, image_path + '/{}_{}'.format(pid, basename))
             nt += 1
-            if nt>50:
+            if nt>=MAX_image:
                 break
-        if nt>50:
+        if nt>=MAX_image:
             break
 
 
@@ -47,10 +47,13 @@ def run_colmap(project_dir, key, mode):
 
     GPU = 0
     EXEC = '/usr/local/bin/colmap'
-    project_path = '{}/colmap_features/proj1'.format(project_dir)
+    project_path = '{}/colmap_features/{}_{}'.format(project_dir,key, mode)
     project_name = os.path.basename(project_path)
-    database_path = '{}/{}.db'.format(project_path, project_name)
+    database_path = '{}/proj.db'.format(project_path)
     image_path = '{}/images'.format(project_path)
+
+    if not os.path.exists(project_path):
+        os.mkdir(project_path)
 
     if os.path.exists(database_path):
         os.remove(database_path)
@@ -61,19 +64,24 @@ def run_colmap(project_dir, key, mode):
     cmd += ' --database_path {}'.format(database_path)
     cmd += ' --image_path {}'.format(image_path)
     cmd += ' --SiftExtraction.use_gpu {}'.format(GPU)
+    cmd += ' --SiftExtraction.num_threads 6'
+    cmd += ' --ImageReader.default_focal_length_factor 0.82'
+    cmd += ' --ImageReader.single_camera 1'
 
     run_cmd(cmd)
 
     cmd = '{} exhaustive_matcher'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)
     cmd += ' --SiftMatching.use_gpu {}'.format(GPU)
+    cmd += ' --SiftMatching.num_threads 6'
 
     run_cmd(cmd)
 
+    os.remove(image_path)
 
 if __name__ == "__main__":
     key = 'heads'  #office" #heads
-    mode = 'Train'
+    mode = 'Test'
     project_dir = '/home/weihao/Projects'
 
     run_colmap(project_dir, key, mode)
