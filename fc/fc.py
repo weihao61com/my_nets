@@ -3,7 +3,7 @@ from fc_dataset import *
 import tensorflow as tf
 import datetime
 
-sys.path.append( '..')
+sys.path.append('..')
 from utils import Utils
 
 HOME = '/home/weihao/Projects/'

@@ -47,19 +47,6 @@ def image_resize(img, scale = 1.01):
     return img[x0:x1, y0:y1, :]
 
 
-def rotationMatrixToEulerAngles(R):
-    sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
-    singular = sy < 1e-6
-    if not singular:
-        x = np.arctan2(R[2, 1], R[2, 2])
-        y = np.arctan2(-R[2, 0], sy)
-        z = np.arctan2(R[1, 0], R[0, 0])
-    else:
-        x = np.arctan2(-R[1, 2], R[1, 1])
-        y = np.arctan2(-R[2, 0], sy)
-        z = 0
-    return np.array([x, y, z])
-
 class Pose:
     def __init__(self, line, location, pose_file, data=0, id=0):
         strs = line[:-1].split()
@@ -97,23 +84,6 @@ class Pose:
     def get_string(self):
         return 'a b c {} d e f {} g h i {}'.\
             format(self.tran[0], self.tran[1], self.tran[2])
-
-
-class PinholeCamera:
-    def __init__(self, width, height, fx, fy, cx, cy,
-                 k1=0.0, k2=0.0, p1=0.0, p2=0.0, k3=0.0):
-        self.width = width
-        self.height = height
-        self.fx = fx
-        self.fy = fy
-        self.cx = cx
-        self.cy = cy
-        self.distortion = (abs(k1) > 0.0000001)
-        self.d = [k1, k2, p1, p2, k3]
-        self.mx = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
-
-
-
 
 def pose_realign(poses):
     mx = None

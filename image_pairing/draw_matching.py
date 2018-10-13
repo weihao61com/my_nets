@@ -1,8 +1,16 @@
+import sys
+import os
+
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
+from utils import Utils
+
 import cv2
 from matplotlib import pyplot as plt
 from skimage import io
 import numpy as np
-from utils import SiftFeature, image_resize, rotationMatrixToEulerAngles
+from imagery_utils import SiftFeature, image_resize
+
 
 
 def draw_matching(img_name_pair, scale):
@@ -65,7 +73,8 @@ def draw_matching(img_name_pair, scale):
     print mh
     print R
     print np.reshape(t,(3))
-    print rotationMatrixToEulerAngles(R)*180/3.1416, rotationMatrixToEulerAngles(R)
+    print Utils.rotationMatrixToEulerAngles(R)*180/3.1416, \
+        Utils.rotationMatrixToEulerAngles(R)
 
 
 import sys
@@ -79,8 +88,8 @@ if len(sys.argv)>1:
 #                 '/Users/weihao/PY/I7/office/seq-05/frame-000272.color.png')
 img_name_pair = ('/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000440.color.png',
                  '/home/weihao/Projects/datasets/indoors/heads/seq-01/frame-000425.color.png')
-img_name_pair = ('/Users/weihao/Downloads/images/FLYINGOVERNORWAY_1_FC.jpg',
-                 '/Users/weihao/Downloads/images/FLYINGOVERNORWAY_200199_FC.jpg')
+img_name_pair = ('/home/weihao/Projects/colmap_features/proj1/images/frame-000000.color.png',
+                 '/home/weihao/Projects/colmap_features/proj1/images/frame-000001.color.png')
 #img_name_pair = ('/home/weihao/Projects/cambridge/OldHospital/seq1/frame00001.png',
 #                 '/home/weihao/Projects/cambridge/OldHospital/seq1/frame00002.png')
 draw_matching(img_name_pair, scale)

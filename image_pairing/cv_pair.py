@@ -3,7 +3,8 @@ import sys
 
 from cv_location import VisualOdometry2
 # from visual_odometry import VisualOdometry
-from utils import SiftFeature, pose_realign
+from imagery_utils import SiftFeature, pose_realign
+from utils import Utils
 from pose_ana import *
 import datetime
 import pickle
@@ -55,9 +56,9 @@ with open(output_file, 'w') as fp:
             for img_id2 in poses:
                 if range1 <= abs(img_id2-img_id1) <=range2:
                     vo.process(img_id1, poses[img_id1], img_id2, poses[img_id2])
-                    b = rotationMatrixToEulerAngles(vo.R)
-                    a = rotationMatrixToEulerAngles(vo.pose_R)
-                    c = rotationMatrixToEulerAngles(poses[img_id1].m3x3)
+                    b = Utils.rotationMatrixToEulerAngles(vo.R)
+                    a = Utils.rotationMatrixToEulerAngles(vo.pose_R)
+                    c = Utils.rotationMatrixToEulerAngles(poses[img_id1].m3x3)
                     d = poses[img_id1].tran
                     matches += vo.matches
                     inline += vo.inline

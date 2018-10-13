@@ -1,6 +1,7 @@
 from sortedcontainers import SortedDict
 import numpy as np
-from utils import Pose, PinholeCamera, rotationMatrixToEulerAngles
+from imagery_utils import Pose
+from utils import Utils, PinholeCamera
 from glob import glob
 import os
 
@@ -85,7 +86,7 @@ def get_pose(location, pose_file):
         pose = poses[id]
         if pose_pre is not None:
             t = pose.get_tran(pose_pre)
-            d = rotationMatrixToEulerAngles(pose.get_direction(pose_pre, cam))
+            d = Utils.rotationMatrixToEulerAngles(pose.get_direction(pose_pre, cam))
             out_pose[id] = [d[0], d[1], d[2], t[0], t[1], t[2]]
             # fp.write('{} {} {} {} {} {} {}\n'.format(id, d[0], d[1], d[2], t[0], t[1], t[2]))
         pose_pre = pose

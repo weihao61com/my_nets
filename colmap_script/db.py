@@ -3,7 +3,9 @@ import struct
 from sortedcontainers import SortedDict
 import numpy as np
 import math
+import cv2
 
+from utils import Utils, PinholeCamera
 
 def camera_params(data):
     return struct.unpack('dddd', data)
@@ -71,10 +73,12 @@ class KeyPoint:
     def add_descriptor(self, p):
         self.descriptor = p
 
+
 def image_ids(pair_id):
     image_id2 = pair_id % 2147483647
     image_id1 = (pair_id - image_id2) / 2147483647
     return int(image_id1-1), int(image_id2-1)
+
 
 class ImageFeature:
 
@@ -106,11 +110,13 @@ class ImageFeature:
             self.key_points[id].add_descriptor(dec)
             id += 1
 
+
 class Colmap_DB:
 
     def __init__(self, db_name, verbose=False):
         self.name = db_name
         self.imagelist = SortedDict()
+        self.matches = []
 
         if verbose:
             conn = sqlite3.connect(db_name)
@@ -129,9 +135,20 @@ class Colmap_DB:
     def get_image_match(self):
         conn = sqlite3.connect(self.name)
         rows = get_rows(conn, 'matches', False)
-        print 'Total match', len(rows)
         for row in rows:
-            print image_ids(long(row[0]))
+            self.matches.append(image_ids(long(row[0])))
+        print 'Total match', len(self.matches)
+
+    def get_relative_poses(self, mx):
+        for match in self.matches:
+            E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx,
+                                           method=cv2.RANSAC, prob=0.00999, threshold=10.0)
+            mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
+            print mh
+            print R
+            print np.reshape(t, (3))
+            print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
+                Utils.rotationMatrixToEulerAngles(R)
 
     def get_image_list(self):
         conn = sqlite3.connect(self.name)
@@ -163,3 +180,6 @@ if __name__ == "__main__":
 
     c.get_image_match()
 
+    focal = 525.0
+    cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
+    c.get_relative_poses(cam.mx)
