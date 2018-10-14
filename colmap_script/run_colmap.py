@@ -5,7 +5,7 @@ import shutil
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/../image_pairing'.format(this_file_path))
 from pose_ana import load_indoor_7_poses
-MAX_image = 2000
+MAX_image = 200
 
 def copy_images(poses_dic, image_path):
     if os.path.exists(image_path):
@@ -77,7 +77,7 @@ def run_colmap(project_dir, key, mode):
 
     run_cmd(cmd)
 
-    os.remove(image_path)
+    # shutil.rmtree(image_path)
 
 if __name__ == "__main__":
     key = 'heads'  #office" #heads

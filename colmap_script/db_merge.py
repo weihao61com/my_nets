@@ -32,19 +32,27 @@ def get_truth(poses_dic, image1, image2):
     #return None
 
 if __name__ == "__main__":
+
     key = 'heads'  # office" #heads
     mode = 'Test'
+
+    if len(sys.argv)>1:
+        key = sys.argv[1]
+    if len(sys.argv)>2:
+        mode = sys.argv[2]
+
     project_dir = '/home/weihao/Projects'
 
     # run_colmap(project_dir, key, mode)
 
-    process_db(project_dir)
+    process_db(project_dir, key, mode)
 
-    db_p = '{}/colmap_features/proj1/pairs.p'.format(project_dir)
+    db_p = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
+    # output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
+    # filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
     output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
     filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
 
-    data = None
     with open(db_p, 'r') as fp:
         data = pickle.load(fp)
 
@@ -61,41 +69,42 @@ if __name__ == "__main__":
     for d in data:
         image1 = d[0]
         image2 = d[1]
+        if image1=='1_frame-000085.color.png' and image2=='1_frame-000139.color.png':
+            print ''
         truth = get_truth(poses_dic, image1, image2)
         if truth is not None:
             angles = d[2]
             pts1 = d[3]
             pts2 = d[4]
+            num_point = int(d[5])
             a0 = pts1[:, 0]
             a1 = pts1[:, 1]
             a2 = pts2[:, 0]
             a3 = pts2[:, 1]
-            features = []
-            features.append((a0-a2)/w2)
-            features.append((a0+a2)/w2/2-1)
-            features.append((a1-a3)/h2)
-            features.append((a1+a3)/h2/2-1)
-            features = np.array(features)
+            features = np.zeros((len(pts1), 4))
+            features[:, 0] = (a0-a2)/w2
+            features[:, 1] = (a0+a2)/w2/2-1
+            features[:, 2] = (a1-a3)/h2
+            features[:, 3] = (a1+a3)/h2/2-1
             output.append([features, truth*180/np.pi])
-            features = []
-            features.append((a2-a0)/w2)
-            features.append((a0+a2)/w2/2-1)
-            features.append((a3-a0)/h2)
-            features.append((a1+a3)/h2/2-1)
-            features = np.array(features)
+            features = np.zeros((len(pts1), 4))
+            features[:, 0] = (a2-a0)/w2
+            features[:, 1] = (a0+a2)/w2/2-1
+            features[:, 2] = (a3-a1)/h2
+            features[:, 3] = (a1+a3)/h2/2-1
             output.append([features, -truth*180/np.pi])
 
             dr = truth - angles
             r0 = np.linalg.norm(dr) * 180 / np.pi
             rs.append(r0)
 
-            fp.write('{},{},{},{},{},{},{},{},{}\n'.
+            fp.write('{},{},{},{},{},{},{},{},{},{},{}\n'.
                      format(image1,image2,
+                            truth[0], truth[1], truth[2],
                             angles[0], angles[1], angles[2],
-                            truth[0], truth[1], truth[2], r0))
-
-
+                             r0, len(pts1), num_point))
     fp.close()
+
     print "output", output_file, filename
     print 'median', len(rs), np.median(rs)
 

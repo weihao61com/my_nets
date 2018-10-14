@@ -105,10 +105,11 @@ class ImageFeature:
                 id += 1
         else:
             print p
-            raise Exception()
+            # raise Exception()
             #print kp[0], kp[1], kp[2], kp[3], kp[4], kp[5]
         #print ('\n')
         #print len(data)
+        return length
 
     def add_descriptor(self, p):
         data = get_data(p[3], 'B')
@@ -148,7 +149,7 @@ class Colmap_DB:
         for row in rows:
             length = int(row[1])
             width = int(row[2])
-            if int(row[1]) > 10:
+            if int(row[1]) > 20:
                 data = np.array(get_data(row[3], 'I')).reshape((length, width))
                 self.matches[image_ids(long(row[0]))] = data
             else:
@@ -160,11 +161,14 @@ class Colmap_DB:
 
         data = []
         for imgs in self.matches:
+
             match = self.matches[imgs]
             pts1 = []
             pts2 = []
             img0 = self.imagelist[imgs[0]]
             img1 = self.imagelist[imgs[1]]
+            if img0.name == '1_frame-000000.color.png' and img1.name == '1_frame-000029.color.png':
+                print ''
             for m in match:
                 kp0 = img0.key_points[m[0]]
                 kp1 = img1.key_points[m[1]]
@@ -175,10 +179,10 @@ class Colmap_DB:
             pts2 = np.array(pts2)
             #for p in range(len(pts1)):
             #    print pts1[p][0], pts1[p][1],pts2[p][0], pts2[p][1]
-            #print pts1.shape, pts2.shape
+            # print pts1.shape, pts2.shape
             #print mx
-            E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx,
-                                           method=cv2.RANSAC, prob=0.9999, threshold=10.0)
+            E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx)
+            #                               ,method=cv2.RANSAC, prob=0.9999, threshold=1.0)
             mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
             #print mh
             #print R
@@ -186,7 +190,7 @@ class Colmap_DB:
             #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
             #    Utils.rotationMatrixToEulerAngles(R)
             angles = Utils.rotationMatrixToEulerAngles(R)
-            data.append((img0.name, img1.name, angles, pts1, pts2))
+            data.append((img0.name, img1.name, angles, pts1, pts2, mh))
 
         with open(filename, 'w') as fp:
             pickle.dump(data, fp)
@@ -204,17 +208,20 @@ class Colmap_DB:
     def get_image_feature(self):
         conn = sqlite3.connect(self.name)
         kp = get_rows(conn, 'keypoints', False)
+        np = 0.0
         for p in kp:
-            self.imagelist[p[0]].add_key_point(p)
+            np += self.imagelist[p[0]].add_key_point(p)
+
+        print 'Average key point', np/len(kp)
 
         des = get_rows(conn, 'descriptors', False)
         for p in des:
             self.imagelist[p[0]].add_descriptor(p)
 
 
-def process_db(project_dir):
-    db = '{}/colmap_features/proj1/proj1.db'.format(project_dir)
-    output = '{}/colmap_features/proj1/pairs.p'.format(project_dir)
+def process_db(project_dir, key, mode):
+    db = '{}/colmap_features/{}_{}/proj.db'.format(project_dir, key, mode)
+    output = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
 
     c = Colmap_DB(db)
 
@@ -229,4 +236,7 @@ def process_db(project_dir):
 
 if __name__ == "__main__":
     project_dir = '/home/weihao/Projects'
-    process_db(project_dir)
+    key = 'heads'  # office" #heads
+    mode = 'Train'
+
+    process_db(project_dir, key, mode)
