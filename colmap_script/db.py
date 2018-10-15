@@ -90,6 +90,7 @@ class ImageFeature:
     def __init__(self, imagename):
         self.name = imagename
         self.key_points = SortedDict()
+        self.ids = []
 
     def add_key_point(self, p):
         length = int(p[1])
@@ -121,6 +122,13 @@ class ImageFeature:
             self.key_points[id].add_descriptor(dec)
             id += 1
 
+    def add_match_id(self,id):
+        self.ids.append(id)
+
+    def reduce_matches(self, max_ids = 20 ):
+        if len(self.ids)>max_ids:
+            np.random.shuffle(self.ids)
+            self.ids = self.ids[:max_ids]
 
 class Colmap_DB:
 
@@ -141,21 +149,37 @@ class Colmap_DB:
             view_data_table(conn, 'keypoints', 3, 'd')
             view_data_table(conn, 'descriptors', 3, 'I')
             view_data_table(conn, 'matches',1)
-            view_data_table(conn, 'inlier_matches',1)
+            view_data_table(conn, 'two_view_geometries',1)
 
-    def get_image_match(self):
+    def get_image_match(self, max_match_per_image):
         conn = sqlite3.connect(self.name)
         rows = get_rows(conn, 'matches', False)
+        matches = dict()
+
         for row in rows:
             length = int(row[1])
             width = int(row[2])
-            if int(row[1]) > 20:
+            if int(row[1]) > max_match_per_image:
                 data = np.array(get_data(row[3], 'I')).reshape((length, width))
-                self.matches[image_ids(long(row[0]))] = data
+                ids = image_ids(long(row[0]))
+                matches[ids] = data
+                self.imagelist[ids[0]].add_match_id(ids[1])
+                self.imagelist[ids[1]].add_match_id(ids[0])
             else:
                 pass
                 # print image_ids(long(row[0])), row
-        print 'Total match', len(self.matches)
+        print 'Total match', len(matches), 'out of', len(rows)
+
+        for id in self.imagelist:
+            self.imagelist[id].reduce_matches()
+
+        for ids in matches:
+            if (ids[0] in self.imagelist[ids[1]].ids or
+                    ids[1] in self.imagelist[ids[0]].ids):
+                self.matches[ids] = matches[ids]
+
+        print 'Final match', len(self.matches)
+
 
     def get_relative_poses(self, mx, filename):
 
@@ -219,16 +243,16 @@ class Colmap_DB:
             self.imagelist[p[0]].add_descriptor(p)
 
 
-def process_db(project_dir, key, mode):
+def process_db(project_dir, key, mode, max_match_per_image, verbose=False):
     db = '{}/colmap_features/{}_{}/proj.db'.format(project_dir, key, mode)
     output = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
 
-    c = Colmap_DB(db)
+    c = Colmap_DB(db, verbose)
 
     c.get_image_list()
     c.get_image_feature()
 
-    c.get_image_match()
+    c.get_image_match(max_match_per_image)
 
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
@@ -237,6 +261,6 @@ def process_db(project_dir, key, mode):
 if __name__ == "__main__":
     project_dir = '/home/weihao/Projects'
     key = 'heads'  # office" #heads
-    mode = 'Train'
+    mode = 'Test'
 
-    process_db(project_dir, key, mode)
+    process_db(project_dir, key, mode, 20)

@@ -5,9 +5,8 @@ import shutil
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/../image_pairing'.format(this_file_path))
 from pose_ana import load_indoor_7_poses
-MAX_image = 200
 
-def copy_images(poses_dic, image_path):
+def copy_images(poses_dic, image_path, MAX_image):
     if os.path.exists(image_path):
         shutil.rmtree(image_path)
     os.mkdir(image_path)
@@ -37,7 +36,7 @@ def get_poses(project_dir, key, mode):
     poses_dic, cam = load_indoor_7_poses(location, pose_file)
     return  poses_dic, cam
 
-def run_colmap(project_dir, key, mode):
+def run_colmap(project_dir, key, mode, max_image):
 
     #location = "{}/datasets/indoors/{}".format(project_dir, key)
     #pose_file = "{}Split.txt".format(mode)
@@ -58,7 +57,7 @@ def run_colmap(project_dir, key, mode):
     if os.path.exists(database_path):
         os.remove(database_path)
 
-    copy_images(poses_dic, image_path)
+    copy_images(poses_dic, image_path, max_image)
 
     cmd = '{} feature_extractor'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)

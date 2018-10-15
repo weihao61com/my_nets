@@ -35,6 +35,8 @@ if __name__ == "__main__":
 
     key = 'heads'  # office" #heads
     mode = 'Test'
+    max_image = 200
+    max_match_per_image = 40
 
     if len(sys.argv)>1:
         key = sys.argv[1]
@@ -43,13 +45,11 @@ if __name__ == "__main__":
 
     project_dir = '/home/weihao/Projects'
 
-    # run_colmap(project_dir, key, mode)
+    run_colmap(project_dir, key, mode, max_image)
 
-    process_db(project_dir, key, mode)
+    process_db(project_dir, key, mode, max_match_per_image)
 
     db_p = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
-    # output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
-    # filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
     output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
     filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
 
@@ -111,3 +111,5 @@ if __name__ == "__main__":
     if filename is not None:
         with open(filename, 'w') as fp:
             pickle.dump(output, fp)
+
+    print "processed", key, mode, max_image, max_match_per_image
