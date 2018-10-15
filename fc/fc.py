@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 1
+    loop = 20
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
