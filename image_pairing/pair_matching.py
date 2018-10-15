@@ -1,9 +1,9 @@
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
-from bluenotelib.common.quaternion import Quaternion
-from bluenotelib.common.bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
-from sortedcontainers import SortedDict
+#from bluenotelib.common.quaternion import Quaternion
+#from bluenotelib.common.bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
+#from sortedcontainers import SortedDict
 
 def rotation_to_rph(R):
     pitch, roll, heading = BlueNoteSensorRotation.get_rotation_angles(R, RotationSequence.XYZ)

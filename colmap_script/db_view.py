@@ -53,7 +53,10 @@ def view_data_table(conn, table_name, id=None, fmt=None):
 
 
 if __name__ == "__main__":
+    import sys
     db = '/home/weihao/Projects/colmap_features/proj1/proj1.db'
+    if len(sys.argv)>1:
+        db =sys.argv[1]
     conn = sqlite3.connect(db)
     res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
     for name in res:
@@ -65,5 +68,5 @@ if __name__ == "__main__":
     view_data_table(conn, 'keypoints', 3, 'd')
     view_data_table(conn, 'descriptors', 3, 'I')
     view_data_table(conn, 'matches',1)
-    view_data_table(conn, 'inlier_matches',1)
+    view_data_table(conn, 'two_view_geometries',1)
 
