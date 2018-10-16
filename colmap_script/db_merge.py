@@ -37,17 +37,20 @@ if __name__ == "__main__":
     mode = 'Test'
     max_image = 400000
     max_match_per_image = 40
+    min_matches = 20
 
     if len(sys.argv)>1:
         key = sys.argv[1]
     if len(sys.argv)>2:
         mode = sys.argv[2]
+    if len(sys.argv)>3:
+        max_match_per_image = int(sys.argv[3])
 
     project_dir = '/home/weihao/Projects'
 
-    run_colmap(project_dir, key, mode, max_image)
+    run_colmap(project_dir, key, mode, max_image, max_match_per_image)
 
-    process_db(project_dir, key, mode, max_match_per_image)
+    process_db(project_dir, key, mode, max_match_per_image, min_matches)
 
     db_p = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
     output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
@@ -112,4 +115,4 @@ if __name__ == "__main__":
         with open(filename, 'w') as fp:
             pickle.dump(output, fp)
 
-    print "processed", key, mode, max_image, max_match_per_image
+    print "processed", key, mode, max_image, max_match_per_image, min_matches

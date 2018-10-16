@@ -83,7 +83,7 @@ def get_poses(project_dir, key, mode):
     poses_dic, cam = load_indoor_7_poses(location, pose_file)
     return  poses_dic, cam
 
-def run_colmap(project_dir, key, mode, max_image):
+def run_colmap(project_dir, key, mode, max_image, max_match_per_image):
 
     #location = "{}/datasets/indoors/{}".format(project_dir, key)
     #pose_file = "{}Split.txt".format(mode)
@@ -115,7 +115,7 @@ def run_colmap(project_dir, key, mode, max_image):
     cmd += ' --ImageReader.single_camera 1'
 
     run_cmd(cmd)
-    create_image_list(project_path, image_list)
+    create_image_list(project_path, image_list, max_match_per_image*5)
 
     cmd = '{} matches_importer'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)

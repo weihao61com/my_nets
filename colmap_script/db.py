@@ -151,7 +151,7 @@ class Colmap_DB:
             view_data_table(conn, 'matches',1)
             view_data_table(conn, 'two_view_geometries',1)
 
-    def get_image_match(self, max_match_per_image):
+    def get_image_match(self, min_matches, max_match_per_image):
         conn = sqlite3.connect(self.name)
         rows = get_rows(conn, 'matches', False)
         matches = dict()
@@ -159,7 +159,7 @@ class Colmap_DB:
         for row in rows:
             length = int(row[1])
             width = int(row[2])
-            if int(row[1]) > max_match_per_image:
+            if int(row[1]) > min_matches:
                 data = np.array(get_data(row[3], 'I')).reshape((length, width))
                 ids = image_ids(long(row[0]))
                 matches[ids] = data
@@ -168,10 +168,10 @@ class Colmap_DB:
             else:
                 pass
                 # print image_ids(long(row[0])), row
-        print 'Total match', len(matches), 'out of', len(rows)
+        print 'Total match', len(matches), 'out of', len(rows), 'at threshold', min_matches
 
         for id in self.imagelist:
-            self.imagelist[id].reduce_matches()
+            self.imagelist[id].reduce_matches(max_match_per_image)
 
         for ids in matches:
             if (ids[0] in self.imagelist[ids[1]].ids or
@@ -243,7 +243,7 @@ class Colmap_DB:
             self.imagelist[p[0]].add_descriptor(p)
 
 
-def process_db(project_dir, key, mode, max_match_per_image, verbose=False):
+def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose=False):
     db = '{}/colmap_features/{}_{}/proj.db'.format(project_dir, key, mode)
     output = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
 
@@ -252,7 +252,7 @@ def process_db(project_dir, key, mode, max_match_per_image, verbose=False):
     c.get_image_list()
     c.get_image_feature()
 
-    c.get_image_match(max_match_per_image)
+    c.get_image_match(min_matches, max_match_per_image)
 
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
