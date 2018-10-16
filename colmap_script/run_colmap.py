@@ -39,7 +39,7 @@ def run_cmd(cmd):
     os.system(cmd)
 
 
-def create_image_list(database_path, image_list, pair_count = 10):
+def create_image_list(database_path, image_list, pair_count = 100):
     if pair_count>len(image_list):
         raise Exception('More pair than imges')
     image_pairs = {}
