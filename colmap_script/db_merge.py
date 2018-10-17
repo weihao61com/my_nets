@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     project_dir = '/home/weihao/Projects'
 
-    # run_colmap(project_dir, key, mode, max_image, max_match_per_image)
+    run_colmap(project_dir, key, mode, max_image, max_match_per_image)
 
     process_db(project_dir, key, mode, max_match_per_image, min_matches)
 

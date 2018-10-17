@@ -259,17 +259,6 @@ class sNet1(Network):
 
         print("number of layers = {}".format(len(self.layers)))
 
-class sNet3_stage(Network):
-
-    def setup(self):
-        nodes = [2048, 256, 32]
-        (self.feed('data').
-         fc(nodes[0], name='fc1_stage').
-         fc(nodes[1], name='fc2_stage').
-         fc(nodes[3], name='fc2_stage').
-         fc(3, relu=False, name='output_stage'))
-
-        print("number of layers = {} {}".format(len(self.layers), nodes))
 
 class sNet3(Network):
 
@@ -282,6 +271,28 @@ class sNet3(Network):
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
+
+class sNet3_2(Network):
+
+    def setup(self):
+        nodes = [256, 64]
+        (self.feed('data').
+         fc(nodes[0], name='fc1').
+         fc(nodes[1], name='fc2').
+         fc(3, relu=False, name='output'))
+
+        print("number of layers = {} {}".format(len(self.layers), nodes))
+
+class sNet3_stage(Network):
+
+    def setup(self):
+        nodes = [128, 64]
+        (self.feed('data').
+         fc(nodes[0], name='fc1_stage').
+         fc(nodes[1], name='fc2_stage').
+         fc(3, relu=False, name='output_stage'))
+
+        print("number of layers (stage) = {} {}".format(len(self.layers), nodes))
 
 class cNet(Network):
 
@@ -315,15 +326,22 @@ def run_data(data, inputs, sess, xy):
     return Utils.calculate_loss(results, truth)
 
 
-def run_stage_data(data, inputs, sess, xy, stage_input, xy_stage):
+def run_stage_data(data,
+                   inputs,
+                   sess,
+                   xy,
+                   stage_input,
+                   xy_stage,
+                   stage_dup,
+                   xy_fc2,
+                   st_fc2):
     results = None
     truth = None
     num_att = 4
-    stage_dup = 5
-    stage_result = None
+    stage_result = {}
 
     for b in data:
-        feed = {inputs: b[0]}
+        feed = {inputs: b[0][:, :-stage_dup*num_att]}
         result = sess.run(xy, feed_dict=feed)
         if results is None:
             results = result
@@ -332,15 +350,22 @@ def run_stage_data(data, inputs, sess, xy, stage_input, xy_stage):
             results = np.concatenate((results, result))
             truth = np.concatenate((truth, b[1]))
 
-        length = b[0].shape[1]
-        for evt in range(0, length, num_att*stage_dup):
-            input_array = np.concatenate((result, b[0][:, evt:evt + num_att*stage_dup]), axis=1)
-            r = sess.run(xy_stage, feed_dict={stage_input: input_array}) + result - b[1]
-            if stage_result is None:
-                stage_result = np.linalg.norm(r, axis=1)
+        fc_input = sess.run(xy_fc2, feed_dict=feed)
+        start = b[0].shape[1] - stage_dup*num_att
+        for evt in range(stage_dup):
+            if not evt in stage_result:
+                stage_result[evt] = None
+            input_array = np.concatenate(
+                (fc_input, b[0][:, start + evt*num_att: start + (evt+1) * num_att]), axis=1)
+            r = sess.run(xy_stage, feed_dict={stage_input: input_array})
+            fc_input = sess.run(st_fc2, feed_dict={stage_input: input_array})
+            if stage_result[evt] is None:
+                stage_result[evt] = r
             else:
-                stage_result = np.concatenate((stage_result, np.linalg.norm(r, axis=1)))
+                stage_result[evt] = np.concatenate((stage_result[evt], r))
 
     a, b = Utils.calculate_loss(results, truth)
-    avg = stage_result.dot(stage_result)/len(stage_result)
+    avg = {}
+    for evt in range(stage_dup):
+        avg[evt] = Utils.calculate_loss(stage_result[evt], truth)
     return a, b, avg
