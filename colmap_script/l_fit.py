@@ -22,7 +22,8 @@ print 'max', max(da[:, 0])
 #da[:, 0] = da[:, 0] - max(da[:, 0])
 mx = max(da[:, 0])
 #print da
-slope, intercept, r_value, p_value, std_err = stats.linregress(da[:, 0], da[:, 1])
+length = int(len(da)/2)
+slope, intercept, r_value, p_value, std_err = stats.linregress(da[length:, 0], da[length:, 1])
 pre1 = da[:, 0] *slope + intercept
 
 ax1 = fig.add_subplot(1, 2, 1)

@@ -9,7 +9,7 @@ from utils import Utils
 HOME = '/home/weihao/Projects/'
 
 if __name__ == '__main__':
-    config_file = "config.json"
+    config_file = HOME + "/my_nets/fc/config.json"
 
     data_type = 'te'
     if len(sys.argv)>2:
