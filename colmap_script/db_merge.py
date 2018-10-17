@@ -4,6 +4,7 @@ from db import process_db
 import numpy as np
 import os
 import sys
+import datetime
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     max_match_per_image = 40
     min_matches = 20
 
+    T0 = datetime.datetime.now()
     if len(sys.argv)>1:
         key = sys.argv[1]
     if len(sys.argv)>2:
@@ -48,7 +50,7 @@ if __name__ == "__main__":
 
     project_dir = '/home/weihao/Projects'
 
-    run_colmap(project_dir, key, mode, max_image, max_match_per_image)
+    # run_colmap(project_dir, key, mode, max_image, max_match_per_image)
 
     process_db(project_dir, key, mode, max_match_per_image, min_matches)
 
@@ -72,8 +74,6 @@ if __name__ == "__main__":
     for d in data:
         image1 = d[0]
         image2 = d[1]
-        if image1=='1_frame-000085.color.png' and image2=='1_frame-000139.color.png':
-            print ''
         truth = get_truth(poses_dic, image1, image2)
         if truth is not None:
             angles = d[2]
@@ -115,4 +115,5 @@ if __name__ == "__main__":
         with open(filename, 'w') as fp:
             pickle.dump(output, fp)
 
-    print "processed", key, mode, max_image, max_match_per_image, min_matches
+    print "processed ", key, mode, max_image, max_match_per_image, \
+        min_matches, datetime.datetime.now()-T0

@@ -181,7 +181,7 @@ class Colmap_DB:
         print 'Final match', len(self.matches)
 
 
-    def get_relative_poses(self, mx, filename):
+    def get_relative_poses(self, mx, filename, tr):
 
         data = []
         for imgs in self.matches:
@@ -191,8 +191,7 @@ class Colmap_DB:
             pts2 = []
             img0 = self.imagelist[imgs[0]]
             img1 = self.imagelist[imgs[1]]
-            if img0.name == '1_frame-000000.color.png' and img1.name == '1_frame-000029.color.png':
-                print ''
+
             for m in match:
                 kp0 = img0.key_points[m[0]]
                 kp1 = img1.key_points[m[1]]
@@ -205,15 +204,19 @@ class Colmap_DB:
             #    print pts1[p][0], pts1[p][1],pts2[p][0], pts2[p][1]
             # print pts1.shape, pts2.shape
             #print mx
-            E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx)
-            #                               ,method=cv2.RANSAC, prob=0.9999, threshold=1.0)
-            mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
-            #print mh
-            #print R
-            #print np.reshape(t, (3))
-            #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
-            #    Utils.rotationMatrixToEulerAngles(R)
-            angles = Utils.rotationMatrixToEulerAngles(R)
+            angles = [0,0,0]
+            mh = 0
+
+            if not tr:
+                E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx)
+                #                               ,method=cv2.RANSAC, prob=0.9999, threshold=1.0)
+                mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
+                #print mh
+                #print R
+                #print np.reshape(t, (3))
+                #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
+                #    Utils.rotationMatrixToEulerAngles(R)
+                angles = Utils.rotationMatrixToEulerAngles(R)
             data.append((img0.name, img1.name, angles, pts1, pts2, mh))
 
         with open(filename, 'w') as fp:
@@ -256,7 +259,7 @@ def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose
 
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
-    c.get_relative_poses(cam.mx, output)
+    c.get_relative_poses(cam.mx, output, mode.startswith('Tr'))
 
 if __name__ == "__main__":
     project_dir = '/home/weihao/Projects'

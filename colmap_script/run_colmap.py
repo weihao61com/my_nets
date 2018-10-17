@@ -65,7 +65,7 @@ def create_image_list(database_path, image_list, pair_count = 100):
             for r in removed:
                 image_pairs[img].remove(r)
                 total_removed += 1
-    print 'removed', total_removed
+    print 'removed dup', total_removed
 
     total = 0
     matches_list = os.path.join(database_path, MATCHES_LIST)

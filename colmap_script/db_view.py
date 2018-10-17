@@ -54,7 +54,7 @@ def view_data_table(conn, table_name, id=None, fmt=None):
 
 if __name__ == "__main__":
     import sys
-    db = '/home/weihao/Projects/colmap_features/proj1/proj1.db'
+    db = '/home/weihao/Projects/colmap_features/fire_Test/proj.db'
     if len(sys.argv)>1:
         db =sys.argv[1]
     conn = sqlite3.connect(db)
