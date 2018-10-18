@@ -67,6 +67,9 @@ if __name__ == "__main__":
     view_data_table(conn, 'images',3, None)
     view_data_table(conn, 'keypoints', 3, 'd')
     view_data_table(conn, 'descriptors', 3, 'I')
-    view_data_table(conn, 'matches',1)
-    view_data_table(conn, 'two_view_geometries',1)
+    view_data_table(conn, 'matches',3, 'I')
+    view_data_table(conn, 'two_view_geometries',3, 'I')
+    view_data_table(conn, 'two_view_geometries',5, 'd')
+    view_data_table(conn, 'two_view_geometries',6, 'd')
+    view_data_table(conn, 'two_view_geometries',7, 'd')
 
