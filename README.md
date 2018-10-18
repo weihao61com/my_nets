@@ -25,3 +25,7 @@ median 1693 1.8427478997156759
 output /home/weihao/Projects/tmp/heads_Test.csv /home/weihao/Projects/p_files/Test_heads.p
 median 6528 2.6623443712653128
 processed heads Test 400000 10 20
+output /home/weihao/Projects/tmp/heads_Test.csv /home/weihao/Projects/p_files/Test_heads.p
+median 7768 2.63587711022838
+processed  heads Test 400000 10 20 0:30:40.223759
+

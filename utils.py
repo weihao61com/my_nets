@@ -53,6 +53,18 @@ class Utils:
         return loss*loss/len(r), np.median(r)
 
     @staticmethod
+    def calculate_stack_loss(v1, v2):
+        L = []
+        M = []
+        for a in range(v1.shape[0]):
+            diff = v1[a]- v2
+            r = np.linalg.norm(diff, axis=1)
+            loss = np.linalg.norm(r)
+            L.append(loss*loss/len(r))
+            M.append(np.median(r))
+        return L, M
+
+    @staticmethod
     def load_json_file(filename):
         out = SortedDict()
         with open(filename, 'r') as fp:

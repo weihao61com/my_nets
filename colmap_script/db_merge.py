@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     key = 'heads'  # office" #heads
     mode = 'Test'
-    max_image = 400000
+    max_image = 400
     max_match_per_image = 40
     min_matches = 20
 
