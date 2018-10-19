@@ -59,22 +59,22 @@ if __name__ == '__main__':
     net = StackNet(input_dic)
 
     xy = {}
-    for a in range(stack+1):
-        xy[a] = net.layers['output{}'.format(a)]
+    for a in range(stack):
+        xy[a] = net.layers['output{}'.format(a+1)]
 
     #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
-    loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
-    for a in range(stack):
-        loss = tf.add(loss, tf.reduce_sum(tf.square(tf.subtract(xy[a+1], output))))
+    #loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
+    #for a in range(stack):
+    #    loss = tf.add(loss, tf.reduce_sum(tf.square(tf.subtract(xy[a+1], output))))
 
-    l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))) * 1
-    l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[1], output)))) * 2
-    l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
-    l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
-    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output)))) * 5
-    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[5], output)))) * 6
+    #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))) * 1
+    #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[1], output)))) * 2
+    #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
+    #l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
+    #l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output)))) * 5
+    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output))))
 
-    loss = l0 + l1 + l2 + l3 + l4 + l5
+    loss = l5
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -100,12 +100,13 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "iteration: {0} {1:.3f} {2:.3f} {3:.3f} {4:.3f} {5:.3f}" \
-                  " {6:.3f} {7:.3f} {8:.3f} {9:.3f} {10:.3f} time {11}".format(
-                a*loop, total_loss[0], te_loss[0], te_loss[0]-total_loss[0],
-                tr_median[0], te_median[0], total_loss[stack], te_loss[stack],
-                te_loss[stack]-total_loss[stack], tr_median[stack],
-                te_median[stack], t1 - t00)
+            str = "iteration: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.2f}" \
+                  " {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f}" \
+                  " {13:.2f} {14:.2f} time {15}".format(
+                a*loop, total_loss[0], te_loss[0],total_loss[stack-1], te_loss[stack-1],
+                tr_median[0], te_median[0], tr_median[1], te_median[1],
+                tr_median[2], te_median[2], tr_median[3], te_median[3],
+                tr_median[stack-1], te_median[stack-1], t1 - t00)
 
             print str
             t00 = t1

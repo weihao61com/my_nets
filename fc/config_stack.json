@@ -12,6 +12,6 @@
     "_retrain": "heads",
     "netTest": "heads",
     "feature": "30",
-    "lr": "1e-5",
+    "lr": "1e-3",
     "num_output": "3"
 }

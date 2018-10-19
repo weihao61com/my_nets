@@ -13,7 +13,7 @@ class StackNet(Network):
 
     def parameters(self, dim_input=4, dim_output=3, dim_ref=64):
         self.stack = 5
-        self.dim_inter = 128
+        self.dim_inter = 512
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
@@ -37,10 +37,11 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(1024, name='fc0').
+         fc(2048, name='fc0').
          fc(256, name='fc1').
-         fc(self.dim_ref, name='fc2').
-         fc(self.dim_output, relu=False, name='output0'))
+         fc(self.dim_ref, name='fc2')
+         #.fc(self.dim_output, relu=False, name='output0')
+         )
 
         ref_out_name = 'fc2'
         for a in range(self.stack):
@@ -49,6 +50,7 @@ class StackNet(Network):
             ifc0_name = 'ifc0{}_in'.format(a)
             ifc1_name = 'ifc1{}_in'.format(a)
             output_name = 'output{}'.format(a+1)
+
             (self.feed(input_name, ref_out_name)
              .concat(1, name=ic_name)
              .fc_w(name=ifc0_name,
@@ -375,7 +377,7 @@ def run_data_stack(data, inputs, sess, xy, stack):
         for a in range(stack):
             feed[inputs['input{}'.format(a+1)]] = b[0][:, length+4*a:length+4*(a+1)]
         result = []
-        for a in range(stack+1):
+        for a in range(stack):
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
         if results is None:
