@@ -36,9 +36,9 @@ if __name__ == "__main__":
 
     key = 'heads'  # office" #heads
     mode = 'Test'
-    max_image = 400
+    max_image = 400000
     max_match_per_image = 40
-    min_matches = 20
+    min_matching_point = 20
 
     T0 = datetime.datetime.now()
     if len(sys.argv)>1:
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     run_colmap(project_dir, key, mode, max_image, max_match_per_image)
 
-    process_db(project_dir, key, mode, max_match_per_image, min_matches)
+    process_db(project_dir, key, mode, max_match_per_image, min_matching_point)
 
     db_p = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
     output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
