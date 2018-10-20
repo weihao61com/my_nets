@@ -6,7 +6,7 @@ import datetime
 sys.path.append('..')
 from utils import Utils
 
-HOME = '/home/weihao/Projects/'
+HOME = '/Users/weihao/Projects/'
 
 if __name__ == '__main__':
 
@@ -26,12 +26,12 @@ if __name__ == '__main__':
             te_data.append(HOME + js['te'])
 
     netFile = HOME + 'NNs/' + js['net'] + '/fc'
-    batch_size = int(js['batch_size'])
-    feature_len = int(js['feature'])
-    lr = float(js['lr'])
 
-    stack = 5
-    num_output = int(js["num_output"])
+    batch_size = js['batch_size']
+    feature_len = js['feature']
+    lr = js['lr']
+    stack = js['stack']
+    num_output = js["num_output"]
 
     renetFile = None
     if 'retrain' in js:
@@ -57,6 +57,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
+    net.real_setup(stack)
 
     xy = {}
     for a in range(stack):
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
     #l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
     #l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output)))) * 5
-    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output))))
+    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))))
 
     loss = l5
 
@@ -101,11 +102,9 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "iteration: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.2f}" \
-                  " {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f}" \
-                  " {13:.2f} {14:.2f} time {15}".format(
-                a*loop, total_loss[0], te_loss[0],total_loss[stack-1], te_loss[stack-1],
-                tr_median[0], te_median[0], tr_median[1], te_median[1],
-                tr_median[2], te_median[2], tr_median[3], te_median[3],
+                  " {6:.2f} {7:.2f} {8:.2f} time {9}".format(
+                a*loop, total_loss[stack-2], te_loss[stack-2],total_loss[stack-1], te_loss[stack-1],
+                tr_median[stack-2], te_median[stack-2],
                 tr_median[stack-1], te_median[stack-1], t1 - t00)
 
             print str

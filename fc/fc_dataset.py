@@ -11,8 +11,8 @@ from network import Network
 
 class StackNet(Network):
 
-    def parameters(self, dim_input=4, dim_output=3, dim_ref=64):
-        self.stack = 5
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=64):
+        self.stack = stack
         self.dim_inter = 512
         self.dim_ref = dim_ref
         self.dim_output = dim_output
@@ -33,7 +33,11 @@ class StackNet(Network):
         self.biases2 = self.make_var('biases2', [self.out2])
 
     def setup(self):
-        self.parameters()
+        pass
+
+    def real_setup(self, stack):
+
+        self.parameters(stack)
 
         # base net
         (self.feed('input0').
