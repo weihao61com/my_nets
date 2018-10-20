@@ -8,11 +8,11 @@
     "_tr5": "p_files/pumpkin_tr20_2.p",
     "_tr6": "p_files/redkitchen_tr20_2.p",
     "_tr7": "p_files/Train_stairs.p",
-    "net": "heads",
-    "retrain": "heads",
-    "netTest": "heads",
+    "net": "stack",
+    "retrain": "stack",
+    "netTest": "stack",
     "feature": 30,
     "lr": 1e-4,
     "num_output": 3,
-    "stack": 3
+    "stack": 5
 }

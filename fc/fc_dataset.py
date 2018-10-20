@@ -11,9 +11,9 @@ from network import Network
 
 class StackNet(Network):
 
-    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=64):
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=32):
         self.stack = stack
-        self.dim_inter = 512
+        self.dim_inter = 128
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
@@ -41,8 +41,7 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(2048, name='fc0').
-         fc(256, name='fc1').
+         fc(128, name='fc0').
          fc(self.dim_ref, name='fc2')
          #.fc(self.dim_output, relu=False, name='output0')
          )
@@ -63,10 +62,16 @@ class StackNet(Network):
              .fc_w(name=ifc1_name,
                    weights=self.weights1,
                    biases=self.biases1)
-             .fc_w(name=output_name,
+             .fc_w(name=output_name, relu=False,
                    weights=self.weights2,
                    biases=self.biases2)
              )
+            # (self.feed(input_name, ref_out_name)
+            #  .concat(1, name=ic_name)
+            #  .fc(128, name=ifc0_name)
+            #  .fc(64, name=ifc1_name)
+            #  .fc(3, relu=False, name=output_name)
+            #  )
             ref_out_name = ifc1_name
 
 
@@ -326,10 +331,13 @@ class sNet1(Network):
 class sNet3(Network):
 
     def setup(self):
-        nodes = [2048, 256]
+        #nodes = [2048, 256]
+        nodes = [128,64,128,64]
         (self.feed('data').
          fc(nodes[0], name='fc1').
          fc(nodes[1], name='fc2').
+         fc(nodes[2], name='fc3').
+         fc(nodes[3], name='fc4').
          fc(3, relu=False, name='output'))
 
         print("number of layers = {} {}".format(len(self.layers), nodes))

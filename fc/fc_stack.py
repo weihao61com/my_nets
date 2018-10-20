@@ -6,7 +6,7 @@ import datetime
 sys.path.append('..')
 from utils import Utils
 
-HOME = '/Users/weihao/Projects/'
+HOME = cwd = os.getcwd() + '/../../'
 
 if __name__ == '__main__':
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 5
+    loop = 200
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -95,17 +95,25 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare()
-            total_loss, tr_median = run_data_stack(tr_pre_data, input_dic, sess, xy, stack)
+            tr_loss, tr_median = run_data_stack(tr_pre_data, input_dic, sess, xy, stack)
 
             te_pre_data = te_set.prepare()
             te_loss, te_median = run_data_stack(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "iteration: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.2f}" \
-                  " {6:.2f} {7:.2f} {8:.2f} time {9}".format(
-                a*loop, total_loss[stack-2], te_loss[stack-2],total_loss[stack-1], te_loss[stack-1],
+            str = "it: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.1f}" \
+                  " {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f}".format(
+                a*loop, (t1 - t00).total_seconds(),
+                tr_loss[stack-2], te_loss[stack-2],
+                tr_loss[stack-1], te_loss[stack-1],
+                tr_median[stack-3], te_median[stack-3],
                 tr_median[stack-2], te_median[stack-2],
-                tr_median[stack-1], te_median[stack-1], t1 - t00)
+                tr_median[stack-1], te_median[stack-1])
+            # str = "it: {0} {1:.1f} {2:.1f} {3:.1f} {4:.3f} {5:.3f}".format(
+            #     a*loop, (t1 - t00).total_seconds(),
+            #     tr_loss[stack-1], te_loss[stack-1],
+            #     tr_median[stack-1], te_median[stack-1]
+            #     )
 
             print str
             t00 = t1

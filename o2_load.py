@@ -50,7 +50,7 @@ class o2_event:
 #             yield o2_event(self.data[indices[idx]], stack)
 
 
-def load_data(filename, verbose = True, max_len=1e6):
+def load_data(filename, verbose = True, max_len=2000):
     import datetime
     t0 = datetime.datetime.now()
     if type(filename) is unicode:
