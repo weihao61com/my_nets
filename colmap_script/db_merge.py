@@ -116,4 +116,4 @@ if __name__ == "__main__":
             pickle.dump(output, fp)
 
     print "processed ", key, mode, max_image, max_match_per_image, \
-        min_matches, datetime.datetime.now()-T0
+        min_matching_point, datetime.datetime.now()-T0

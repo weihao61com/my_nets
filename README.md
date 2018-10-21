@@ -13,19 +13,22 @@ redkitchen_Train_15.csv median 1.16451781794
 stairs_Train_15.csv     median 1.51468257953
 pumpkin_Train_15.csv    median 1.29073101975
 
+heads
 2000-40
 iteration: 571 44.1006285263 279.19249173 235.091863204 3.64066121129 7.78289296222 time 0:00:10.468065
 iteration: 4400 31.0958453349 287.966950323 256.871104988 2.75984065176 7.62594638681 time 0:03:47.351766
 
-output /home/weihao/Projects/tmp/heads_Test.csv /home/weihao/Projects/p_files/Test_heads.p
-median 1693 1.8427478997156759
-20 40
+heads median 3881 2.592033134206067
+processed  heads Test 400000 5 20 0:16:35.589945
+stair 4312 5.51 (1.9)
 
 
-output /home/weihao/Projects/tmp/heads_Test.csv /home/weihao/Projects/p_files/Test_heads.p
-median 6528 2.6623443712653128
-processed heads Test 400000 10 20
-output /home/weihao/Projects/tmp/heads_Test.csv /home/weihao/Projects/p_files/Test_heads.p
-median 7768 2.63587711022838
-processed  heads Test 400000 10 20 0:30:40.223759
-
+  // Essential matrix.
+  Eigen::Matrix3d E;
+  // Fundamental matrix.
+  Eigen::Matrix3d F;
+  // Homography matrix.
+  Eigen::Matrix3d H;
+  
+  output /home/weihao/Projects/tmp/fire_Test.csv /home/weihao/Projects/p_files/Test_fire.p
+median 9240 2.9703977874609935

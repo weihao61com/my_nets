@@ -47,6 +47,22 @@ class R3_Opt:
         res = minimize(self.f, initial_guess)
         return res.x, res.fun
 
+def load_data_new(filename):
+    r1 = []
+    r2 = []
+    nt = 0
+
+    with open(filename, 'r') as fp:
+        for line in fp.readlines():
+            vals = list(map(float, line.split(',')[2:]))
+
+            r1.append(np.array(vals[0:3]))
+            r2.append(np.array(vals[3:6]))
+            nt += 1
+        print "total data {} out of {}. ".format(len(r1), nt)
+    return r1, r2
+
+
 def load_data(filename, th=10):
     r1 = []
     r2 = []
@@ -89,11 +105,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import sys
 
-    filename = '/Users/weihao/bluenote/feature_validation_framework/image_pairing/cv.csv'
+    filename = '/home/weihao/Projects/tmp/heads_Test.csv'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
-    r1, r2 = load_data(filename, th=10)
+    r1, r2 = load_data_new(filename)
     print "Total data", len(r1), len(r2)
     print "Truth", r1[0].shape
 
