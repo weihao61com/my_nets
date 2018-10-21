@@ -31,6 +31,8 @@ if __name__ == '__main__':
     lr = float(js['lr'])
 
     num_output = int(js["num_output"])
+    nodes = map(int, js["nodes"].split(','))
+    nodes.append(num_output)
 
     renetFile = None
     if 'retrain' in js:
@@ -45,7 +47,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 200
+    loop = 20
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
@@ -54,10 +56,8 @@ if __name__ == '__main__':
     if net_type == 'cnn':
         net = cNet({'data': input})
     else:
-        if num_output==3:
-            net = sNet3({'data': input})
-        else:
-            net = sNet1({'data': input})
+        net = sNet3({'data': input})
+        net.real_setup(nodes)
 
     xy = net.layers['output']
     #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
@@ -80,10 +80,10 @@ if __name__ == '__main__':
 
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr.prepare(num_output=num_output)
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy)
 
-            te_pre_data = te_set.prepare()
+            te_pre_data = te_set.prepare(num_output=num_output)
             te_loss, te_median = run_data(te_pre_data, input, sess, xy)
 
             t1 = datetime.datetime.now()
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             t00 = t1
 
             for _ in range(loop):
-                tr_pre_data = tr.prepare() #.get()
+                tr_pre_data = tr.prepare(num_output=num_output, multi=100) #.get()
                 while tr_pre_data:
                     for b in tr_pre_data:
                         feed = {input: b[0], output: b[1]}

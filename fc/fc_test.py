@@ -22,7 +22,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         loop = int(sys.argv[1])
 
-    js = Utils.load_json_file(config_file)
+    js = Utils.load_json_file(config_file, False)
 
     te_data = []
     for key in js:
@@ -33,15 +33,15 @@ if __name__ == '__main__':
     batch_size = int(js['batch_size'])
     feature_len = int(js['feature'])
     num_output = int(js["num_output"])
+    nodes = map(int, js["nodes"].split(','))
+    nodes.append(num_output)
 
     te_set = DataSet(te_data, batch_size, feature_len)
 
     input = tf.placeholder(tf.float32, [None, feature_len*4])
 
-    if num_output==3:
-        net = sNet3({'data': input})
-    else:
-        net = sNet1({'data': input})
+    net = sNet3({'data': input})
+    net.real_setup(nodes)
 
     xy = net.layers['output']
 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            te_pre_data = te_set.prepare(rd=False)
+            te_pre_data = te_set.prepare(rd=False, num_output=num_output)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)
@@ -77,9 +77,13 @@ if __name__ == '__main__':
             t = truth[a]
             #fp.write('{},{},{},{},{},{},{}\n'.
             #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))
-            if random.random()<0.1:
-                fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
+            if random.random()<0.2:
+                if num_output==3:
+                    fp.write('{},{},{},{},{},{},{}\n'.
+                         format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
+                else:
+                    fp.write('{},{},{}\n'.
+                         format(t[0], mm[0], r))
             d.append(r)
         fp.close()
         md = np.median(d)

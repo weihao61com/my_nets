@@ -8,6 +8,21 @@ from utils import Utils
 from o2_load import *
 from network import Network
 
+class sNet3(Network):
+
+    def setup(self):
+        pass
+
+    def real_setup(self, nodes):
+        self.feed('data')
+        for a in range(len(nodes) - 1):
+            name = 'fc_{}'.format(a)
+            self.fc(nodes[a], name=name)
+
+        self.fc(nodes[-1], relu=False, name='output')
+
+        print("number of layers = {} {}".format(len(self.layers), nodes))
+
 
 class StackNet(Network):
 
@@ -143,17 +158,17 @@ class DataSet:
             np.random.shuffle(pre_data)
         return pre_data
 
-    def prepare(self, rd=True, num_output=3):
+    def prepare(self, rd=True, num_output=3, multi=1):
         pre_data = []
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            pre_data.append(self.create_bucket(d, num_output))
+            pre_data.append(self.create_bucket(d, num_output, multi))
         if rd:
             np.random.shuffle(pre_data)
         return pre_data
 
-    def create_bucket(self, data, num_output):
+    def create_bucket(self, data, num_output, multi):
         outputs = []
         inputs = []
         ids = []
@@ -161,7 +176,7 @@ class DataSet:
 
         for d in data:
             input = d[0]
-            num = 10 #int(np.ceil(len(input)/float(self.nPar)))
+            num = multi*int(np.ceil(len(input)/float(self.nPar)))
             length = num*self.nPar
             while len(input) < length: #self.nPar:
                 input= np.concatenate((input, input))
@@ -326,21 +341,6 @@ class sNet1(Network):
          fc(1, relu=False, name='output'))
 
         print("number of layers = {}".format(len(self.layers)))
-
-
-class sNet3(Network):
-
-    def setup(self):
-        #nodes = [2048, 256]
-        nodes = [128,64,128,64]
-        (self.feed('data').
-         fc(nodes[0], name='fc1').
-         fc(nodes[1], name='fc2').
-         fc(nodes[2], name='fc3').
-         fc(nodes[3], name='fc4').
-         fc(3, relu=False, name='output'))
-
-        print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
 class sNet3_2(Network):

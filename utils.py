@@ -65,15 +65,16 @@ class Utils:
         return L, M
 
     @staticmethod
-    def load_json_file(filename):
+    def load_json_file(filename, verbose = True):
         out = SortedDict()
         with open(filename, 'r') as fp:
             js = json.load(fp)
             for key in js:
                 if not key.startswith('_'):
                     out[key] = js[key]
-            for key in out:
-                print("Config *****   {}: {}".format(key, out[key]))
+            if verbose:
+                for key in out:
+                    print("Config *****   {}: {}".format(key, out[key]))
             return out
 
     @staticmethod

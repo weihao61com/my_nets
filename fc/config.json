@@ -1,5 +1,5 @@
 {
-    "batch_size": "1000",
+    "batch_size": 1000,
     "te": "p_files/Test_heads.p",
     "tr1": "p_files/Train_heads.p",
     "_tr2": "p_files/Train_chess15_2.p",
@@ -11,7 +11,8 @@
     "net": "heads",
     "_retrain": "heads",
     "netTest": "heads",
-    "feature": "30",
-    "lr": "1e-4",
-    "num_output": "3"
+    "feature": 20,
+    "lr": 1e-2,
+    "num_output": 1,
+    "nodes": "128, 64"
 }
