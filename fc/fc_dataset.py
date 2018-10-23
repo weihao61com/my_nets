@@ -28,7 +28,7 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=32):
         self.stack = stack
-        self.dim_inter = 128
+        self.dim_inter = 512
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
@@ -56,7 +56,7 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(128, name='fc0').
+         fc(512, name='fc0').
          fc(self.dim_ref, name='fc2')
          #.fc(self.dim_output, relu=False, name='output0')
          )

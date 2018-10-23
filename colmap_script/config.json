@@ -1,0 +1,31 @@
+{
+   "experiment_id":"test",
+   "colmap_steps":
+           ["feature_extractor",
+            "matches_importer",
+            "mapper",
+            "model_converter"
+          ],
+   "hdfs_paths":
+      {"images":
+         {
+          "da":"wbu2/da1",
+          "dir":"/ImageProcessing/Sensor/test/images/Office/driver_still"
+         },
+      "base_ini":
+         {
+           "da":"wbu2/da1",
+           "file":"/user/weihao/driver/bridge.ini"
+         },
+      "vocab":
+        {
+          "da":"wbu2/da1",
+          "file":"/user/gregm/vocab_tree/vocab_tree_flickr100K_words32K.bin"
+        },
+      "output":
+        {
+          "da":"wbu2/da1",
+          "dir":"/user/weihao/driver/output"
+        }
+     }
+}
