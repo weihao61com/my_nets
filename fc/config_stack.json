@@ -9,7 +9,7 @@
     "_tr6": "p_files/redkitchen_tr20_2.p",
     "_tr7": "p_files/Train_stairs.p",
     "net": "stack",
-    "_retrain": "stack",
+    "retrain": "stack",
     "netTest": "stack",
     "feature": 30,
     "lr": 1e-4,

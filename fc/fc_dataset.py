@@ -50,23 +50,22 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack):
+    def real_setup(self, stack, verbose=True):
 
         self.parameters(stack)
 
         # base net
         (self.feed('input0').
-         fc(512, name='fc0').
-         fc(self.dim_ref, name='fc2')
-         #.fc(self.dim_output, relu=False, name='output0')
+         fc(128, name='base_fc0').
+         fc(self.dim_ref, name='base_fc1')
          )
 
-        ref_out_name = 'fc2'
+        ref_out_name = 'base_fc1'
         for a in range(self.stack):
             input_name = 'input{}'.format(a+1)
-            ic_name = 'ic{}_in'.format(a)
-            ifc0_name = 'ifc0{}_in'.format(a)
-            ifc1_name = 'ifc1{}_in'.format(a)
+            ic_name = 'p1_concat{}_in'.format(a)
+            ifc0_name = 'p1_fc0_{}_in'.format(a)
+            ifc1_name = 'p1_fc1_{}_in'.format(a)
             output_name = 'output{}'.format(a+1)
 
             (self.feed(input_name, ref_out_name)
@@ -89,8 +88,10 @@ class StackNet(Network):
             #  )
             ref_out_name = ifc1_name
 
-
-        print("number of layers = {}".format(len(self.layers)))
+        if verbose:
+            print("number of layers = {}".format(len(self.layers)))
+            for l in sorted(self.layers.keys()):
+                print l, self.layers[l].get_shape()
 
 def _reshuffle(data):
     np.random.shuffle(data[0])
@@ -400,6 +401,37 @@ def run_data_stack(data, inputs, sess, xy, stack):
             truth = np.concatenate((truth, b[1]))
 
     return Utils.calculate_stack_loss(results, truth)
+
+
+def run_data_stack_avg(data, inputs, sess, xy, stack):
+    rst_dic = {}
+    truth_dic = {}
+    for b in data:
+        length = b[0].shape[1] - 4*stack
+        feed = {inputs['input0']: b[0][:, :length] }
+        for a in range(stack):
+            feed[inputs['input{}'.format(a+1)]] = b[0][:, length+4*a:length+4*(a+1)]
+        result = []
+        for a in range(stack):
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
+        result = np.array(result)
+        for a in range(len(b[2])):
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:,a,:])
+            truth_dic[b[2][a]] = b[1][a]
+
+    results = []
+    truth = []
+
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        results.append(result)
+        truth.append(truth_dic[id])
+
+    return Utils.calculate_stack_loss(np.array(results), np.array(truth))
 
 
 def run_data(data, inputs, sess, xy):

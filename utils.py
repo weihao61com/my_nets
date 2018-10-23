@@ -56,8 +56,8 @@ class Utils:
     def calculate_stack_loss(v1, v2):
         L = []
         M = []
-        for a in range(v1.shape[0]):
-            diff = v1[a]- v2
+        for a in range(v1.shape[1]):
+            diff = v1[:,a,:]- v2
             r = np.linalg.norm(diff, axis=1)
             loss = np.linalg.norm(r)
             L.append(loss*loss/len(r))
