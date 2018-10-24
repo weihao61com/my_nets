@@ -3,7 +3,14 @@ from matplotlib import pyplot as plt
 import numpy as np
 #from bluenotelib.common.quaternion import Quaternion
 #from bluenotelib.common.bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
-#from sortedcontainers import SortedDict
+from sortedcontainers import SortedDict
+import os
+import sys
+
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
+from utils import Utils, PinholeCamera
+
 
 def rotation_to_rph(R):
     pitch, roll, heading = BlueNoteSensorRotation.get_rotation_angles(R, RotationSequence.XYZ)
@@ -98,6 +105,7 @@ class FeatureMatching():
 
 
 def matching(img_nms, alg, step, focal_length):
+    cam = PinholeCamera(1241.0, 376.0, 718.8560, 718.8560, 607.1928, 185.2157)
 
     rots = []
     fm = FeatureMatching(alg)
@@ -129,16 +137,18 @@ def matching(img_nms, alg, step, focal_length):
 
             #focal_length = 1500 #3225.6/3024.0*960.0
             principal_point = tuple((np.array(img1.shape[0:2]) / 2.0).astype(int))
-            mx = np.array([[focal_length, 0, principal_point[0]],
-                          [0, focal_length, principal_point[1]],
-                          [0,0,1]])
+            #mx = np.array([[focal_length, 0, principal_point[0]],
+            #              [0, focal_length, principal_point[1]],
+            #              [0,0,1]])
+            mx = cam.mx
 
             E, mask = cv2.findEssentialMat(pts1, pts2,  cameraMatrix=mx, method=cv2.RANSAC, prob=0.999, threshold=3.0)
             #R1, R2, t0 = cv2.decomposeEssentialMat(E)
             retval, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx) #pp=principal_point
-            rot = rotation_to_rph(R)
+            #rot = rotation_to_rph(R)
+            rot = Utils.rotationMatrixToEulerAngles(R)
             d = np.linalg.inv(pose2).dot(pose1)
-            dr = rotation_to_rph(d)
+            dr = Utils.rotationMatrixToEulerAngles(d) #rotation_to_rph(d)
             print('{} {} {} {} {} {} {} {} {}'.format(a, len(pts1), rot[0], rot[1], rot[2], dr[0], dr[1], dr[2],
                                         np.linalg.norm(tran1-tran2)))
             rots.append(rot)
@@ -177,7 +187,7 @@ def load_kitty_poses(location, pose_file):
             strs = line[:-1].split()
             a = np.reshape(np.array(map(float, strs)), (3,4))
             nm = '{0}/sequences/{1}/image_0/{2}.png'.format(location, pose_file, str(id).zfill(6))
-            q = Quaternion(m3x3=a[:3])
+            q = None # Quaternion(m3x3=a[:3])
             # poses[id] = (nm, np.array(a[:, 3]), np.array(a[:, :3]), q)
             poses[id] = (nm, a[:, 3], a[:, :3], q)
             id += 1
@@ -191,7 +201,7 @@ import sys
 # pose_file = 'dataset_train.txt'
 # poses = load_poses(location, pose_file)
 
-location = '/Users/weihao/BlueNoteData/dataset'
+location = '/home/weihao/Projects/datasets/kitti/dataset'
 pose_file = '00'
 poses, focal = load_kitty_poses(location, pose_file)
 

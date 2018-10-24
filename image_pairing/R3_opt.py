@@ -47,6 +47,27 @@ class R3_Opt:
         res = minimize(self.f, initial_guess)
         return res.x, res.fun
 
+
+def load_txt(filename):
+    r1 = []
+    r2 = []
+    nt = 0
+
+    with open(filename, 'r') as fp:
+        for line in fp.readlines():
+            strs = line.split(' ')
+            if len(strs)<5:
+                continue
+            vals = list(map(float, strs[2:]))
+
+            r1.append(np.array(vals[0:3]))
+            r2.append(np.array(vals[3:6]))
+            nt += 1
+        print "total data {} out of {}. ".format(len(r1), nt)
+    return r1, r2
+
+
+
 def load_data_new(filename):
     r1 = []
     r2 = []
@@ -105,11 +126,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import sys
 
-    filename = '/home/weihao/Projects/tmp/heads_Test.csv'
+    filename = '/home/weihao/Projects/my_nets/image_pairing/p.txt'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
-    r1, r2 = load_data_new(filename)
+    r1, r2 = load_txt(filename)
     print "Total data", len(r1), len(r2)
     print "Truth", r1[0].shape
 
@@ -137,10 +158,17 @@ if __name__ == '__main__':
                 idx = a
         if max_loss/np.mean(loss)<loss_th:
             print 'values, fun', vals, fun
-            print eular2m(vals)
+            mx = eular2m(vals)
             print len(r1), max_loss, np.mean(loss)
             break
         del r1[idx]
         del r2[idx]
+
+    r_new = []
+    for r in r2:
+        r_new.append(mx.dot(r))
+
+    cal_medians(r1, r_new)
+
         # print len(r1), max_loss, np.mean(loss)
 
