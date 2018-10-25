@@ -56,7 +56,7 @@ class Pose:
             self.filename = nm
             self.m3x3 = a[:, :3]
             self.tran = a[:, 3]
-            q = Quaternion(m3x3=self.m3x3)
+            #q = Quaternion(m3x3=self.m3x3)
         elif data==1:
             # mx = np.array([[0,1,0], [0,0,1], [-1,0,0]])
             # mx = np.array([[1,0,0], [0,1,0], [0,0,1]])

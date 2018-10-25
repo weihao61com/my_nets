@@ -201,8 +201,8 @@ import sys
 # pose_file = 'dataset_train.txt'
 # poses = load_poses(location, pose_file)
 
-location = '/home/weihao/Projects/datasets/kitti/dataset'
-pose_file = '00'
+location = '/home/weihao/Projects/datasets/kitty'
+pose_file = '03'
 poses, focal = load_kitty_poses(location, pose_file)
 
 print('Total images {}'.format(len(poses)))

@@ -11,26 +11,28 @@ import pickle
 
 project_dir = '/home/weihao/Projects'
 
-range1 = 15
-range2 = 15
+range1 = 2
+range2 = 2
 #location = '/home/weihao/Projects/cambridge/OldHospital'
 #pose_file = '/dataset_test.txt'
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 #
-#location = '/home/weihao/Projects/kitty_dataset'
-#pose_file = '00'
-#poses_dic, cam = load_kitty_poses(location, pose_file)
-project_dir = '/home/weihao/Projects'
-key = 'heads'  #office" #heads
-mode = 'Train'
-location = "{}/datasets/indoors/{}".format(project_dir, key)
-pose_file = "{}Split.txt".format(mode)
-poses_dic, cam = load_indoor_7_poses(location, pose_file)
-output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, range2)
-filename = '{}/p_files/{}_{}_{}_{}_2.p'.format(project_dir, mode, key, range1, range2)
+location = '{}/datasets/kitty'.format(project_dir)
+key = '02'
+mode = 'Test'
+poses_dic, cam = load_kitty_poses(location, key)
 
-print location, pose_file, 'focal', cam.fx
+#key = 'heads'  #office" #heads
+#mode = 'Train'
+#location = "{}/datasets/indoors/{}".format(project_dir, key)
+#pose_file = "{}Split.txt".format(mode)
+#poses_dic, cam = load_indoor_7_poses(location, pose_file)
+
+output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, range2)
+filename = '{}/p_files/{}_{}_{}_{}.p'.format(project_dir, mode, key, range1, range2)
+
+print location, 'focal', cam.fx
 
 for p in poses_dic:
     print p, len(poses_dic[p])

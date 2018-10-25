@@ -119,7 +119,7 @@ def cal_medians(r1, r2):
 
     s = 180/np.pi
 
-    print "medians:  ", np.median(s0)*s, np.median(s1)*s, np.median(s2)*s, np.median(sa)*s
+    print "medians(degree):  ", np.median(s0)*s, np.median(s1)*s, np.median(s2)*s, np.median(sa)*s
 
 
 if __name__ == '__main__':
@@ -130,13 +130,14 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
-    r1, r2 = load_data_new(filename)
+    r1, r2 = load_txt(filename)
     print "Total data", len(r1), len(r2)
     print "Truth", r1[0].shape
 
     cal_medians(r1,r2)
 
-    loss_th = 10
+    loss_th = 1
+    nt = 0
 
     while True:
         r3 = R3_Opt(r1, r2)
@@ -156,12 +157,21 @@ if __name__ == '__main__':
             if loss[a]>max_loss:
                 max_loss = loss[a]
                 idx = a
-        if max_loss/np.mean(loss)<loss_th:
+        nt += 1
+        if max_loss/np.mean(loss)<loss_th or nt>100:
             print 'values, fun', vals, fun
-            print eular2m(vals)
+            mx = eular2m(vals)
+            print mx
             print len(r1), max_loss, np.mean(loss)
             break
         del r1[idx]
         del r2[idx]
+
+    r_new = []
+    for r in r2:
+        r_new.append(mx.dot(r))
+
+    cal_medians(r1, r_new)
+
         # print len(r1), max_loss, np.mean(loss)
 
