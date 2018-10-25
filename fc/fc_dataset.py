@@ -55,7 +55,7 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack):
+    def real_setup(self, stack, verbose=True):
 
         self.parameters(stack)
 
@@ -98,8 +98,10 @@ class StackNet(Network):
             #  )
             ref_out_name = ifc2_name
 
-
-        print("number of layers = {}".format(len(self.layers)))
+        if verbose:
+            print("number of layers = {}".format(len(self.layers)))
+            for l in self.layers:
+                print l, len(self.layers[l])
 
 def _reshuffle(data):
     np.random.shuffle(data[0])
@@ -186,7 +188,7 @@ class DataSet:
         for d in data:
             input = d[0]
             if multi>0:
-                num = multi*int(np.ceil(len(input)/float(self.nPar)))
+                num = multi# *int(np.ceil(len(input)/float(self.nPar)))
             else:
                 num = int(np.ceil(len(input) / float(self.nPar)))
             length = num*self.nPar
