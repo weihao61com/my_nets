@@ -1,7 +1,9 @@
 {
-    "batch_size": 1000,
-    "te": "p_files/Test_heads.p",
-    "tr1": "p_files/Train_heads.p",
+    "batch_size": 10,
+    "te": "p_files/Test_02_2_2.p",
+    "tr": "p_files/Train_00_2_2.p",
+    "_te": "p_files/Test_stairs.p",
+    "_tr1": "p_files/Train_heads.p",
     "_tr2": "p_files/Train_chess15_2.p",
     "_tr3": "p_files/fire_tr20_2.p",
     "_tr4": "p_files/Train_office15_2.p",
@@ -11,8 +13,8 @@
     "net": "heads",
     "_retrain": "heads",
     "netTest": "heads",
-    "feature": 20,
-    "lr": 1e-2,
-    "num_output": 1,
-    "nodes": "128, 64"
+    "feature": 100,
+    "lr": 1e-4,
+    "num_output": 3,
+    "nodes": "4096, 512, 64"
 }

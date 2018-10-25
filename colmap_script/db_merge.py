@@ -1,5 +1,6 @@
 import pickle
 from run_colmap import run_colmap, get_poses
+from run_colmap_seq import run_colmap_seq
 from db import process_db
 import numpy as np
 import os
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     max_image = 400000
     max_match_per_image = 40
     min_matching_point = 20
+    seq = None
 
     T0 = datetime.datetime.now()
     if len(sys.argv)>1:
@@ -47,16 +49,23 @@ if __name__ == "__main__":
         mode = sys.argv[2]
     if len(sys.argv)>3:
         max_match_per_image = int(sys.argv[3])
+    if len(sys.argv)>4:
+        seq = int(sys.argv[4])
 
     project_dir = '/home/weihao/Projects'
 
-    run_colmap(project_dir, key, mode, max_image, max_match_per_image)
+    if seq is None:
+        run_colmap(project_dir, key, mode, max_image, max_match_per_image)
+        output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
+        filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
+    else:
+        run_colmap_seq(project_dir, key, mode, max_image, max_match_per_image, seq)
+        output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, seq)
+        filename = None
 
     process_db(project_dir, key, mode, max_match_per_image, min_matching_point)
 
     db_p = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
-    output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
-    filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
 
     with open(db_p, 'r') as fp:
         data = pickle.load(fp)
@@ -112,8 +121,9 @@ if __name__ == "__main__":
     print 'median', len(rs), np.median(rs)
 
     if filename is not None:
-        with open(filename, 'w') as fp:
-            pickle.dump(output, fp)
+        if filename is not None:
+            with open(filename, 'w') as fp:
+                pickle.dump(output, fp)
 
     print "processed ", key, mode, max_image, max_match_per_image, \
         min_matching_point, datetime.datetime.now()-T0

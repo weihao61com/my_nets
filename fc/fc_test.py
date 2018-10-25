@@ -53,7 +53,7 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            te_pre_data = te_set.prepare(rd=False, num_output=num_output)
+            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=-1)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)

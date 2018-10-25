@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 20
+    loop = 10
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             t00 = t1
 
             for _ in range(loop):
-                tr_pre_data = tr.prepare(num_output=num_output, multi=100) #.get()
+                tr_pre_data = tr.prepare(num_output=num_output, multi=1) #.get()
                 while tr_pre_data:
                     for b in tr_pre_data:
                         feed = {input: b[0], output: b[1]}

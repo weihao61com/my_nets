@@ -126,11 +126,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import sys
 
-    filename = '/home/weihao/Projects/my_nets/image_pairing/p.txt'
+    filename = '/home/weihao/Projects/tmp/heads_Test.csv'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
-    r1, r2 = load_txt(filename)
+    r1, r2 = load_data_new(filename)
     print "Total data", len(r1), len(r2)
     print "Truth", r1[0].shape
 
@@ -158,17 +158,10 @@ if __name__ == '__main__':
                 idx = a
         if max_loss/np.mean(loss)<loss_th:
             print 'values, fun', vals, fun
-            mx = eular2m(vals)
+            print eular2m(vals)
             print len(r1), max_loss, np.mean(loss)
             break
         del r1[idx]
         del r2[idx]
-
-    r_new = []
-    for r in r2:
-        r_new.append(mx.dot(r))
-
-    cal_medians(r1, r_new)
-
         # print len(r1), max_loss, np.mean(loss)
 

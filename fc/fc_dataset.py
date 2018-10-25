@@ -28,44 +28,51 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=32):
         self.stack = stack
-        self.dim_inter = 512
+        self.dim_inter = [1024, 256]
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
         self.dim0 = dim_input + dim_ref
-        self.out0 = self.dim_inter
+        self.out0 = self.dim_inter[0]
         self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
         self.biases0 = self.make_var('biases0', [self.out0])
 
         self.dim1 = self.out0
-        self.out1 = dim_ref
+        self.out1 = self.dim_inter[1]
         self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
         self.biases1 = self.make_var('biases1', [self.out1])
 
         self.dim2 = self.out1
-        self.out2 = self.dim_output
+        self.out2 = dim_ref
         self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
         self.biases2 = self.make_var('biases2', [self.out2])
+
+        self.dim3 = self.out2
+        self.out3 = self.dim_output
+        self.weights3 = self.make_var('weights3', shape=[self.dim3, self.out3])
+        self.biases3 = self.make_var('biases3', [self.out3])
 
     def setup(self):
         pass
 
-    def real_setup(self, stack, verbose=True):
+    def real_setup(self, stack):
 
         self.parameters(stack)
 
         # base net
         (self.feed('input0').
-         fc(128, name='base_fc0').
-         fc(self.dim_ref, name='base_fc1')
+         fc(256, name='fc0').
+         fc(self.dim_ref, name='fc2')
+         #.fc(self.dim_output, relu=False, name='output0')
          )
 
-        ref_out_name = 'base_fc1'
+        ref_out_name = 'fc2'
         for a in range(self.stack):
             input_name = 'input{}'.format(a+1)
-            ic_name = 'p1_concat{}_in'.format(a)
-            ifc0_name = 'p1_fc0_{}_in'.format(a)
-            ifc1_name = 'p1_fc1_{}_in'.format(a)
+            ic_name = 'ic{}_in'.format(a)
+            ifc0_name = 'ifc0{}_in'.format(a)
+            ifc1_name = 'ifc1{}_in'.format(a)
+            ifc2_name = 'ifc2{}_in'.format(a)
             output_name = 'output{}'.format(a+1)
 
             (self.feed(input_name, ref_out_name)
@@ -76,9 +83,12 @@ class StackNet(Network):
              .fc_w(name=ifc1_name,
                    weights=self.weights1,
                    biases=self.biases1)
-             .fc_w(name=output_name, relu=False,
+             .fc_w(name=ifc2_name,
                    weights=self.weights2,
                    biases=self.biases2)
+             .fc_w(name=output_name, relu=False,
+                   weights=self.weights3,
+                   biases=self.biases3)
              )
             # (self.feed(input_name, ref_out_name)
             #  .concat(1, name=ic_name)
@@ -86,12 +96,10 @@ class StackNet(Network):
             #  .fc(64, name=ifc1_name)
             #  .fc(3, relu=False, name=output_name)
             #  )
-            ref_out_name = ifc1_name
+            ref_out_name = ifc2_name
 
-        if verbose:
-            print("number of layers = {}".format(len(self.layers)))
-            for l in sorted(self.layers.keys()):
-                print l, self.layers[l].get_shape()
+
+        print("number of layers = {}".format(len(self.layers)))
 
 def _reshuffle(data):
     np.random.shuffle(data[0])
@@ -177,7 +185,10 @@ class DataSet:
 
         for d in data:
             input = d[0]
-            num = multi*int(np.ceil(len(input)/float(self.nPar)))
+            if multi>0:
+                num = multi*int(np.ceil(len(input)/float(self.nPar)))
+            else:
+                num = int(np.ceil(len(input) / float(self.nPar)))
             length = num*self.nPar
             while len(input) < length: #self.nPar:
                 input= np.concatenate((input, input))
@@ -401,37 +412,6 @@ def run_data_stack(data, inputs, sess, xy, stack):
             truth = np.concatenate((truth, b[1]))
 
     return Utils.calculate_stack_loss(results, truth)
-
-
-def run_data_stack_avg(data, inputs, sess, xy, stack):
-    rst_dic = {}
-    truth_dic = {}
-    for b in data:
-        length = b[0].shape[1] - 4*stack
-        feed = {inputs['input0']: b[0][:, :length] }
-        for a in range(stack):
-            feed[inputs['input{}'.format(a+1)]] = b[0][:, length+4*a:length+4*(a+1)]
-        result = []
-        for a in range(stack):
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:,a,:])
-            truth_dic[b[2][a]] = b[1][a]
-
-    results = []
-    truth = []
-
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        results.append(result)
-        truth.append(truth_dic[id])
-
-    return Utils.calculate_stack_loss(np.array(results), np.array(truth))
 
 
 def run_data(data, inputs, sess, xy):

@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 5
+    loop = 20
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -72,10 +72,10 @@ if __name__ == '__main__':
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[1], output)))) * 2
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
     #l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
-    l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output))) * 0.5
-    l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
+    #l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output)))) * 5
+    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))))
 
-    loss = l4 + l5
+    loss = l5
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -95,10 +95,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare()
-            tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack)
+            tr_loss, tr_median = run_data_stack(tr_pre_data, input_dic, sess, xy, stack)
 
             te_pre_data = te_set.prepare()
-            te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
+            te_loss, te_median = run_data_stack(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
             str = "it: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.1f}" \
