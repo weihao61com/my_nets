@@ -55,7 +55,11 @@ class StackNet(Network):
     def setup(self):
         pass
 
+<<<<<<< HEAD
     def real_setup(self, stack, verbose = True):
+=======
+    def real_setup(self, stack, verbose=True):
+>>>>>>> 888e7b24daf391477ea933d344f7d7337f99344e
 
         self.parameters(stack)
 
@@ -188,7 +192,7 @@ class DataSet:
         for d in data:
             input = d[0]
             if multi>0:
-                num = multi*int(np.ceil(len(input)/float(self.nPar)))
+                num = multi# *int(np.ceil(len(input)/float(self.nPar)))
             else:
                 num = int(np.ceil(len(input) / float(self.nPar)))
             length = num*self.nPar
