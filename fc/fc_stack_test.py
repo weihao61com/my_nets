@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
         t1 = datetime.datetime.now()
         str = "RST: {0:.1f} " \
-              " {1:.2f} {2:.2f} {3:.2f} {4:.2f} {5:.2f}".format(
+              " {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}".format(
             (t1 - t00).total_seconds(),
             te_loss[stack-2],
             te_loss[stack-1],

@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 20
+    loop = 10
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -101,8 +101,8 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.1f} {2:.1f} {3:.1f} {4:.1f} {5:.1f}" \
-                  " {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f}".format(
+            str = "it: {0} {1:.1f} {2:.3f} {3:.3f} {4:.3f} {5:.3f}" \
+                  " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f}".format(
                 a*loop, (t1 - t00).total_seconds(),
                 tr_loss[stack-2], te_loss[stack-2],
                 tr_loss[stack-1], te_loss[stack-1],
