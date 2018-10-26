@@ -72,10 +72,10 @@ if __name__ == '__main__':
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[1], output)))) * 2
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
     #l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
-    #l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[4], output)))) * 5
+    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))) * .9
     l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))))
 
-    loss = l5
+    loss = l5 + l4
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,

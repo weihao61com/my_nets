@@ -55,12 +55,7 @@ class StackNet(Network):
     def setup(self):
         pass
 
-<<<<<<< HEAD
     def real_setup(self, stack, verbose = True):
-=======
-    def real_setup(self, stack, verbose=True):
->>>>>>> 888e7b24daf391477ea933d344f7d7337f99344e
-
         self.parameters(stack)
 
         # base net
@@ -173,7 +168,7 @@ class DataSet:
             np.random.shuffle(pre_data)
         return pre_data
 
-    def prepare(self, rd=True, num_output=3, multi=1):
+    def prepare(self, rd=True, num_output=3, multi=-1):
         pre_data = []
         self.reshuffle_data()
         self.id = 0
