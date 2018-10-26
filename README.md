@@ -32,11 +32,13 @@ stair 4312 5.51 (1.9)
   
   output /home/weihao/Projects/tmp/fire_Test.csv /home/weihao/Projects/p_files/Test_fire.p
 median 9240 2.9703977874609935
+output /home/weihao/Projects/tmp/office_Test.csv /home/weihao/Projects/p_files/Test_office.p
+median 12577 3.235353009095589
 
 Rotations
 
 /home/weihao/Projects/tmp/heads_Test.csv
-total data 3881 out of 3881. 
+total data 3881 out of 3881.
 Total data 3881 3881
 Truth (3,)
 medians: (x,y,z,r)  1.3011721960403941 1.448570404587601 0.713444043607908 2.5920331341841045
@@ -47,7 +49,7 @@ values, fun [-0.0184538  -0.00132773 -0.00924446  1.        ] 14.645431711
 3136 0.04649509421745931 0.004670099397624599
 
 /home/weihao/Projects/tmp/office_Test_0.csv
-total data 2832 out of 2832. 
+total data 2832 out of 2832.
 Total data 2832 2832
 Truth (3,)
 medians: (x,y,z,r)  0.8214952019578357 1.5436046419416543 0.5913601513127889 2.3143972840069984
@@ -58,7 +60,7 @@ values, fun [-0.03627774 -0.00573483 -0.01591558  1.        ] 8.56041170525
 2527 0.03384406363483834 0.0033875788307278364
 
 /home/weihao/Projects/tmp/office_Test_1.csv
-total data 3034 out of 3034. 
+total data 3034 out of 3034.
 Total data 3034 3034
 Truth (3,)
 medians: (x,y,z,r)  0.8752525400164227 1.4200367432522996 0.5338025372493024 2.0708773015495656
@@ -70,7 +72,7 @@ values, fun [-0.01569969  0.0054762  -0.02734908  1.        ] 6.90706430349
 0:02:21.364233
 
 /home/weihao/Projects/tmp/stairs_Test.csv
-total data 4312 out of 4312. 
+total data 4312 out of 4312.
 Total data 4312 4312
 Truth (3,)
 medians: (x,y,z,r)  2.645984533624836 2.4142265402961858 1.3699297801677868 5.509610956704533

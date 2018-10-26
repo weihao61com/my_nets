@@ -126,7 +126,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import sys
 
-    filename = '/home/weihao/Projects/tmp/heads_Test.csv'
+    filename = '/home/weihao/Projects/tmp/office_Test.csv'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
