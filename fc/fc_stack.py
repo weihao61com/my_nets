@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 10
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}

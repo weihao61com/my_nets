@@ -66,13 +66,14 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
-        te_pre_data = te_set.prepare()
+        te_pre_data = te_set.prepare(multi=-1)
         te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
         t1 = datetime.datetime.now()
         str = "RST: {0:.1f} " \
-              " {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}".format(
+              " {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f} {6:.4f}".format(
             (t1 - t00).total_seconds(),
+            te_loss[stack-3],
             te_loss[stack-2],
             te_loss[stack-1],
             te_median[stack-3],

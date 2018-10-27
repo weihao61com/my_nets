@@ -1,7 +1,7 @@
 {
     "batch_size": 200,
-    "te": "p_files/Test_02_2_2.p",
-    "tr": "p_files/Train_00_2_2.p",
+    "te": "p_files/Test_heads_cv.p",
+    "tr": "p_files/Train_heads_cv.p",
     "_te": "p_files/Test_heads.p",
     "_tr1": "p_files/Train_heads.p",
     "_te": "p_files/Test_office.p",
@@ -18,7 +18,7 @@
     "retrain": "stack",
     "netTest": "stack",
     "feature": 20,
-    "lr": 1e-6,
+    "lr": 1e-4,
     "num_output": 3,
     "stack": 12
 }
