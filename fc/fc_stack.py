@@ -57,7 +57,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(stack)
+    net.real_setup(stack, verbose=False)
 
     xy = {}
     for a in range(stack):
@@ -95,13 +95,13 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare()
-            tr_loss, tr_median = run_data_stack(tr_pre_data, input_dic, sess, xy, stack)
+            tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack)
 
             te_pre_data = te_set.prepare()
-            te_loss, te_median = run_data_stack(te_pre_data, input_dic, sess, xy, stack)
+            te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.1f} {2:.3f} {3:.3f} {4:.3f} {5:.3f}" \
+            str = "it: {0} {1:.1f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
                   " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f}".format(
                 a*loop, (t1 - t00).total_seconds(),
                 tr_loss[stack-2], te_loss[stack-2],
@@ -109,11 +109,6 @@ if __name__ == '__main__':
                 tr_median[stack-3], te_median[stack-3],
                 tr_median[stack-2], te_median[stack-2],
                 tr_median[stack-1], te_median[stack-1])
-            # str = "it: {0} {1:.1f} {2:.1f} {3:.1f} {4:.3f} {5:.3f}".format(
-            #     a*loop, (t1 - t00).total_seconds(),
-            #     tr_loss[stack-1], te_loss[stack-1],
-            #     tr_median[stack-1], te_median[stack-1]
-            #     )
 
             print str
             t00 = t1

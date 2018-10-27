@@ -168,7 +168,7 @@ class DataSet:
             np.random.shuffle(pre_data)
         return pre_data
 
-    def prepare(self, rd=True, num_output=3, multi=-1):
+    def prepare(self, rd=True, num_output=3, multi=1):
         pre_data = []
         self.reshuffle_data()
         self.id = 0
@@ -437,11 +437,19 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
     results = []
     truth = []
 
+    fp = open('/home/weihao/tmp/test.csv', 'w')
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
         results.append(result)
         truth.append(truth_dic[id])
+        t = truth_dic[id]
+        if random.random() < 0.2:
+            r = np.linalg.norm(t-result)
+            mm = result[stack-1]
+            fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+    fp.close()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 

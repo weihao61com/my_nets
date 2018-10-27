@@ -24,7 +24,6 @@ pose_file = "{}Split.txt".format(mode)
 poses_dic, cam = load_indoor_7_poses(location, pose_file)
 filename = '/home/weihao/Projects/p_files/{}_{}_cv.p'.format(c, mode)
 
-
 print location, pose_file, filename
 
 for p in poses_dic:

@@ -47,22 +47,23 @@ def rot2Euler(M):
         ay = np.arctan2(-M[2, 0], s2)
         az = 0.0
 
-    #if ax < -np.pi / 2:
+    # if ax < -np.pi / 2:
     #    ax += np.pi
 
     return np.array([ax, ay, az]) * 180.0 / np.pi
+
 
 def get_location(line):
     ss = line.strip().split()
     x = float(ss[3])
     y = float(ss[7])
     z = float(ss[11])
-    return np.array([x,y,z])
+    return np.array([x, y, z])
 
 
 class VisualOdometry2:
     def __init__(self, cam, sf):
-        #self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
+        # self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
         FLANN_INDEX_KDTREE = 1
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)  # or pass empty dictionary
@@ -74,19 +75,18 @@ class VisualOdometry2:
 
     def get_feature(self, pose, scale=0):
         try:
-            #print pose.filename
+            # print pose.filename
             img = cv2.imread(pose.filename)
         except:
             raise Exception("failed load file {}".format(pose.filename))
 
-        if scale>1:
+        if scale > 1:
             img = image_resize(img, scale)
         fs = self.sift_feature.get_sift_feature(img)
 
         # fs = self.detector.detectAndCompute(img, None)
         # print pose.filename, len(fs[1])
         return fs
-
 
     def get_match_point(self, curent_feature):
         matches = self.matcher.knnMatch(self.feature[1], curent_feature[1], k=2)
@@ -103,7 +103,7 @@ class VisualOdometry2:
 
         return pts1, pts2
 
-    def get_features(self, id1, pose1, pose2):
+    def get_features(self, id1, pose1, pose2, proc=False):
 
         self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
         if id1 != self.id:
@@ -115,8 +115,22 @@ class VisualOdometry2:
         if px_new.shape[0] > 10:
             self.features = np.concatenate((px_new, px_last), 1)
             self.truth = Utils.rotationMatrixToEulerAngles(self.pose_R)
+            if proc:
+                self.matches = len(px_new)
+                E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                               method=cv2.RANSAC)  # cv2.RANSAC)LMEDS
+                # , prob=0.999, threshold=10.0)
+                mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+                m1 = np.mean(mask)
+                m2 = np.mean(mask0) / 255.0
+
+                self.inline = mh
+                self.R = R
+                self.t = t
+                self.m1 = m1  # np.mean(mask)
+                self.m2 = m2
         else:
-            self.features = None
+            self.features = []
 
     def get_features_inline(self, id1, pose1, pose2):
 
@@ -132,7 +146,7 @@ class VisualOdometry2:
 
             E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
                                            method=cv2.RANSAC, prob=0.999, threshold=10.0)
-            #mh, R, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+            # mh, R, t, mask = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
             px1 = []
             px2 = []
             for a in range(len(mask)):
@@ -144,7 +158,6 @@ class VisualOdometry2:
             self.features = np.concatenate((px1, px2), 1)
         else:
             self.features = None
-
 
     def process(self, id1, pose1, id2, pose2, scale=1):
 
@@ -167,25 +180,25 @@ class VisualOdometry2:
 
             # print self.matches
             E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
-                                           method= cv2.RANSAC) # cv2.RANSAC)LMEDS
-            #, prob=0.999, threshold=10.0)
+                                           method=cv2.RANSAC)  # cv2.RANSAC)LMEDS
+            # , prob=0.999, threshold=10.0)
             mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
             m1 = np.mean(mask)
-            m2 = np.mean(mask0)/255.0
+            m2 = np.mean(mask0) / 255.0
 
             self.inline = mh
             self.R = R
             self.t = t
-            self.m1 = m1 #np.mean(mask)
-            self.m2 = m2 #np.mean(mask0)/255.0
+            self.m1 = m1  # np.mean(mask)
+            self.m2 = m2  # np.mean(mask0)/255.0
 
-            #p1 = []
-            #p2 = []
-            #for a in range(len(mask0)):
+            # p1 = []
+            # p2 = []
+            # for a in range(len(mask0)):
             #    if mask0[a] > 0:
             #        p1.append(px_new[a])
             #        p2.append(px_last[a])
-            #self.features = np.concatenate((np.array(p1), np.array(p2)), 1)
+            # self.features = np.concatenate((np.array(p1), np.array(p2)), 1)
 
             self.features = np.concatenate((px_new, px_last), 1)
             self.truth = Utils.rotationMatrixToEulerAngles(self.pose_R)
@@ -194,6 +207,7 @@ class VisualOdometry2:
 
         else:
             print("No match {}: {} {}".format(self.matches, id1, id2))
+
 
 class VisualOdometry_Not:
 
@@ -227,17 +241,17 @@ class VisualOdometry_Not:
 
     def getAbsoluteScale(self, frame_id):  # specialized for KITTI odometry dataset
         loc_prev = get_location(self.annotations[frame_id - 1]) - self.true_loc0
-        #ss = self.annotations[frame_id - 1].strip().split()
-        #x_prev = float(ss[3]) - self.trueX0
-        #y_prev = float(ss[7]) - self.trueY0
-        #z_prev = float(ss[11]) - self.trueZ0
+        # ss = self.annotations[frame_id - 1].strip().split()
+        # x_prev = float(ss[3]) - self.trueX0
+        # y_prev = float(ss[7]) - self.trueY0
+        # z_prev = float(ss[11]) - self.trueZ0
         locs = get_location(self.annotations[frame_id]) - self.true_loc0
-        #ss = self.annotations[frame_id].strip().split()
+        # ss = self.annotations[frame_id].strip().split()
         # x = float(ss[3]) - self.trueX0
-        #y = float(ss[7]) - self.trueY0
-        #z = float(ss[11]) - self.trueZ0
+        # y = float(ss[7]) - self.trueY0
+        # z = float(ss[11]) - self.trueZ0
         self.trueX, self.trueY, self.trueZ = locs[0], locs[1], locs[2]
-        return np.linalg.norm(loc_prev-locs)
+        return np.linalg.norm(loc_prev - locs)
 
     def processFirstFrame(self, frame_id):
         self.px_ref = self.detector.detect(self.new_frame)
@@ -248,13 +262,13 @@ class VisualOdometry_Not:
     def processSecondFrame(self, frame_id):
         self.px_ref, self.px_cur = featureTracking(self.last_frame, self.new_frame, self.px_ref)
 
-        #E, mask = cv2.findEssentialMat(self.px_cur, self.px_ref, focal=self.focal, pp=self.pp, method=cv2.RANSAC, prob=0.999, threshold=1.0)
-        #_, self.cur_R, self.cur_t, mask = cv2.recoverPose(E, self.px_cur, self.px_ref, focal=self.focal, pp = self.pp)
+        # E, mask = cv2.findEssentialMat(self.px_cur, self.px_ref, focal=self.focal, pp=self.pp, method=cv2.RANSAC, prob=0.999, threshold=1.0)
+        # _, self.cur_R, self.cur_t, mask = cv2.recoverPose(E, self.px_cur, self.px_ref, focal=self.focal, pp = self.pp)
         E, mask = cv2.findEssentialMat(self.px_cur, self.px_ref,
                                        cameraMatrix=self.mx, method=cv2.RANSAC,
                                        prob=0.999, threshold=1.0)
         mh, self.cur_dR, self.cur_t, mask = cv2.recoverPose(E, self.px_cur, self.px_ref,
-                                                          cameraMatrix=self.mx)
+                                                            cameraMatrix=self.mx)
         self.matches = mh
 
         self.cur_R = self.cur_dR
@@ -282,7 +296,6 @@ class VisualOdometry_Not:
                 pts2.append(f2[0][m.trainIdx].pt)
                 pts1.append(f1[0][m.queryIdx].pt)
         return np.array(pts1), np.array(pts2)
-
 
     def processFrame(self, frame_id):
         px_last, px_new = self.get_match_point(self.last_frame, self.new_frame)
