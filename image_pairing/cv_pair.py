@@ -11,13 +11,18 @@ import datetime
 import pickle
 
 project_dir = '/home/weihao/Projects'
-key = 'heads'
+#key = 'heads'
+#mode = 'Test'
+key = '02'
 mode = 'Test'
 
 if len(sys.argv)>1:
     key = sys.argv[1]
 if len(sys.argv)>2:
     mode = sys.argv[2]
+
+print key, mode
+
 
 #range1 = 2
 #range2 = 2
@@ -26,19 +31,19 @@ if len(sys.argv)>2:
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 #
-# location = '{}/datasets/kitty'.format(project_dir)
-# key = '02'
-# mode = 'Test'
-# poses_dic, cam = load_kitty_poses(location, key)
+location = '{}/datasets/kitty'.format(project_dir)
+poses_dic, cam = load_kitty_poses(location, key)
+key = 'kitty_{}'.format(key)
 
-location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
-pose_file = "{}Split.txt".format(mode)
-poses_dic, cam = load_indoor_7_poses(location, pose_file)
+#location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
+#pose_file = "{}Split.txt".format(mode)
+#poses_dic, cam = load_indoor_7_poses(location, pose_file)
+
 
 output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
 filename = '{}/p_files/{}_{}_cv.p'.format(project_dir, mode, key)
 
-print location, pose_file, 'focal', cam.fx
+print location, mode, 'focal', cam.fx
 
 for p in poses_dic:
     print p, len(poses_dic[p])
@@ -56,7 +61,7 @@ data = []
 
 rs= []
 
-num_match = 40
+num_match = 10
 mini_features_matches = 100
 image_list = {}
 
