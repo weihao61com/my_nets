@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from random import randint
+from random import randint, random
 
 from cv_location import VisualOdometry2
 from imagery_utils import SiftFeature, pose_realign
@@ -60,7 +60,7 @@ if isTest:
     fp = open(output_file, 'w')
 
 #num_match = 5
-#mini_features_matches = 20
+mini_features_matches = 20
 #image_list = {}
 
 length = 0
@@ -78,7 +78,7 @@ for seq in poses_dic:
                 pose2 = poses[img_id2]
                 vo.get_features(img_id1, pose1, pose2, isTest)
                 fs = vo.features
-                if len(fs) > 0:
+                if len(fs) > mini_features_matches:
                     fs[:, 0] = (fs[:, 0]-w2)/w2
                     fs[:, 1] = (fs[:, 1]-h2)/h2
                     fs[:, 2] = (fs[:, 2]-w2)/w2
@@ -94,7 +94,8 @@ for seq in poses_dic:
                         d = pose1.tran
                         dr = a - b
                         r0 = np.linalg.norm(dr) * 180 / np.pi
-                        fp.write('{},{},{},{},{},{},{},{},{},'
+                        if random()<0.1:
+                            fp.write('{},{},{},{},{},{},{},{},{},'
                                  '{},{},{},{},{},{},{},{},{},{}\n'.
                                  format(pose1.filename, pose2.filename,
                                         vo.matches, vo.inline,

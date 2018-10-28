@@ -10,7 +10,7 @@ if sys.platform=='darwin':
 
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
-usecols = (1,2,3)
+usecols = (1,9,10,11,12,13,14)
 if len(sys.argv)>1:
     usecols = map(int, sys.argv[1].split(','))
 

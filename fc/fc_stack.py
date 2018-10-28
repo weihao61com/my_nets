@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 500
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))) * .9
     l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output))))
 
-    loss = l5 + l4 + l3 + l2 + l1 + l0
+    loss = l5 + l4 # + l3 + l2 + l1 + l0
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -102,13 +102,13 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "it: {0} {1:.1f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
-                  " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f}".format(
+                  " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
+                  "{12:.4f} {13:.4f}".format(
                 a*loop, (t1 - t00).total_seconds(),
-                tr_loss[stack-2], te_loss[stack-2],
-                tr_loss[stack-1], te_loss[stack-1],
-                tr_median[stack-3], te_median[stack-3],
-                tr_median[stack-2], te_median[stack-2],
-                tr_median[stack-1], te_median[stack-1])
+                tr_loss[stack-3], tr_loss[stack-2], tr_loss[stack-1],
+                te_loss[stack-3], te_loss[stack-2], te_loss[stack-1],
+                tr_median[stack-3], tr_median[stack-2], tr_median[stack-1],
+                te_median[stack-3], te_median[stack-2], te_median[stack-1])
 
             print str
             t00 = t1
