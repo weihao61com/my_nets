@@ -10,8 +10,8 @@ import pickle
 
 project_dir = '/home/weihao/Projects'
 
-range1 = 2
-range2 = 3
+range1 = -3
+range2 = 4
 #key = 'heads'
 #mode = 'Train'
 key = '02'
@@ -29,13 +29,13 @@ print key, mode
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 #
-location = '{}/datasets/kitty'.format(project_dir)
-poses_dic, cam = load_kitty_poses(location, key)
-key = 'kitty_{}'.format(key)
+#location = '{}/datasets/kitty'.format(project_dir)
+#poses_dic, cam = load_kitty_poses(location, key)
+#key = 'kitty_{}'.format(key)
 
 
-#location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
-#poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
+poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
 filename = '/home/weihao/Projects/p_files/{}_{}_cv.p'.format(key, mode)
 output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
@@ -72,6 +72,8 @@ for seq in poses_dic:
         #    break
         pose1 = poses[img_id1]
         for img_id2 in poses:
+            if img_id2-img_id1 == 0:
+                continue
             if range1 <= img_id2-img_id1 < range2:
                 pose2 = poses[img_id2]
                 vo.get_features(img_id1, pose1, pose2, isTest)
@@ -104,6 +106,7 @@ for seq in poses_dic:
         nt += 1
         if nt % 100 == 0:
             print nt, img_id1, len(data), datetime.datetime.now() - t0
+            t0 = datetime.datetime.now()
 
 if isTest:
     fp.close()

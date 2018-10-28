@@ -1,5 +1,5 @@
 {
-    "batch_size": 200,
+    "batch_size": 2000,
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "stack",

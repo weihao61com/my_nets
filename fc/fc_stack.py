@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 100
+    loop = 500
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -68,14 +68,14 @@ if __name__ == '__main__':
     #for a in range(stack):
     #    loss = tf.add(loss, tf.reduce_sum(tf.square(tf.subtract(xy[a+1], output))))
 
-    #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))) * 1
-    #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[1], output)))) * 2
-    #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[2], output)))) * 3
-    #l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[3], output)))) * 4
-    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))) * .9
-    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))))
+    l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
+    l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
+    l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
+    l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-4], output)))) * .8
+    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))) * .9
+    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output))))
 
-    loss = l5 + l4
+    loss = l5 + l4 + l3 + l2 + l1 + l0
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
