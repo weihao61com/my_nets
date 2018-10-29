@@ -1,12 +1,12 @@
 {
-    "batch_size": 2000,
+    "batch_size": 1000,
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "stack",
-    "retrain": "stack",
+    "_retrain": "stack",
     "netTest": "stack",
     "feature": 20,
-    "lr": 1e-5,
+    "lr": 1e-4,
     "num_output": 3,
-    "stack": 12
+    "stack": 50
 }

@@ -437,7 +437,7 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
     results = []
     truth = []
 
-    fp = open('/home/weihao/tmp/test.csv', 'w')
+    fp = open('/Users/weihao/tmp/test.csv', 'w')
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
