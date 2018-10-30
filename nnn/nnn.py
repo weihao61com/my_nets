@@ -7,6 +7,8 @@ from utils import Utils
 from fc_dataset import *
 import datetime
 
+from nnn_bias import NNNB
+
 def sigmoid(x, derivative=False):
     return x * (1 - x) if derivative else 1 / (1 + np.exp(-x))
 
@@ -137,13 +139,13 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 10
+    loop = 50
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len* sz_in[1]
     D_out = num_output
 
-    nnn = NNN(D_in, D_out, nodes, lr=lr)
+    nnn = NNNB(D_in, D_out, nodes, lr=lr)
 
     t00 = datetime.datetime.now()
     for a in range(iterations):
