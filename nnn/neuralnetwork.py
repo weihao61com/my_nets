@@ -1,93 +1,38 @@
-# Teaching a 3 level neural network to work as Full Adder
+import numpy as np
 
-#import numpy for maths, pandas for reading data from text
-from numpy import random, exp, array, dot
-import pandas as pd
+np.random.seed(1)
 
-# Neural Network class definition
-class NeuralNetwork():
-  def __init__(self, gateInput, gateOutput, ):
+# N is batch size; D_in is input dimension;
+# H is hidden dimension; D_out is output dimension.
+N, D_in, H, D_out = 64, 1000, 100, 10
 
-    # seed the random generator for easier debugging
-    random.seed(1)
+# Create random input and output data
+x = np.random.randn(N, D_in)
+y = np.random.randn(N, D_out)
 
-    # Save all variables in self for future references
-    self.gateInput = gateInput
-    self.gateOutput = gateOutput
-    self.input_shape = (1,3)
-    self.output_shape = (1,2)
-    self.layer_1_nodes = 5
-    self.layer_2_nodes = 5
-    self.layer_3_nodes = 5
+# Randomly initialize weights
+w1 = np.random.randn(D_in, H)
+w2 = np.random.randn(H, D_out)
 
-    # Generate weights with value between -1 to 1 so that mean is overall 0
-    self.weights_1 = 2 * random.random((self.input_shape[1], self.layer_1_nodes)) - 1
-    self.weights_2 = 2 * random.random((self.layer_1_nodes, self.layer_2_nodes)) - 1
-    self.weights_3 = 2 * random.random((self.layer_2_nodes, self.layer_3_nodes)) - 1
-    self.out_weights = 2 * random.random((self.layer_3_nodes, self.output_shape[1])) - 1
+learning_rate = 1e-6
+for t in range(100):
+    # Forward pass: compute predicted y
+    h = x.dot(w1)
+    h_relu = np.maximum(h, 0)
+    y_pred = h_relu.dot(w2)
 
-  # Sigmoid function gives a value between 0 and 1
-  def sigmoid(self, x):
-    return 1 / (1 + exp(-x))
+    # Compute and print loss
+    loss = np.square(y_pred - y).sum()
+    print t, loss
 
-  # Reversed Sigmoid by derivating the value
-  def sigmoid_derivative(self, x):
-    return x * (1 - x)
+    # Backprop to compute gradients of w1 and w2 with respect to loss
+    grad_y_pred = 2.0 * (y_pred - y)
+    grad_w2 = h_relu.T.dot(grad_y_pred)
+    grad_h_relu = grad_y_pred.dot(w2.T)
+    grad_h = grad_h_relu.copy()
+    grad_h[h < 0] = 0
+    grad_w1 = x.T.dot(grad_h)
 
-  def think(self, x):
-    # Multiply the input with weights and find its sigmoid activation for all layers
-    layer1 = self.sigmoid(dot(x, self.weights_1))
-    layer2 = self.sigmoid(dot(layer1, self.weights_2))
-    layer3 = self.sigmoid(dot(layer2, self.weights_3))
-    output = self.sigmoid(dot(layer3, self.out_weights))
-    return output
-
-  def train(self, num_steps):
-    for x in range(num_steps):
-      # Same as code of thinking
-      layer1 = self.sigmoid(dot(self.gateInput, self.weights_1))
-      layer2 = self.sigmoid(dot(layer1, self.weights_2))
-      layer3 = self.sigmoid(dot(layer2, self.weights_3))
-      output = self.sigmoid(dot(layer3, self.out_weights))
-
-      # What is the error?
-      outputError = self.gateOutput - output
-
-      # Find delta, i.e. Product of Error and derivative of next layer
-      delta = outputError * self.sigmoid_derivative(output)
-      
-      # Multiply with transpose of last layer
-      # to invert the multiplication we did to get layer 
-      out_weights_adjustment = dot(layer3.T, delta)
-      
-      # Apply the out_weights_adjustment
-      self.out_weights += out_weights_adjustment
-      
-      # Procedure stays same, but the error now is the product of current weight and
-      # Delta in next layer
-      delta = dot(delta, self.out_weights.T) * self.sigmoid_derivative(layer3)
-      weight_3_adjustment = dot(layer2.T, delta)
-      self.weights_3 += weight_3_adjustment
-
-      delta = dot(delta, self.weights_3.T) * self.sigmoid_derivative(layer2)
-      weight_2_adjustment = dot(layer1.T, delta)
-      self.weights_2 += weight_2_adjustment
-
-      delta = dot(delta, self.weights_2.T) * self.sigmoid_derivative(layer1)
-      weight_1_adjustment = dot(self.gateInput.T, delta)
-      self.weights_1 += weight_1_adjustment
-
-if __name__ == '__main__':
-  file = pd.read_csv("dataset.txt", delimiter=',')
-
-  dataset = file.values
-
-  gateInput = dataset[:,:3]
-  gateOutput = dataset[:,3:]
-
-  neural_network = NeuralNetwork(gateInput, gateOutput)
-
-  neural_network.train(6000)
-
-  # Should be 0 , 1
-  print(neural_network.think([[0,0,1]]))
+    # Update weights
+    w1 -= learning_rate * grad_w1
+    w2 -= learning_rate * grad_w2
