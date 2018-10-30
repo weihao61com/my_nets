@@ -80,10 +80,10 @@ if __name__ == '__main__':
 
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output)
+            tr_pre_data = tr.prepare(num_output=num_output, multi=1)
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy)
 
-            te_pre_data = te_set.prepare(num_output=num_output)
+            te_pre_data = te_set.prepare(num_output=num_output, multi=1)
             te_loss, te_median = run_data(te_pre_data, input, sess, xy)
 
             t1 = datetime.datetime.now()
