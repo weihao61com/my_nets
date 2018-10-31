@@ -27,19 +27,22 @@ class NNNB:
         self.num_layers = len(layers)
         self.learning_rate = lr
 
-        self.D_weight = None
-        self.D_pre_weight = None
-        self.learning_scale = []
+        self.D_weight = []
+        self.gradient_momentum = []
+        self.beta1 = 0.99
 
         number = self.input_dim + 1
         for a in range(self.num_layers):
             layer = layers[a]
             w = np.random.randn(number, layer)/np.sqrt(number)
             self.weights.append(w)
+            self.gradient_momentum.append(np.zeros(w.shape))
+            self.D_weight.append(np.zeros(w.shape))
             number = layer + 1
 
     def train(self, inputs, outputs):
 
+        Z = None
         Zs = [add_1(inputs)]
         for a in range(self.num_layers - 1):
             A = Zs[a].dot(self.weights[a])
@@ -63,50 +66,35 @@ class NNNB:
             weigh_T = self.weights[-2-a].T
 
         for a in range(self.num_layers):
-            self.D_weight[-1-a] += D_weight_m[a]
-            for b in range(len(D_weight_m[a])):
-                self.weights[-1-a][b] += D_weight_m[a][b]*\
-                                         self.learning_rate*\
-                                         self.learning_scale[a][b]
+            #self.D_weight[-1-a] += D_weight_m[a]
+            self.D_weight[-1-a] = D_weight_m[a]
+
+        self.update_momentum()
+
+        for a in range(self.num_layers):
+            self.weights[a] += self.gradient_momentum[a]*self.learning_rate
 
         return loss
 
-    def reset(self, first=False):
-        if first:
-            self.D_pre_weight = None
-            self.D_weight = None
-            for a in range(self.num_layers):
-                w = self.weights[self.num_layers - 1 - a]
-                self.learning_scale.append(np.ones(w.shape))
+    def update_momentum(self):
+        for a in range(self.num_layers):
+            self.gradient_momentum[a] = self.beta1 * self.gradient_momentum[a]\
+                                        + (1 - self.beta1) * self.D_weight[a]
 
-        if self.D_pre_weight is not None:
-            p = self.D_pre_weight
-            w = self.weights
-            s = self.learning_scale
-            print 'A{0:12.6f} {1:12.6f} {2:5.2f} ' \
-                  '{3:12.6f} {4:12.6f} {5:5.2f} ' \
-                  '{6:12.6f} {7:12.6f} {8:5.2f}'.\
-                format(p[0][1][10],w[0][1][10],s[2][1][10],
-                       p[1][10][21],w[1][10][21],s[1][10][21],
-                       p[2][15][0], w[2][15][0], s[0][15][0])
-            for a in range(self.num_layers):
-                p = self.D_pre_weight[a]
-                w = self.D_weight[a]
-                s = self.learning_scale[-1-a]
-                for b in range(len(p)):
-                    for c in range(len(p[b])):
-                        if np.sign(p[b][c]) == np.sign(w[b][c]):
-                            if np.abs(p[b][c]) < np.abs(w[b][c]):
-                                s[b][c] *= 1.1
-                        else:
-                            s[b][c] *= 0.5
-                            if s[b][c]<0.01:
-                                s[b][c] = 0.01
+    def reset(self):
 
-        self.D_pre_weight = self.D_weight
+        p = self.gradient_momentum
+        w = self.weights
+        #s = self.D_weight
+        output = '{0:.6f} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f} '.\
+            format(p[0][1][10], p[1][10][21], p[2][15][0],
+                   w[0][1][10], w[1][10][21], w[2][15][0])
+        # print output
+
         self.D_weight = []
         for a in range(self.num_layers):
             self.D_weight.append(np.zeros(self.weights[a].shape))
+        return output
 
     def run(self,inputs):
         Z = add_1(inputs)

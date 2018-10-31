@@ -144,9 +144,11 @@ if __name__ == '__main__':
     else:
         nnn = NNNB(D_in, D_out, nodes, lr=lr)
 
-    nnn.reset(True)
+    nnn.beta1=0.99
+    #nnn.reset(True)
 
     t00 = datetime.datetime.now()
+    str1 = ''
     for a in range(iterations):
         tr_pre_data = tr.prepare(multi=1)
         total_loss, tr_median = nnn.run_data(tr_pre_data)
@@ -155,14 +157,14 @@ if __name__ == '__main__':
         te_loss, te_median = nnn.run_data(te_pre_data)
 
         t1 = datetime.datetime.now()
-        str = "iteration: {} {} {} {} {} time {}".format(
+        str = "iteration: {} {} {} {} {} time {} ".format(
             a * loop, total_loss, te_loss,
             tr_median, te_median, t1 - t00)
-        print str
+        print str + str1
         t00 = t1
 
-        nnn.reset()
         for t in range(loop):
+            str1 = nnn.reset()
             loss = 0
             tr_pre_data = tr.prepare(multi=1)
             while tr_pre_data:
