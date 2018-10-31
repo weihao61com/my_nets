@@ -26,10 +26,9 @@ class NNNB:
         layers.append(output_dim)
         self.num_layers = len(layers)
         self.learning_rate = lr
-
+        self.beta1 = None
         self.D_weight = []
         self.gradient_momentum = []
-        self.beta1 = 0.99
 
         number = self.input_dim + 1
         for a in range(self.num_layers):
@@ -39,6 +38,9 @@ class NNNB:
             self.gradient_momentum.append(np.zeros(w.shape))
             self.D_weight.append(np.zeros(w.shape))
             number = layer + 1
+
+    def setup(self):
+        self.beta1 = 0.999
 
     def train(self, inputs, outputs):
 

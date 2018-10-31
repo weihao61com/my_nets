@@ -99,6 +99,8 @@ class NNN:
 if __name__ == '__main__':
 
     HOME = '/home/weihao/Projects/'
+    if sys.platform == 'darwin':
+        HOME = '/Users/weihao/Projects/'
 
     config_file = "config.json"
 
@@ -144,8 +146,7 @@ if __name__ == '__main__':
     else:
         nnn = NNNB(D_in, D_out, nodes, lr=lr)
 
-    nnn.beta1=0.99
-    #nnn.reset(True)
+    nnn.setup()
 
     t00 = datetime.datetime.now()
     str1 = ''

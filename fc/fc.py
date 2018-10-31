@@ -2,11 +2,14 @@ import sys
 from fc_dataset import *
 import tensorflow as tf
 import datetime
+import os
 
 sys.path.append('..')
 from utils import Utils
 
 HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
 
 if __name__ == '__main__':
 
@@ -47,7 +50,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 20
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
@@ -87,8 +90,8 @@ if __name__ == '__main__':
             te_loss, te_median = run_data(te_pre_data, input, sess, xy)
 
             t1 = datetime.datetime.now()
-            str = "iteration: {} {} {} {} {} {} time {}".format(
-                a*loop, total_loss, te_loss, te_loss-total_loss,
+            str = "iteration: {} {} {} {} {} time {}".format(
+                a*loop, total_loss, te_loss,
                 tr_median, te_median, t1 - t00)
             print str
             t00 = t1
