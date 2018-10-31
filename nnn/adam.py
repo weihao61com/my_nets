@@ -11,8 +11,13 @@ num_examples = 1000
 true_w = [2, -3.4]
 true_b = 4.2
 X = nd.random_normal(scale=1, shape=(num_examples, num_inputs))
+#X = np.random.randn(num_examples, num_examples)
 y = true_w[0] * X[:, 0] + true_w[1] * X[:, 1] + true_b
 y += .01 * nd.random_normal(scale=1, shape=y.shape)
+#y += 0.01 * np.random.randn(y.shape[0])
+
+print ''
+
 
 # Adam.
 def adam(params, vs, sqrs, lr, batch_size, t):
@@ -45,6 +50,8 @@ def data_iter(batch_size):
 def init_params():
     w = nd.random.randn(num_inputs, 1)
     b = nd.zeros(shape=(1,))
+    #w = np.random.randn(num_inputs, 1)
+    #b = np.zeros(1)
     params = [w, b]
     vs = []
     sqrs = []
@@ -92,4 +99,4 @@ def train(batch_size, lr, epochs, period):
 
 
 if __name__ == '__main__':
-    train(batch_size=10, lr=0.1, epochs=3, period=10)
+    train(batch_size=10, lr=0.01, epochs=30, period=10)

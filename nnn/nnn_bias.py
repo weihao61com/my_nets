@@ -22,62 +22,98 @@ class NNNB:
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.weights = []
-        self.active_function = relu
+        self.active_function = sigmoid
+        layers.append(output_dim)
         self.num_layers = len(layers)
         self.learning_rate = lr
+
+        self.D_weight = None
+        self.D_pre_weight = None
+        self.learning_scale = []
 
         number = self.input_dim + 1
         for a in range(self.num_layers):
             layer = layers[a]
-            self.weights.append(np.random.randn(number, layer)/np.sqrt(number))
-
+            w = np.random.randn(number, layer)/np.sqrt(number)
+            self.weights.append(w)
             number = layer + 1
 
-        self.output_weights = np.random.randn(number, self.output_dim)/np.sqrt(number)
+    def train(self, inputs, outputs):
 
-    def train(self, inputs, outputs, num_steps=1):
+        Zs = [add_1(inputs)]
+        for a in range(self.num_layers - 1):
+            A = Zs[a].dot(self.weights[a])
+            Z = add_1(self.active_function(A))
+            Zs.append(Z)
 
-        pre_loss = 0
-        for t in range(num_steps):
+        predicts = Z.dot(self.weights[-1])
+        grad = outputs - predicts
 
-            Zs = [add_1(inputs)]
+        loss = np.square(grad).sum()
+
+        D_weight_m = [Zs[-1].T.dot(grad)]
+
+        weigh_T = self.weights[-1].T
+
+        for a in range(self.num_layers - 1):
+            grad = grad.dot(weigh_T)
+            grad = grad * self.active_function(Zs[-1-a], True)
+            grad = grad[:, :-1]
+            D_weight_m.append(Zs[-2-a].T.dot(grad))
+            weigh_T = self.weights[-2-a].T
+
+        for a in range(self.num_layers):
+            self.D_weight[-1-a] += D_weight_m[a]
+            for b in range(len(D_weight_m[a])):
+                self.weights[-1-a][b] += D_weight_m[a][b]*\
+                                         self.learning_rate*\
+                                         self.learning_scale[a][b]
+
+        return loss
+
+    def reset(self, first=False):
+        if first:
+            self.D_pre_weight = None
+            self.D_weight = None
             for a in range(self.num_layers):
-                A = Zs[a].dot(self.weights[a])
-                Z = add_1(self.active_function(A))
-                Zs.append(Z)
+                w = self.weights[self.num_layers - 1 - a]
+                self.learning_scale.append(np.ones(w.shape))
 
-            predicts = Z.dot(self.output_weights)# + self.output_bias
-            grad = outputs - predicts
+        if self.D_pre_weight is not None:
+            p = self.D_pre_weight
+            w = self.weights
+            s = self.learning_scale
+            print 'A{0:12.6f} {1:12.6f} {2:5.2f} ' \
+                  '{3:12.6f} {4:12.6f} {5:5.2f} ' \
+                  '{6:12.6f} {7:12.6f} {8:5.2f}'.\
+                format(p[0][1][10],w[0][1][10],s[2][1][10],
+                       p[1][10][21],w[1][10][21],s[1][10][21],
+                       p[2][15][0], w[2][15][0], s[0][15][0])
+            for a in range(self.num_layers):
+                p = self.D_pre_weight[a]
+                w = self.D_weight[a]
+                s = self.learning_scale[-1-a]
+                for b in range(len(p)):
+                    for c in range(len(p[b])):
+                        if np.sign(p[b][c]) == np.sign(w[b][c]):
+                            if np.abs(p[b][c]) < np.abs(w[b][c]):
+                                s[b][c] *= 1.1
+                        else:
+                            s[b][c] *= 0.5
+                            if s[b][c]<0.01:
+                                s[b][c] = 0.01
 
-            loss = np.square(grad).sum()
-
-            #if pre_loss is not None and t % 50 == 0:
-            # print '{0} {1} {2}'.format(t, loss, pre_loss - loss)
-
-            pre_loss = loss
-
-            grad *= 2
-            D_output_weights = Zs[-1].T.dot(grad)
-
-            grad = grad.dot(self.output_weights.T)
-            grad = grad * self.active_function(Zs[-1], True)
-
-            D_weight_m1 = Zs[-2].T.dot(grad[:, :-1])
-
-
-            self.output_weights += D_output_weights*self.learning_rate
-
-            self.weights[-1] += D_weight_m1*self.learning_rate
-
-            #self.bias[-2] += D_bias_m2*self.learning_rate
-            #self.weights[-2] += D_weight_m2*self.learning_rate
+        self.D_pre_weight = self.D_weight
+        self.D_weight = []
+        for a in range(self.num_layers):
+            self.D_weight.append(np.zeros(self.weights[a].shape))
 
     def run(self,inputs):
         Z = add_1(inputs)
-        for a in range(self.num_layers):
+        for a in range(self.num_layers - 1):
             A = Z.dot(self.weights[a])
             Z = add_1(self.active_function(A))
-        predicts = Z.dot(self.output_weights)
+        predicts = Z.dot(self.weights[-1])
         return predicts
 
     def run_data(self, data):
@@ -108,6 +144,6 @@ if __name__ == '__main__':
 
     D_in = X.shape[1]
     D_out = y.shape[1]
-    nnn = NNNS(D_in, D_out, [100])
+    nnn = NNNB(D_in, D_out, [100])
 
     nnn.train(X, y, 100)

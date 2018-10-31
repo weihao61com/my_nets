@@ -6,6 +6,7 @@ sys.path.append('../fc')
 from utils import Utils
 from fc_dataset import *
 import datetime
+import pickle
 
 from nnn_bias import NNNB
 
@@ -38,47 +39,37 @@ class NNN:
         self.output_weights = np.random.randn(number, self.output_dim)/np.sqrt(number)
         #self.output_bias = np.random.randn(self.output_dim)
 
-    def train(self, inputs, outputs, num_steps=1):
+    def train(self, inputs, outputs):
 
-        pre_loss = 0
-        for t in range(num_steps):
+        Zs = [inputs]
+        for a in range(self.num_layers):
+            A = Zs[a].dot(self.weights[a]) #+ self.bias[a]
+            Z = self.active_function(A)
+            Zs.append(Z)
 
-            Zs = [inputs]
-            # As = []
-            for a in range(self.num_layers):
-                A = Zs[a].dot(self.weights[a]) #+ self.bias[a]
-                Z = self.active_function(A)
-                Zs.append(Z)
+        predicts = Z.dot(self.output_weights) #+ self.output_bias
+        grad = outputs - predicts
 
-            predicts = Z.dot(self.output_weights) #+ self.output_bias
-            grad = outputs - predicts
+        loss = np.square(grad).sum()
 
-            loss = np.square(grad).sum()
+        grad *= 2
+        #D_output_bias = sum(grad)
+        D_output_weights = Zs[-1].T.dot(grad)
 
-            #if pre_loss is not None and t % 50 == 0:
-            #print '{0} {1} {2}'.format(t, loss, pre_loss - loss)
+        grad = grad.dot(self.output_weights.T)
+        grad = grad * self.active_function(Zs[-1], True)
 
-            pre_loss = loss
-
-            grad *= 2
-            D_output_bias = sum(grad)
-            D_output_weights = Zs[-1].T.dot(grad)
-
-            grad = grad.dot(self.output_weights.T)
-            grad = grad * self.active_function(Zs[-1], True)
-
-            D_bias_m1 = sum(grad)
-            D_weight_m1 = Zs[-2].T.dot(grad)
+        #D_bias_m1 = sum(grad)
+        D_weight_m1 = Zs[-2].T.dot(grad)
 
 
-            #self.output_bias += D_output_bias*self.learning_rate
-            self.output_weights += D_output_weights*self.learning_rate
+        #self.output_bias += D_output_bias*self.learning_rate
+        self.output_weights += D_output_weights*self.learning_rate
 
-            #self.bias[-1] += D_bias_m1*self.learning_rate
-            self.weights[-1] += D_weight_m1*self.learning_rate
+        #self.bias[-1] += D_bias_m1*self.learning_rate
+        self.weights[-1] += D_weight_m1*self.learning_rate
 
-            #self.bias[-2] += D_bias_m2*self.learning_rate
-            #self.weights[-2] += D_weight_m2*self.learning_rate
+        return loss
 
     def run(self,inputs):
         Z = inputs
@@ -132,20 +123,28 @@ if __name__ == '__main__':
     num_output = int(js["num_output"])
     nodes = map(int, js["nodes"].split(','))
 
-    #np.random.seed(1)
+    renetFile = None
+    if 'retrain' in js:
+        renetFile = HOME + 'NNs/' + js['retrain'] + '.p'
 
     tr = DataSet(tr_data, batch_size, feature_len)
     te_set = DataSet(te_data, batch_size, feature_len)
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 50
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len* sz_in[1]
     D_out = num_output
 
-    nnn = NNNB(D_in, D_out, nodes, lr=lr)
+    if renetFile is not None:
+        with open(renetFile, 'r') as fp:
+            nnn = pickle.load(fp)
+    else:
+        nnn = NNNB(D_in, D_out, nodes, lr=lr)
+
+    nnn.reset(True)
 
     t00 = datetime.datetime.now()
     for a in range(iterations):
@@ -162,12 +161,15 @@ if __name__ == '__main__':
         print str
         t00 = t1
 
-        for _ in range(loop):
+        nnn.reset()
+        for t in range(loop):
+            loss = 0
             tr_pre_data = tr.prepare(multi=1)
             while tr_pre_data:
                 for b in tr_pre_data:
-                    nnn.train(b[0], b[1])
-                    #feed = {input: b[0], output: b[1]}
-                    #sess.run(opt, feed_dict=feed)
+                    loss += nnn.train(b[0], b[1])
                 tr_pre_data = tr.get_next()
-            #nnn.train(X, y, 100)
+            #print t, loss
+
+        with open(netFile, 'w') as fp:
+            pickle.dump(nnn, fp)
