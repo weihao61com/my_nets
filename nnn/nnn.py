@@ -1,14 +1,20 @@
 import numpy as np
 import sys
-
-sys.path.append('..')
-sys.path.append('../fc')
-from utils import Utils
-from fc_dataset import *
 import datetime
 import pickle
+import os
 
-from nnn_bias import NNNB
+HOME = '{}/Projects/'.format(os.getenv('HOME'))
+sys.path.append('{}/my_nets'.format(HOME))
+sys.path.append('{}/my_nets/fc'.format(HOME))
+
+from utils import Utils
+from fc_dataset import DataSet
+
+
+def add_1(inputs):
+    return np.concatenate ((inputs, np.array([[1]*len(inputs)]).T), axis=1)
+
 
 def sigmoid(x, derivative=False):
     return x * (1 - x) if derivative else 1 / (1 + np.exp(-x))
@@ -20,63 +26,94 @@ def relu(x, derivative=False):
 
 class NNN:
 
-    def __init__(self, input_dim, output_dim, layers, lr = 1e-3):
+    def __init__(self, input_dim, output_dim, layers):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.weights = []
-        self.bias = []
-        self.active_function = sigmoid
+        self.active_function = relu
+        layers.append(output_dim)
         self.num_layers = len(layers)
-        self.learning_rate = lr
+        self.learning_rate = None
+        self.beta1 = None
+        self.D_weight = []
+        self.gradient_momentum = []
+        self.g2_momentum = []
+        self.Zs = None
 
-        number = self.input_dim
+        number = self.input_dim + 1
         for a in range(self.num_layers):
             layer = layers[a]
-            self.weights.append(np.random.randn(number, layer)/np.sqrt(number))
-            #self.bias.append(np.random.randn(layer))
-            number = layer
+            w = np.random.randn(number, layer)/np.sqrt(number)
+            self.weights.append(w)
 
-        self.output_weights = np.random.randn(number, self.output_dim)/np.sqrt(number)
-        #self.output_bias = np.random.randn(self.output_dim)
+            self.gradient_momentum.append(np.zeros(w.shape))
+            self.g2_momentum.append(np.zeros(w.shape))
+            self.D_weight.append(np.zeros(w.shape))
+            number = layer + 1
+
+    def setup(self, lr):
+        self.beta1 = 0.99
+        self.beta2 = 0.999999
+
+        self.learning_rate = lr
+
+    def backward(self, grad):
+        self.D_weight[-1] = self.Zs[-1].T.dot(grad)
+        weigh_T = self.weights[-1].T
+        for a in range(self.num_layers - 1):
+            grad = grad.dot(weigh_T)
+            grad = grad * self.active_function(self.Zs[-1 - a], True)
+            grad = grad[:, :-1]
+            self.D_weight[-2 - a] = self.Zs[-2 - a].T.dot(grad)
+            weigh_T = self.weights[-2 - a].T
 
     def train(self, inputs, outputs):
 
-        Zs = [inputs]
-        for a in range(self.num_layers):
-            A = Zs[a].dot(self.weights[a]) #+ self.bias[a]
-            Z = self.active_function(A)
-            Zs.append(Z)
-
-        predicts = Z.dot(self.output_weights) #+ self.output_bias
+        predicts = self.run(inputs, True)
         grad = outputs - predicts
-
         loss = np.square(grad).sum()
+        self.backward(grad)
 
-        grad *= 2
-        #D_output_bias = sum(grad)
-        D_output_weights = Zs[-1].T.dot(grad)
-
-        grad = grad.dot(self.output_weights.T)
-        grad = grad * self.active_function(Zs[-1], True)
-
-        #D_bias_m1 = sum(grad)
-        D_weight_m1 = Zs[-2].T.dot(grad)
-
-
-        #self.output_bias += D_output_bias*self.learning_rate
-        self.output_weights += D_output_weights*self.learning_rate
-
-        #self.bias[-1] += D_bias_m1*self.learning_rate
-        self.weights[-1] += D_weight_m1*self.learning_rate
+        self.update_momentum()
+        for a in range(self.num_layers):
+            self.weights[a] += self.gradient_momentum[a]*self.learning_rate
 
         return loss
 
-    def run(self,inputs):
-        Z = inputs
+    def update_momentum(self):
         for a in range(self.num_layers):
-            A = Z.dot(self.weights[a])
-            Z = self.active_function(A)
-        predicts = Z.dot(self.output_weights)
+
+            v = self.beta1 * self.gradient_momentum[a]\
+                + (1 - self.beta1) * self.D_weight[a]
+
+            #v1 = np.maximum(v, 1e-4)
+            #v2 = np.minimum(v, -1e-4)
+
+            self.gradient_momentum[a] = v #v1 * (v>0) + v2 * (v<0)
+
+    def reset(self):
+
+        p = self.gradient_momentum
+        w = self.weights
+        output = '{0} {1} {2} {3:.6f} {4:.6f} {5:.6f} '.\
+            format(p[0][1][10], p[1][10][21], p[2][15][0],
+                   w[0][1][10], w[1][10][21], w[2][15][0])
+
+        self.D_weight = []
+        for a in range(self.num_layers):
+            self.D_weight.append(np.zeros(self.weights[a].shape))
+        return output
+
+    def run(self,inputs, save_intermediate=False):
+        Z = None
+        Zs = [add_1(inputs)]
+        for a in range(self.num_layers - 1):
+            A = Zs[a].dot(self.weights[a])
+            Z = add_1(self.active_function(A))
+            Zs.append(Z)
+        predicts = Z.dot(self.weights[-1])
+        if save_intermediate:
+            self.Zs = Zs
         return predicts
 
     def run_data(self, data):
@@ -97,10 +134,6 @@ class NNN:
 
 
 if __name__ == '__main__':
-
-    HOME = '/home/weihao/Projects/'
-    if sys.platform == 'darwin':
-        HOME = '/Users/weihao/Projects/'
 
     config_file = "config.json"
 
@@ -134,7 +167,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 100
+    loop = 200
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len* sz_in[1]
@@ -144,9 +177,9 @@ if __name__ == '__main__':
         with open(renetFile, 'r') as fp:
             nnn = pickle.load(fp)
     else:
-        nnn = NNNB(D_in, D_out, nodes, lr=lr)
+        nnn = NNN(D_in, D_out, nodes)
 
-    nnn.setup()
+    nnn.setup(lr)
 
     t00 = datetime.datetime.now()
     str1 = ''
@@ -158,7 +191,7 @@ if __name__ == '__main__':
         te_loss, te_median = nnn.run_data(te_pre_data)
 
         t1 = datetime.datetime.now()
-        str = "iteration: {} {} {} {} {} time {} ".format(
+        str = "iteration: {0} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5} ".format(
             a * loop, total_loss, te_loss,
             tr_median, te_median, t1 - t00)
         print str + str1
