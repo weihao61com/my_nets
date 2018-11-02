@@ -3,6 +3,7 @@ import sys
 import datetime
 import pickle
 import os
+import shutil
 
 HOME = '{}/Projects/'.format(os.getenv('HOME'))
 sys.path.append('{}/my_nets'.format(HOME))
@@ -112,14 +113,17 @@ class NNN:
     def reset(self):
 
         p = self.gradient_momentum
+        a = self.g2_momentum
         w = self.weights
-        output = '{0} {1} {2} {3:.6f} {4:.6f} {5:.6f} '. \
+        output = '{0:.6f} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f} {7:.6f} {8:.6f} '. \
             format(p[0][1][10], p[1][10][21], p[2][15][0],
-                   w[0][1][10], w[1][10][21], w[2][15][0])
+                   np.sqrt(a[0][1][10]), np.sqrt(a[1][10][21]), np.sqrt(a[2][15][0]),
+                   w[0][1][10], w[1][10][21], w[2][15][0]
+                   )
 
-        self.D_weight = []
-        for a in range(self.num_layers):
-            self.D_weight.append(np.zeros(self.weights[a].shape))
+        #self.D_weight = []
+        #for a in range(self.num_layers):
+        #    self.D_weight.append(np.zeros(self.weights[a].shape))
         return output
 
     def run(self, inputs):
@@ -184,7 +188,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 200
+    loop = 50
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len * sz_in[1]
@@ -224,5 +228,8 @@ if __name__ == '__main__':
                 tr_pre_data = tr.get_next()
             # print t, loss
 
-        with open(netFile, 'w') as fp:
+        tmp_file = netFile+'.tmp'
+        with open(tmp_file, 'w') as fp:
             pickle.dump(nnn, fp)
+        shutil.copy(tmp_file, netFile)
+        os.remove(tmp_file)
