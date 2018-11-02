@@ -168,6 +168,29 @@ class DataSet:
             np.random.shuffle(pre_data)
         return pre_data
 
+    def prepare_stack(self, rd=True, num_output=3):
+        pre_data = []
+        self.reshuffle_data()
+        self.id = 0
+        for d in self.data:
+            pre_data.append(self.create_stack(d, num_output))
+        if rd:
+            np.random.shuffle(pre_data)
+        return pre_data
+
+
+    def create_stack(self, data, num_output):
+        outputs = []
+        inputs = []
+
+        for d in data:
+            sz = d[0].shape
+            truth = d[1][:num_output]
+            inputs.append(d[0].reshape(1, sz[0] * sz[1]))
+            outputs.append(truth.reshape(num_output))
+
+        return inputs, outputs
+
     def prepare(self, rd=True, num_output=3, multi=1):
         pre_data = []
         self.reshuffle_data()
