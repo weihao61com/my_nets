@@ -87,8 +87,8 @@ class NNN:
 
         self.update_momentum()
         for a in range(self.num_layers):
-            div = self.gradient_momentum[a] /\
-                  (np.sqrt(self.g2_momentum[a]) + self.eps_stable)
+            v2 = np.sqrt(self.g2_momentum[a]) + self.eps_stable
+            div = self.gradient_momentum[a] / v2
 
             self.weights[a] += div * self.learning_rate
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 50
+    loop = 200
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len * sz_in[1]

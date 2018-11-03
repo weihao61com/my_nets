@@ -28,6 +28,7 @@ c = int(np.ceil(zone/float(r)))
 
 #da[:, 0] = da[:, 0] - max(da[:, 0])
 mx = max(da[:, 0])
+
 #print da
 for a in range(zone):
     length = int(len(da)/2)
@@ -36,7 +37,11 @@ for a in range(zone):
 
     ax1 = fig.add_subplot(c, r, a+1)
     ax1.scatter(da[:, 0], da[:, a+1],  color='black')
-    ax1.plot(da[:, 0], pre1, color='blue', linewidth=3)
+    ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
+    ymin = np.min(da[:, a+1])
+    ymax = np.max(da[:, a+1])
+    ax1.set_ylim([ymin, ymax])
+
     #
     # slope1, intercept1, r_value, p_value, std_err = stats.linregress(da[:, 0], da[:, 2])
     # pre2 = da[:, 0] *slope1 + intercept1

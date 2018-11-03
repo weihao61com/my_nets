@@ -28,8 +28,9 @@ class Stack:
 
     def reset(self):
         self.base_nn.reset()
-        self.stack_nn.reset()
+        str = self.stack_nn.reset()
         self.final_nn.reset()
+        return str
 
     def run(self, inputs):
         outputs = []
@@ -38,15 +39,40 @@ class Stack:
             outputs.append(output[0])
         return outputs
 
-    def _run(self, input):
-        if input.shape[1]<self.feture*self.attribute:
+    def _run(self, inputs):
+        if inputs.shape[1] < self.feture * self.attribute:
             raise Exception("data is too short {} vs {}".
-                            format(len(input), self.feture*self.attribute))
-        ref, _ = self.base_nn.run(input[:, -self.feture*self.attribute:])
-        for a in range(0, len(input), self.attribute):
-            ref = np.concatenate((ref, input[:, a:a+self.attribute]), axis=1)
-            ref, _ = self.stack_nn.run(ref)
-        return self.final_nn.run(ref)
+                            format(len(inputs), self.feture * self.attribute))
+        Zs = []
+        ref, Z = self.base_nn.run(inputs[:, -self.feture * self.attribute:])
+        Zs.append(Z)
+        for a in range(0, len(inputs), self.attribute):
+            ref = np.concatenate((ref, inputs[:, a:a + self.attribute]), axis=1)
+            ref, Z = self.stack_nn.run(ref)
+            Zs.append(Z)
+
+        output, Z = self.final_nn.run(ref)
+        Zs.append(Z)
+        return output, Zs
+
+    def train(self, inputs, outputs):
+        for a in range(len(inputs)):
+            self._train(inputs[a], outputs[a])
+
+    def _train(self, inputs, outputs):
+        predicts, Zs = self._run(inputs)
+        grad = outputs - predicts
+        loss = np.square(grad).sum()
+        self.backward(grad, Zs)
+
+        self.update_momentum()
+        for a in range(self.num_layers):
+            v2 = np.sqrt(self.g2_momentum[a]) + self.eps_stable
+            div = self.gradient_momentum[a]/v2
+
+            self.weights[a] += div * self.learning_rate
+
+        return loss
 
     def run_data(self, data):
         results = None
@@ -88,7 +114,7 @@ if __name__ == '__main__':
     feature_len = js['feature']
 
     reference = js["reference"]
-    base_nodes =  map(int, js["base_nodes"].split(','))
+    base_nodes = map(int, js["base_nodes"].split(','))
     stack_nodes = map(int, js["stack_nodes"].split(','))
     final_nodes = map(int, js["final_nodes"].split(','))
 
@@ -107,13 +133,12 @@ if __name__ == '__main__':
     loop = 4
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
-
     if renetFile is not None:
         with open(renetFile, 'r') as fp:
             stack = pickle.load(fp)
     else:
-        base_nn = NNN(feature_len*num_att, reference, base_nodes)
-        stack_nn = NNN(reference+num_att, reference, stack_nodes)
+        base_nn = NNN(feature_len * num_att, reference, base_nodes)
+        stack_nn = NNN(reference + num_att, reference, stack_nodes)
         final_nn = NNN(reference, num_output, final_nodes)
         stack = Stack(base_nn, stack_nn, final_nn, feature_len, num_att)
 
@@ -141,9 +166,9 @@ if __name__ == '__main__':
             tr_pre_data = tr.prepare_stack()
             while tr_pre_data:
                 for b in tr_pre_data:
-                    loss += nnn.train(b[0], b[1])
+                    loss += stack.train(b[0], b[1])
                 tr_pre_data = tr.get_next()
             # print t, loss
 
         with open(netFile, 'w') as fp:
-            pickle.dump(nnn, fp)
+            pickle.dump(stack, fp)
