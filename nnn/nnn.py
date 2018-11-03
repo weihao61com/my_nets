@@ -103,11 +103,16 @@ class NNN:
 
     def update_momentum(self):
         for a in range(self.num_layers):
+
+            d = self.D_weight[a]
+            sign = (d>0)*2-1
+            d0 = np.maximum(abs(d), 1e-6) * sign
+
             v1 = self.beta1 * self.gradient_momentum[a] \
-                + (1 - self.beta1) * self.D_weight[a]
+                + (1 - self.beta1) * d0
 
             v2 = self.beta2 * self.g2_momentum[a] \
-                 + (1 - self.beta2) * self.D_weight[a] * self.D_weight[a]
+                 + (1 - self.beta2) * d0 * d0
 
             #self.beta1T *= self.beta1
             #self.beta2T *= self.beta2
@@ -122,7 +127,7 @@ class NNN:
         p = self.gradient_momentum
         a = self.g2_momentum
         w = self.weights
-        output = '{0:.6f} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f} {7:.6f} {8:.6f} '. \
+        output = '{0} {1} {2} {3} {4} {5} {6:.6f} {7:.6f} {8:.6f} '. \
             format(p[0][1][10], p[1][10][21], p[2][15][0],
                    np.sqrt(a[0][1][10]), np.sqrt(a[1][10][21]), np.sqrt(a[2][15][0]),
                    w[0][1][10], w[1][10][21], w[2][15][0]

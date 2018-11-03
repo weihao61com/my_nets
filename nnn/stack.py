@@ -28,8 +28,8 @@ class Stack:
 
     def reset(self):
         self.base_nn.reset()
-        str = self.stack_nn.reset()
-        self.final_nn.reset()
+        self.stack_nn.reset()
+        str = self.final_nn.reset()
         return str
 
     def run(self, inputs):
@@ -46,14 +46,25 @@ class Stack:
         Zs = []
         ref, Z = self.base_nn.run(inputs[:, -self.feture * self.attribute:])
         Zs.append(Z)
-        for a in range(0, len(inputs), self.attribute):
+        for a in range(0, inputs.shape[1], self.attribute):
             ref = np.concatenate((ref, inputs[:, a:a + self.attribute]), axis=1)
             ref, Z = self.stack_nn.run(ref)
             Zs.append(Z)
+            break
 
         output, Z = self.final_nn.run(ref)
         Zs.append(Z)
         return output, Zs
+
+    def backward(self, grad, Zs):
+
+        grad = self.final_nn.backward(grad, Zs[-1], True)
+
+        for a in range(len(Zs)-2):
+            grad = self.stack_nn.backward(grad, Zs[-2-a], True)
+            grad = grad[:, :-self.attribute]
+
+        self.base_nn.backward(grad, Zs[0])
 
     def train(self, inputs, outputs):
         for a in range(len(inputs)):
@@ -63,15 +74,6 @@ class Stack:
         predicts, Zs = self._run(inputs)
         grad = outputs - predicts
         self.backward(grad, Zs)
-
-    def backward(self, grad, Zs):
-
-        grad = self.final_nn.backward(grad, Zs[-1])
-
-        for a in range(len(Zs)-2):
-            grad = self.stack_nn.backward(grad, Zs[-2-a])
-
-        self.final_nn.backward(grad, Zs[0])
 
     def run_data(self, data):
         results = None
@@ -112,10 +114,10 @@ if __name__ == '__main__':
     lr = js['lr']
     feature_len = js['feature']
 
-    reference = js["reference"]
-    base_nodes = map(int, js["base_nodes"].split(','))
-    stack_nodes = map(int, js["stack_nodes"].split(','))
-    final_nodes = map(int, js["final_nodes"].split(','))
+    reference = js["nodes_reference"]
+    base_nodes = map(int, js["nodes_base"].split(','))
+    stack_nodes = map(int, js["nodes_stack"].split(','))
+    final_nodes = map(int, js["nodes_final"].split(','))
 
     num_att = 4
     num_output = 3
@@ -129,7 +131,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 4
+    loop = 10
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     if renetFile is not None:
