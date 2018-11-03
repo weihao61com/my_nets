@@ -62,17 +62,16 @@ class Stack:
     def _train(self, inputs, outputs):
         predicts, Zs = self._run(inputs)
         grad = outputs - predicts
-        loss = np.square(grad).sum()
         self.backward(grad, Zs)
 
-        self.update_momentum()
-        for a in range(self.num_layers):
-            v2 = np.sqrt(self.g2_momentum[a]) + self.eps_stable
-            div = self.gradient_momentum[a]/v2
+    def backward(self, grad, Zs):
 
-            self.weights[a] += div * self.learning_rate
+        grad = self.final_nn.backward(grad, Zs[-1])
 
-        return loss
+        for a in range(len(Zs)-2):
+            grad = self.stack_nn.backward(grad, Zs[-2-a])
+
+        self.final_nn.backward(grad, Zs[0])
 
     def run_data(self, data):
         results = None
@@ -166,7 +165,7 @@ if __name__ == '__main__':
             tr_pre_data = tr.prepare_stack()
             while tr_pre_data:
                 for b in tr_pre_data:
-                    loss += stack.train(b[0], b[1])
+                    stack.train(b[0], b[1])
                 tr_pre_data = tr.get_next()
             # print t, loss
 

@@ -68,7 +68,7 @@ class NNN:
             self.g2_momentum.append(np.zeros(w.shape))
             self.D_weight.append(np.zeros(w.shape))
 
-    def backward(self, grad, Zs):
+    def backward(self, grad, Zs, with_grad=False):
         self.D_weight[-1] = Zs[-1].T.dot(grad)
         weigh_T = self.weights[-1].T
         for a in range(self.num_layers - 1):
@@ -78,19 +78,26 @@ class NNN:
             self.D_weight[-2 - a] = Zs[-2 - a].T.dot(grad)
             weigh_T = self.weights[-2 - a].T
 
-    def train(self, inputs, outputs):
-
-        predicts, Zs = self.run(inputs)
-        grad = outputs - predicts
-        loss = np.square(grad).sum()
-        self.backward(grad, Zs)
-
         self.update_momentum()
         for a in range(self.num_layers):
             v2 = np.sqrt(self.g2_momentum[a]) + self.eps_stable
             div = self.gradient_momentum[a] / v2
 
             self.weights[a] += div * self.learning_rate
+
+        if not with_grad:
+            return None
+
+        grad = grad.dot(weigh_T)
+        # grad = grad * self.active_function(Zs[-1 - a], True)
+        return grad[:, :-1]
+
+    def train(self, inputs, outputs):
+
+        predicts, Zs = self.run(inputs)
+        grad = outputs - predicts
+        loss = np.square(grad).sum()
+        self.backward(grad, Zs)
 
         return loss
 
