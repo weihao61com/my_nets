@@ -27,12 +27,13 @@ def relu(x, derivative=False):
 
 class NNN:
 
-    def __init__(self, input_dim, output_dim, layers):
+    def __init__(self, input_dim, output_dim, layers, final_layer_act=False):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.active_function = relu
+        self.active_function = sigmoid
         layers.append(output_dim)
         self.num_layers = len(layers)
+        self.final_act = final_layer_act
 
         self.weights = []
         self.D_weight = []
@@ -52,9 +53,7 @@ class NNN:
 
     def setup(self, lr):
         self.beta1 = 0.9
-        self.beta2 = 0.999
-        self.beta1T = 1.0
-        self.beta2T = 1.0
+        self.beta2 = 0.99
         self.eps_stable = 1e-8
 
         self.learning_rate = lr
@@ -69,13 +68,16 @@ class NNN:
             self.D_weight.append(np.zeros(w.shape))
 
     def backward(self, grad, Zs, with_grad=False):
-        self.D_weight[-1] = Zs[-1].T.dot(grad)
+        if self.final_act:
+            grad = grad * self.active_function(Zs[-1], True)
+
+        self.D_weight[-1] = Zs[-2].T.dot(grad)
         weigh_T = self.weights[-1].T
         for a in range(self.num_layers - 1):
             grad = grad.dot(weigh_T)
-            grad = grad * self.active_function(Zs[-1 - a], True)
+            grad = grad * self.active_function(Zs[-2 - a], True)
             grad = grad[:, :-1]
-            self.D_weight[-2 - a] = Zs[-2 - a].T.dot(grad)
+            self.D_weight[-2 - a] = Zs[-3 - a].T.dot(grad)
             weigh_T = self.weights[-2 - a].T
 
         self.update_momentum()
@@ -104,20 +106,15 @@ class NNN:
     def update_momentum(self):
         for a in range(self.num_layers):
 
-            d = self.D_weight[a]
-            sign = (d>0)*2-1
-            d0 = np.maximum(abs(d), 1e-6) * sign
+            d0 = self.D_weight[a]
+            #sign = (d>0)*2-1
+            #d0 = np.maximum(abs(d), 1e-6) * sign
 
             v1 = self.beta1 * self.gradient_momentum[a] \
                 + (1 - self.beta1) * d0
 
             v2 = self.beta2 * self.g2_momentum[a] \
                  + (1 - self.beta2) * d0 * d0
-
-            #self.beta1T *= self.beta1
-            #self.beta2T *= self.beta2
-            #v3 = v1/(1 - self.beta1T)
-            #v4 = v2/(1 - self.beta2T)
 
             self.gradient_momentum[a] = v1
             self.g2_momentum[a] = v2
@@ -133,21 +130,22 @@ class NNN:
                    w[0][1][10], w[1][10][21], w[2][15][0]
                    )
 
-        #self.D_weight = []
-        #for a in range(self.num_layers):
-        #    self.D_weight.append(np.zeros(self.weights[a].shape))
         return output
 
     def run(self, inputs):
-        Z = None
-        Zs = [add_1(inputs)]
+        Z = add_1(inputs)
+        Zs = [Z]
         for a in range(self.num_layers - 1):
-            A = Zs[a].dot(self.weights[a])
+            A = Z.dot(self.weights[a])
             Z = add_1(self.active_function(A))
             Zs.append(Z)
-        predicts = Z.dot(self.weights[-1])
 
-        return predicts, Zs
+        A = Z.dot(self.weights[-1])
+        if self.final_act:
+            A = self.active_function(A)
+
+        Zs.append(A)
+        return A, Zs
 
     def run_data(self, data):
         results = None

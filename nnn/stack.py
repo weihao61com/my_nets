@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 10
+    loop = 50
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     if renetFile is not None:
