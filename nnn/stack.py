@@ -21,10 +21,10 @@ class Stack:
         self.feture = feature
         self.attribute = attribute
 
-    def setup(self, lr):
-        self.base_nn.setup(lr)
-        self.stack_nn.setup(lr)
-        self.final_nn.setup(lr)
+    def setup(self, lr, init):
+        self.base_nn.setup(lr, init)
+        self.stack_nn.setup(lr, init)
+        self.final_nn.setup(lr, init)
 
     def reset(self):
         s1 = self.base_nn.reset()
@@ -67,13 +67,16 @@ class Stack:
         self.base_nn.backward(grad, Zs[0])
 
     def train(self, inputs, outputs):
+        loss = 0
         for a in range(len(inputs)):
-            self._train(inputs[a], outputs[a])
+            loss += self._train(inputs[a], outputs[a])
+        return loss
 
     def _train(self, inputs, outputs):
         predicts, Zs = self._run(inputs)
         grad = outputs - predicts
         self.backward(grad, Zs)
+        return (grad*grad).sum()
 
     def run_data(self, data):
         results = None
@@ -131,19 +134,21 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 10
+    loop = 1000
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     if renetFile is not None:
         with open(renetFile, 'r') as fp:
             stack = pickle.load(fp)
+        stack.setup(lr, False)
+
     else:
         base_nn = NNN(feature_len * num_att, reference, base_nodes, True)
         stack_nn = NNN(reference + num_att, reference, stack_nodes, True)
         final_nn = NNN(reference, num_output, final_nodes)
         stack = Stack(base_nn, stack_nn, final_nn, feature_len, num_att)
 
-    stack.setup(lr)
+        stack.setup(lr)
 
     t00 = datetime.datetime.now()
     str1 = ''
@@ -161,15 +166,23 @@ if __name__ == '__main__':
         print str + str1
         t00 = t1
 
+        lt0 = datetime.datetime.now()
+        loss = 0
+        length = 0
         for t in range(loop):
             str1 = stack.reset()
-            loss = 0
+
             tr_pre_data = tr.prepare_stack()
             while tr_pre_data:
                 for b in tr_pre_data:
-                    stack.train(b[0], b[1])
+                    loss += stack.train(b[0], b[1])
+                    length += len(b[0])
                 tr_pre_data = tr.get_next()
-            # print t, loss
+            if t%10 == 0:
+                print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
+                loss = 0
+                length = 0
+                lt0 = datetime.datetime.now()
 
         with open(netFile, 'w') as fp:
             pickle.dump(stack, fp)

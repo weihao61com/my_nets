@@ -51,21 +51,22 @@ class NNN:
             self.weights.append(w)
             number = layer + 1
 
-    def setup(self, lr):
+    def setup(self, lr, init=True):
         self.beta1 = 0.9
         self.beta2 = 0.99
         self.eps_stable = 1e-8
 
         self.learning_rate = lr
 
-        self.gradient_momentum = []
-        self.g2_momentum = []
-        self.D_weight = []
-        for a in range(self.num_layers):
-            w = self.weights[a]
-            self.gradient_momentum.append(np.zeros(w.shape))
-            self.g2_momentum.append(np.zeros(w.shape))
-            self.D_weight.append(np.zeros(w.shape))
+        if init:
+            self.gradient_momentum = []
+            self.g2_momentum = []
+            self.D_weight = []
+            for a in range(self.num_layers):
+                w = self.weights[a]
+                self.gradient_momentum.append(np.zeros(w.shape))
+                self.g2_momentum.append(np.zeros(w.shape))
+                self.D_weight.append(np.zeros(w.shape))
 
     def backward(self, grad, Zs, with_grad=False):
         if self.final_act:

@@ -3,12 +3,12 @@
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "stack",
-    "_retrain": "stack",
+    "retrain": "stack",
     "netTest": "stack",
-    "lr": 1e-5,
+    "lr": 1e-4,
     "feature": 20,
-    "nodes_reference": 128,
-    "nodes_base": "1024",
-    "nodes_stack": "1024",
-    "nodes_final": "256"
+    "nodes_reference": 32,
+    "nodes_base": "256",
+    "nodes_stack": "256",
+    "nodes_final": "64"
 }
