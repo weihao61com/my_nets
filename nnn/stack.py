@@ -27,10 +27,10 @@ class Stack:
         self.final_nn.setup(lr)
 
     def reset(self):
-        self.base_nn.reset()
-        self.stack_nn.reset()
-        str = self.final_nn.reset()
-        return str
+        s1 = self.base_nn.reset()
+        s2 = self.stack_nn.reset()
+        s3 = self.final_nn.reset()
+        return s1 + ' ' + s2 + ' ' + s3
 
     def run(self, inputs):
         outputs = []
@@ -131,15 +131,15 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 50
+    loop = 10
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     if renetFile is not None:
         with open(renetFile, 'r') as fp:
             stack = pickle.load(fp)
     else:
-        base_nn = NNN(feature_len * num_att, reference, base_nodes)
-        stack_nn = NNN(reference + num_att, reference, stack_nodes)
+        base_nn = NNN(feature_len * num_att, reference, base_nodes, True)
+        stack_nn = NNN(reference + num_att, reference, stack_nodes, True)
         final_nn = NNN(reference, num_output, final_nodes)
         stack = Stack(base_nn, stack_nn, final_nn, feature_len, num_att)
 
