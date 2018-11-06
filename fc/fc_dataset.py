@@ -196,11 +196,9 @@ class DataSet:
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            if rd:
-                np.random.shuffle(d)
             pre_data.append(self.create_bucket(d, num_output, multi))
-        #if rd:
-        #    np.random.shuffle(pre_data)
+        if rd:
+            np.random.shuffle(pre_data)
         return pre_data
 
     def create_bucket(self, data, num_output, multi):
