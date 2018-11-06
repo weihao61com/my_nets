@@ -127,7 +127,7 @@ class DataSet:
         self.sz = self.data[0][0][0].shape
         self.id = None
 
-    def get_next(self, rd=False, num_output=3):
+    def get_next(self, rd=True, num_output=3):
         self.load_next_data()
 
         if self.index == 0:
@@ -173,10 +173,9 @@ class DataSet:
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            np.random.shuffle(d)
             pre_data.append(self.create_stack(d, num_output))
-        #if rd:
-        #    np.random.shuffle(pre_data)
+        if rd:
+            np.random.shuffle(pre_data)
         return pre_data
 
 
