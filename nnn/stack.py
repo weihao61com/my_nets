@@ -35,8 +35,8 @@ class Stack:
     def run(self, inputs):
         outputs = []
         for a in inputs:
-            output, _ = self._run(a)
-            outputs.append(output[0])
+            output= self._run(a)
+            outputs.append(output[0][-1])
         return outputs
 
     def _run(self, inputs):
@@ -44,17 +44,26 @@ class Stack:
             raise Exception("data is too short {} vs {}".
                             format(len(inputs), self.feture * self.attribute))
         Zs = []
+        Zo = []
+        Zr = []
         ref, Z = self.base_nn.run(inputs[:, -self.feture * self.attribute:])
+        output, r = self.final_nn.run(ref)
+        Zo.append(output)
+        Zr.append(r)
         Zs.append(Z)
         for a in range(0, inputs.shape[1], self.attribute):
             ref = np.concatenate((ref, inputs[:, a:a + self.attribute]), axis=1)
             ref, Z = self.stack_nn.run(ref)
+            output, r = self.final_nn.run(ref)
+            Zo.append(output)
+            Zr.append(r)
             Zs.append(Z)
-            break
 
         output, Z = self.final_nn.run(ref)
+        Zo.append(output)
+        Zr.append(r)
         Zs.append(Z)
-        return output, Zs
+        return Zo, Zr, Zs
 
     def backward(self, grad, Zs):
 
@@ -73,8 +82,8 @@ class Stack:
         return loss
 
     def _train(self, inputs, outputs):
-        predicts, Zs = self._run(inputs)
-        grad = outputs - predicts
+        Zo, Zr, Zs = self._run(inputs)
+        grad = outputs - Zo[-1]
         self.backward(grad, Zs)
         return (grad*grad).sum()
 
@@ -84,7 +93,7 @@ class Stack:
 
         for b in data:
             inputs = b[0]
-            result = self.run(inputs)
+            result = self.run(inputs)[0]
             if results is None:
                 results = result
                 truth = b[1]
@@ -177,7 +186,7 @@ if __name__ == '__main__':
                     loss += stack.train(b[0], b[1])
                     length += len(b[0])
                 tr_pre_data = tr.get_next()
-            if t%10 == 0:
+            if t%1 == 0:
                 print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
                 loss = 0
                 length = 0

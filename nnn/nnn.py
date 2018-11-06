@@ -30,7 +30,7 @@ class NNN:
     def __init__(self, input_dim, output_dim, layers, final_layer_act=False):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.active_function = sigmoid
+        self.active_function = relu
         layers.append(output_dim)
         self.num_layers = len(layers)
         self.final_act = final_layer_act
@@ -125,7 +125,7 @@ class NNN:
         p = self.gradient_momentum
         a = self.g2_momentum
         w = self.weights
-        output = '{0:.6f} {1:.6f} {2:.6f}'. \
+        output = '{0} {1} {2:.6f}'. \
             format(p[0][1][2], np.sqrt(a[0][1][2]),
                w[0][1][2]
                )

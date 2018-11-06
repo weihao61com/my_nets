@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # ]
     cost = tf.multiply(diff, diff)
     step = tf.train.GradientDescentOptimizer(0.1).minimize(cost)
-    
+
     acct_mat = tf.equal(tf.argmax(a_2, 1), tf.argmax(y, 1))
     acct_res = tf.reduce_sum(tf.cast(acct_mat, tf.float32))
 

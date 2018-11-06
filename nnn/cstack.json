@@ -5,7 +5,7 @@
     "net": "stack",
     "_retrain": "stack",
     "netTest": "stack",
-    "lr": 1e-4,
+    "lr": 1e-6,
     "feature": 20,
     "nodes_reference": 32,
     "nodes_base": "256",
