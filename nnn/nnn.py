@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 20
+    loop = 1000
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len * sz_in[1]
@@ -228,15 +228,24 @@ if __name__ == '__main__':
         print str + str1
         t00 = t1
 
+        loss = 0
+        length = 0
+        lt0 = datetime.datetime.now()
+
         for t in range(loop):
             str1 = nnn.reset()
-            loss = 0
             tr_pre_data = tr.prepare(multi=1)
             while tr_pre_data:
                 for b in tr_pre_data:
                     loss += nnn.train(b[0], b[1])
+                    length += len(b[0])
+
                 tr_pre_data = tr.get_next()
-            # print t, loss
+            if t%10 == 0:
+                print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
+                loss = 0
+                length = 0
+                lt0 = datetime.datetime.now()
 
         tmp_file = netFile+'.tmp'
         with open(tmp_file, 'w') as fp:
