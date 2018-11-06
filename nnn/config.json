@@ -6,7 +6,7 @@
     "retrain": "heads",
     "netTest": "heads",
     "feature": 20,
-    "lr": 1e-4,
+    "lr": 1e-5,
     "num_output": 3,
-    "nodes": "1024, 128, 256"
+    "nodes": "256, 32, 256, 32, 64"
 }
