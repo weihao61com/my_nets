@@ -65,19 +65,21 @@ if __name__ == '__main__':
     d_w_1 = tf.matmul(tf.transpose(a_0), d_z_1)
 
     eta = tf.constant(0.001)
-    step = [
-        tf.assign(w_1,
-                  tf.subtract(w_1, tf.multiply(eta, d_w_1)))
-        , tf.assign(b_1,
-                    tf.subtract(b_1, tf.multiply(eta,
-                                                 tf.reduce_mean(d_b_1, axis=[0]))))
-        , tf.assign(w_2,
-                    tf.subtract(w_2, tf.multiply(eta, d_w_2)))
-        , tf.assign(b_2,
-                    tf.subtract(b_2, tf.multiply(eta,
-                                                 tf.reduce_mean(d_b_2, axis=[0]))))
-    ]
-
+    # step = [
+    #     tf.assign(w_1,
+    #               tf.subtract(w_1, tf.multiply(eta, d_w_1)))
+    #     , tf.assign(b_1,
+    #                 tf.subtract(b_1, tf.multiply(eta,
+    #                                              tf.reduce_mean(d_b_1, axis=[0]))))
+    #     , tf.assign(w_2,
+    #                 tf.subtract(w_2, tf.multiply(eta, d_w_2)))
+    #     , tf.assign(b_2,
+    #                 tf.subtract(b_2, tf.multiply(eta,
+    #                                              tf.reduce_mean(d_b_2, axis=[0]))))
+    # ]
+    cost = tf.multiply(diff, diff)
+    step = tf.train.GradientDescentOptimizer(0.1).minimize(cost)
+    
     acct_mat = tf.equal(tf.argmax(a_2, 1), tf.argmax(y, 1))
     acct_res = tf.reduce_sum(tf.cast(acct_mat, tf.float32))
 
@@ -87,12 +89,12 @@ if __name__ == '__main__':
     dt = 0
     for i in xrange(500000):
         #batch_i, batch_xs, batch_ys = next(di)
-        batch_xs, batch_ys = mnist.train.next_batch(10)
+        batch_xs, batch_ys = mnist.train.next_batch(5000)
         t0 = datetime.datetime.now()
         sess.run(step, feed_dict={a_0: batch_xs,
                                   y: batch_ys})
         dt += (datetime.datetime.now() - t0).microseconds
-        if i % 10000 == 0:
+        if i % 100 == 0:
             res = sess.run(acct_res, feed_dict=
             {a_0: mnist.test.images[:1000],
              y: mnist.test.labels[:1000]})
