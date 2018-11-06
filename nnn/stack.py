@@ -147,8 +147,7 @@ if __name__ == '__main__':
         stack_nn = NNN(reference + num_att, reference, stack_nodes, True)
         final_nn = NNN(reference, num_output, final_nodes)
         stack = Stack(base_nn, stack_nn, final_nn, feature_len, num_att)
-
-        stack.setup(lr)
+        stack.setup(lr, True)
 
     t00 = datetime.datetime.now()
     str1 = ''
