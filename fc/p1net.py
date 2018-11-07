@@ -59,12 +59,14 @@ class P1Net:
     def train(self, data, truth):
         truth = truth.reshape((1, len(truth)))
         feed = {self.input1: data[:, :self.data_len], self.output1: truth}
-        _, reference = sess.run([self.opt1, self.reference1], feed_dict=feed)
+        #_, reference = sess.run([self.opt1, self.reference1], feed_dict=feed)
+        reference = sess.run(self.reference1, feed_dict=feed)
 
         for d in range(self.data_len, len(data), self.att):
             input_data = np.concatenate((reference, data[d:d+self.att]))
             feed = {self.input2: input_data, self.output2: truth}
             _, reference = sess.run([self.opt2, self.reference2], feed_dict=feed)
+            break
 
     def run(self, data):
         # print data.shape
@@ -74,10 +76,11 @@ class P1Net:
         for d in range(self.data_len, data_length, self.att):
             input_data = np.concatenate((reference, data[:, d:d+self.att]), axis=1)
             feed = {self.input2: input_data}
-            if d+self.att == data_length:
-                reference = sess.run(self.xy2, feed_dict=feed)
-            else:
-                reference = sess.run(self.reference2, feed_dict=feed)
+            #if d+self.att == data_length:
+            reference = sess.run(self.xy2, feed_dict=feed)
+            break
+            #else:
+            #    reference = sess.run(self.reference2, feed_dict=feed)
 
         return reference1, reference
 
@@ -138,7 +141,7 @@ if __name__ == '__main__':
 
     att = te.sz[1]
     iterations = 100000
-    loop = 2
+    loop = 20
     print "input shape", att, "LR", lr, 'feature', feature_len
 
     net =P1Net(nodes1, nodes2, nodes3, att, num_output, feature_len, lr)
