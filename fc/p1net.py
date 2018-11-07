@@ -59,11 +59,11 @@ class P1Net:
     def train(self, data, truth):
         truth = truth.reshape((1, len(truth)))
         feed = {self.input1: data[:, :self.data_len], self.output1: truth}
-        #_, reference = sess.run([self.opt1, self.reference1], feed_dict=feed)
-        reference = sess.run(self.reference1, feed_dict=feed)
+        _, reference = sess.run([self.opt1, self.reference1], feed_dict=feed)
+        # reference = sess.run(self.reference1, feed_dict=feed)
 
-        for d in range(self.data_len, len(data), self.att):
-            input_data = np.concatenate((reference, data[d:d+self.att]))
+        for d in range(self.data_len, data.shape[1], self.att):
+            input_data = np.concatenate((reference, data[:, d:d+self.att]), axis=1)
             feed = {self.input2: input_data, self.output2: truth}
             _, reference = sess.run([self.opt2, self.reference2], feed_dict=feed)
             break

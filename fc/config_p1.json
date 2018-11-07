@@ -2,13 +2,12 @@
     "batch_size": 1,
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
-    "net": "heads",
-    "retrain": "heads",
+    "net": "heads_p1",
+    "_retrain": "heads_p1",
     "netTest": "heads",
     "feature": 40,
     "lr": 1e-5,
     "nodes1": "1024, 128",
     "nodes2": "32",
     "nodes3": "512"
-
 }

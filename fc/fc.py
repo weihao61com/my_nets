@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "iteration: {} {} {} {} {} time {}".format(
-                a*loop/1000, total_loss, te_loss,
+                a*loop/1000.0, total_loss, te_loss,
                 tr_median, te_median, t1 - t00)
             print str, st1
             t00 = t1
