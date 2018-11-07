@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 100
+    loop = 400
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             saver.restore(sess, renetFile)
 
         t00 = datetime.datetime.now()
-
+        st1 = ''
         for a in range(iterations):
 
             tr_pre_data = tr.prepare(num_output=num_output, multi=1)
@@ -91,18 +91,23 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "iteration: {} {} {} {} {} time {}".format(
-                a*loop, total_loss, te_loss,
+                a*loop/1000, total_loss, te_loss,
                 tr_median, te_median, t1 - t00)
-            print str
+            print str, st1
             t00 = t1
 
+            t_loss = 0
+            t_count = 0
             for _ in range(loop):
                 tr_pre_data = tr.prepare(num_output=num_output, multi=1) #.get()
                 while tr_pre_data:
                     for b in tr_pre_data:
                         feed = {input: b[0], output: b[1]}
-                        sess.run(opt, feed_dict=feed)
+                        _, A = sess.run([opt, loss], feed_dict=feed)
+                        t_loss += A
+                        t_count += len(b[0])
                     tr_pre_data = tr.get_next()
+                st1 = '{}'.format(t_loss/t_count)
 
             saver.save(sess, netFile)
 
