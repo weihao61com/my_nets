@@ -8,6 +8,27 @@ from utils import Utils
 from o2_load import *
 from network import Network
 
+
+class P1Net(Network):
+
+    def setup(self):
+        pass
+
+    def real_setup(self, nodes1, nodes2):
+        self.feed('input')
+        for a in range(len(nodes1) - 1):
+            name = 'fc1_{}'.format(a)
+            self.fc(nodes1[a], name=name)
+        self.fc(nodes1[-1], relu=False, name='reference')
+
+        for a in range(len(nodes2) - 1):
+            name = 'fc2_{}'.format(a)
+            self.fc(nodes2[a], name=name)
+        self.fc(nodes2[-1], relu=False, name='output')
+
+        print("number of layers = {} {} {}".format(len(self.layers), nodes1, nodes2))
+
+
 class sNet3(Network):
 
     def setup(self):

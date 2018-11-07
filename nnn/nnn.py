@@ -30,7 +30,7 @@ class NNN:
     def __init__(self, input_dim, output_dim, layers, final_layer_act=False):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.active_function = relu
+        self.active_function = sigmoid
         layers.append(output_dim)
         self.num_layers = len(layers)
         self.final_act = final_layer_act
@@ -69,6 +69,7 @@ class NNN:
                 self.D_weight.append(np.zeros(w.shape))
 
     def backward(self, grad, Zs, with_grad=False):
+        n1 =  np.linalg.norm(grad)
         if self.final_act:
             grad = grad * self.active_function(Zs[-1], True)
 
@@ -91,9 +92,10 @@ class NNN:
         if not with_grad:
             return None
 
-        grad = grad.dot(weigh_T)
+        grad = grad.dot(weigh_T)[:, :-1]
         # grad = grad * self.active_function(Zs[-1 - a], True)
-        return grad[:, :-1]
+        # print n1, np.linalg.norm(grad)
+        return grad
 
     def train(self, inputs, outputs):
 
@@ -125,9 +127,9 @@ class NNN:
         p = self.gradient_momentum
         a = self.g2_momentum
         w = self.weights
-        output = '{0} {1} {2:.6f}'. \
-            format(p[0][1][2], np.sqrt(a[0][1][2]),
-               w[0][1][2]
+        output = '{0} {1} {2:.6f} {3} {4} {5:.6f}'. \
+            format(p[0][1][2], np.sqrt(a[0][1][2]), w[0][1][2],
+                   p[1][1][2], np.sqrt(a[1][1][2]), w[1][1][2]
                )
 
         return output
@@ -198,7 +200,7 @@ if __name__ == '__main__':
 
     sz_in = te_set.sz
     iterations = 10000
-    loop = 1000
+    loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len * sz_in[1]
@@ -241,11 +243,11 @@ if __name__ == '__main__':
                     length += len(b[0])
 
                 tr_pre_data = tr.get_next()
-            if t%10 == 0:
-                print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
-                loss = 0
-                length = 0
-                lt0 = datetime.datetime.now()
+            #if t%10 == 0:
+            #    print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
+            #    loss = 0
+            #    length = 0
+            #    lt0 = datetime.datetime.now()
 
         tmp_file = netFile+'.tmp'
         with open(tmp_file, 'w') as fp:

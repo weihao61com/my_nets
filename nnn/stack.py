@@ -59,33 +59,30 @@ class Stack:
             Zr.append(r)
             Zs.append(Z)
 
-        output, Z = self.final_nn.run(ref)
-        Zo.append(output)
-        Zr.append(r)
-        Zs.append(Z)
         return Zo, Zr, Zs
 
-    def backward(self, grad, Zs):
+    def _train(self, inputs, outputs):
+        Zo, Zr, Zs = self._run(inputs)
+        grad = outputs - Zo[-1]
+        self.backward(grad, Zr[-1], Zs, Zs[0])
+        return (grad*grad).sum()
 
-        grad = self.final_nn.backward(grad, Zs[-1], True)
+    def backward(self, grad, Z0, Zs, Zfinal):
+
+        grad = self.final_nn.backward(grad, Z0, True)
 
         for a in range(len(Zs)-2):
-            grad = self.stack_nn.backward(grad, Zs[-2-a], True)
+            grad = self.stack_nn.backward(grad, Zs[-1-a], True)
             grad = grad[:, :-self.attribute]
 
-        self.base_nn.backward(grad, Zs[0])
+        print np.linalg.norm(grad)
+        self.base_nn.backward(grad, Zfinal)
 
     def train(self, inputs, outputs):
         loss = 0
         for a in range(len(inputs)):
             loss += self._train(inputs[a], outputs[a])
         return loss
-
-    def _train(self, inputs, outputs):
-        Zo, Zr, Zs = self._run(inputs)
-        grad = outputs - Zo[-1]
-        self.backward(grad, Zs)
-        return (grad*grad).sum()
 
     def run_data(self, data):
         results = None
@@ -161,18 +158,18 @@ if __name__ == '__main__':
     t00 = datetime.datetime.now()
     str1 = ''
     for a in range(iterations):
-        tr_pre_data = tr.prepare_stack()
-        total_loss, tr_median = stack.run_data(tr_pre_data)
-
-        te_pre_data = te_set.prepare_stack()
-        te_loss, te_median = stack.run_data(te_pre_data)
-
-        t1 = datetime.datetime.now()
-        str = "iteration: {0} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5} ".format(
-            a * loop, total_loss, te_loss,
-            tr_median, te_median, t1 - t00)
-        print str + str1
-        t00 = t1
+        # tr_pre_data = tr.prepare_stack()
+        # total_loss, tr_median = stack.run_data(tr_pre_data)
+        #
+        # te_pre_data = te_set.prepare_stack()
+        # te_loss, te_median = stack.run_data(te_pre_data)
+        #
+        # t1 = datetime.datetime.now()
+        # str = "iteration: {0} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5} ".format(
+        #     a * loop, total_loss, te_loss,
+        #     tr_median, te_median, t1 - t00)
+        # print str + str1
+        # t00 = t1
 
         lt0 = datetime.datetime.now()
         loss = 0
