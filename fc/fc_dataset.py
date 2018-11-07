@@ -217,15 +217,25 @@ class DataSet:
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            pre_data.append(self.create_bucket(d, num_output, multi))
-        if rd:
-            np.random.shuffle(pre_data)
+            data = self.create_bucket(d, num_output, multi)
+            if rd:
+                np.random.shuffle(data)
+            ins = []
+            outs = []
+            ids = []
+            for a in data:
+                ins.append(a[0])
+                outs.append(a[1])
+                ids.append(a[2])
+            dd = (np.array(ins), np.array(outs), ids)
+            pre_data.append(dd)
+
         return pre_data
 
     def create_bucket(self, data, num_output, multi):
         outputs = []
-        inputs = []
-        ids = []
+        #inputs = []
+        #ids = []
         sz_in = data[0][0].shape
 
         for d in data:
@@ -241,12 +251,12 @@ class DataSet:
             for a in range(0, len(input), self.nPar):
                 it = input[a:a+self.nPar]
                 truth = d[1][:num_output]
-                inputs.append(it.reshape(self.nPar * sz_in[1]))
-                outputs.append(truth.reshape(num_output))
-                ids.append(self.id)
+                output = (it.reshape(self.nPar * sz_in[1]), truth.reshape(num_output), self.id)
+                outputs.append(output)
+
             self.id += 1
 
-        return np.array(inputs), np.array(outputs), ids
+        return outputs
 
     def create_bucket_cnn(self, data, num_output):
         outputs = []
