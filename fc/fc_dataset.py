@@ -9,22 +9,22 @@ from o2_load import *
 from network import Network
 
 
-class P1Net(Network):
+class P1Net1(Network):
 
     def setup(self):
         pass
 
-    def real_setup(self, nodes1, nodes2):
-        self.feed('input')
+    def real_setup(self, nodes1, nodes2, post):
+        self.feed('input_{}'.format(post))
         for a in range(len(nodes1) - 1):
-            name = 'fc1_{}'.format(a)
+            name = 'fc1_{}_{}'.format(post, a)
             self.fc(nodes1[a], name=name)
-        self.fc(nodes1[-1], relu=False, name='reference')
+        self.fc(nodes1[-1], relu=False, name='reference_{}'.format(post))
 
         for a in range(len(nodes2) - 1):
-            name = 'fc2_{}'.format(a)
+            name = 'fc2_{}_{}'.format(post, a)
             self.fc(nodes2[a], name=name)
-        self.fc(nodes2[-1], relu=False, name='output')
+        self.fc(nodes2[-1], relu=False, name='output_{}'.format(post))
 
         print("number of layers = {} {} {}".format(len(self.layers), nodes1, nodes2))
 
@@ -206,7 +206,7 @@ class DataSet:
         for d in data:
             sz = d[0].shape
             if sz[0]<self.nPar:
-                d = np.concatenate((d,d))
+                d[0] = np.concatenate((d[0],d[0]))
                 sz = d[0].shape
             truth = d[1][:num_output]
             inputs.append(d[0].reshape(1, sz[0] * sz[1]))
