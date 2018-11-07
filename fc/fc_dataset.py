@@ -199,13 +199,15 @@ class DataSet:
             np.random.shuffle(pre_data)
         return pre_data
 
-
     def create_stack(self, data, num_output):
         outputs = []
         inputs = []
 
         for d in data:
             sz = d[0].shape
+            if sz[0]<self.nPar:
+                d = np.concatenate((d,d))
+                sz = d[0].shape
             truth = d[1][:num_output]
             inputs.append(d[0].reshape(1, sz[0] * sz[1]))
             outputs.append(truth.reshape(num_output))

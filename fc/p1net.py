@@ -1,8 +1,9 @@
 import sys
-from fc_dataset import *
+from fc_dataset import DataSet, P1Net
 import tensorflow as tf
 import datetime
 import os
+import numpy as np
 
 sys.path.append('..')
 from utils import Utils
@@ -10,6 +11,25 @@ from utils import Utils
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
     HOME = '/Users/weihao/Projects/'
+
+
+def run_data(data, inputs, sess, xy, att):
+    results = None
+    truth = None
+
+    for b in data:
+        for a in range(len(b[0])):
+            feed = {inputs: b[0][a][:, :att]}
+            result = sess.run(xy, feed_dict=feed)
+            if results is None:
+                results = result
+                truth = b[1][a].reshape((1,len(b[1][a])))
+            else:
+                results = np.concatenate((results, result))
+                truth = np.concatenate((truth, b[1][a].reshape((1,len(b[1][a])))))
+
+    return Utils.calculate_loss(results, truth)
+
 
 if __name__ == '__main__':
 
@@ -42,15 +62,16 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/p1'
 
-    tr = DataSet(tr_data, batch_size, feature_len, npar=feature_len+1)
-    te = DataSet(te_data, batch_size, feature_len, npar=feature_len+1)
+    tr = DataSet(tr_data, batch_size, feature_len+1)
+    te = DataSet(te_data, batch_size, feature_len+1)
 
-    sz_in = te.sz
-    iterations = 10000
+    att = te.sz[1]
+    iterations = 100000
     loop = 10
-    print "input shape", sz_in, "LR", lr, 'feature', feature_len
+    print "input shape", att, "LR", lr, 'feature', feature_len
+    att *= feature_len
 
-    input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
+    input = tf.placeholder(tf.float32, [None, att])
     output = tf.placeholder(tf.float32, [None, num_output])
 
     net =P1Net({'input': input})
@@ -77,10 +98,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare_stack()
-            total_loss, tr_median = run_data(tr_pre_data, input, sess, xy)
+            total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, att)
 
             te_pre_data = te.prepare_stack()
-            te_loss, te_median = run_data(te_pre_data, input, sess, xy)
+            te_loss, te_median = run_data(te_pre_data, input, sess, xy, att)
 
             t1 = datetime.datetime.now()
             str = "iteration: {} {} {} {} {} time {}".format(
@@ -93,8 +114,10 @@ if __name__ == '__main__':
                 tr_pre_data = tr.prepare_stack()
                 while tr_pre_data:
                     for b in tr_pre_data:
-                        feed = {input: b[0], output: b[1]}
-                        sess.run(opt, feed_dict=feed)
+                        for a in range(len(b[0])):
+                            feed = {input: b[0][a][:, :att],
+                                    output: b[1][a].reshape((1,len(b[1][a])))}
+                            sess.run(opt, feed_dict=feed)
                     tr_pre_data = tr.get_next()
 
             saver.save(sess, netFile)
