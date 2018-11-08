@@ -194,14 +194,15 @@ class DataSet:
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            pre_data.append(self.create_stack(d, num_output))
-        if rd:
-            np.random.shuffle(pre_data)
+            data = self.create_stack(d, num_output)
+            if rd:
+                np.random.shuffle(data)
+            pre_data.append(data)
+
         return pre_data
 
     def create_stack(self, data, num_output):
         outputs = []
-        inputs = []
 
         for d in data:
             sz = d[0].shape
@@ -209,10 +210,11 @@ class DataSet:
                 d[0] = np.concatenate((d[0],d[0]))
                 sz = d[0].shape
             truth = d[1][:num_output]
-            inputs.append(d[0].reshape(1, sz[0] * sz[1]))
-            outputs.append(truth.reshape(num_output))
+            d0 = d[0][:self.nPar-1].reshape((self.nPar-1) * sz[1])
+            d1 = d[0][self.nPar-1:]
+            outputs.append([d0, d1, truth])
 
-        return inputs, outputs
+        return outputs
 
     def prepare(self, rd=True, num_output=3, multi=1):
         pre_data = []
