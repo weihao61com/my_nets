@@ -76,30 +76,30 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack, verbose = True):
+    def real_setup(self, stack, verbose=True):
         self.parameters(stack)
 
         # base net
         (self.feed('input0').
          fc(256, name='fc0').
          fc(self.dim_ref, name='fc2')
-         #.fc(self.dim_output, relu=False, name='output0')
+         # .fc(self.dim_output, relu=False, name='output0')
          )
 
         ref_out_name = 'fc2'
         for a in range(self.stack):
-            input_name = 'input{}'.format(a+1)
+            input_name = 'input{}'.format(a + 1)
             ic_name = 'ic{}_in'.format(a)
             ifc0_name = 'ifc0{}_in'.format(a)
             ifc1_name = 'ifc1{}_in'.format(a)
             ifc2_name = 'ifc2{}_in'.format(a)
-            output_name = 'output{}'.format(a+1)
+            output_name = 'output{}'.format(a + 1)
 
             (self.feed(input_name, ref_out_name)
              .concat(1, name=ic_name)
              .fc_w(name=ifc0_name,
-                  weights=self.weights0,
-                  biases=self.biases0)
+                   weights=self.weights0,
+                   biases=self.biases0)
              .fc_w(name=ifc1_name,
                    weights=self.weights1,
                    biases=self.biases1)
@@ -123,6 +123,7 @@ class StackNet(Network):
             for l in sorted(self.layers.keys()):
                 print l, self.layers[l].get_shape()
 
+
 def _reshuffle(data):
     np.random.shuffle(data[0])
 
@@ -133,12 +134,13 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, batch_size=500, npar=50, cache=True):
+    def __init__(self, dataset, batch_size=500, npar=50, cache=True, nadd=0):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
         self.batch_size = batch_size
         self.nPar = npar
+        self.nAdd = nadd
         self.data = None
         self.verbose = True
         self.cache = cache
@@ -158,7 +160,7 @@ class DataSet:
     def load_next_data(self):
         self.bucket = 0
 
-        if len(self.dataset)==1 and self.index==0:
+        if len(self.dataset) == 1 and self.index == 0:
             return
 
         self.index += 1
@@ -176,8 +178,8 @@ class DataSet:
         self.data = []
         for a in range(0, len(data), self.batch_size):
             b = a + self.batch_size
-            if b>len(data):
-                b=len(data)
+            if b > len(data):
+                b = len(data)
             self.data.append(data[a:b])
 
     def prepare_cnn(self, rd=False, num_output=3):
@@ -206,12 +208,12 @@ class DataSet:
 
         for d in data:
             sz = d[0].shape
-            if sz[0]<self.nPar:
-                d[0] = np.concatenate((d[0],d[0]))
+            if sz[0] < self.nPar + self.nAdd:
+                d[0] = np.concatenate((d[0], d[0]))
                 sz = d[0].shape
             truth = d[1][:num_output]
-            d0 = d[0][:self.nPar-1].reshape((self.nPar-1) * sz[1])
-            d1 = d[0][self.nPar-1:]
+            d0 = d[0][:self.nPar].reshape(self.nPar * sz[1])
+            d1 = d[0][self.nPar:]
             outputs.append([d0, d1, truth])
 
         return outputs
@@ -238,22 +240,22 @@ class DataSet:
 
     def create_bucket(self, data, num_output, multi):
         outputs = []
-        #inputs = []
-        #ids = []
+        # inputs = []
+        # ids = []
         sz_in = data[0][0].shape
 
         for d in data:
             input = d[0]
-            if multi>0:
-                num = multi# *int(np.ceil(len(input)/float(self.nPar)))
+            if multi > 0:
+                num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
                 num = int(np.ceil(len(input) / float(self.nPar)))
-            length = num*self.nPar
-            while len(input) < length: #self.nPar:
-                input= np.concatenate((input, input))
+            length = num * (self.nPar + self.nAdd)
+            while len(input) < length:
+                input = np.concatenate((input, input))
             input = input[:length]
             for a in range(0, len(input), self.nPar):
-                it = input[a:a+self.nPar]
+                it = input[a:a + self.nPar]
                 truth = d[1][:num_output]
                 output = (it.reshape(self.nPar * sz_in[1]), truth.reshape(num_output), self.id)
                 outputs.append(output)
@@ -270,7 +272,7 @@ class DataSet:
         for d in data:
             input = d[0]
             while len(input) < self.nPar:
-                input= np.concatenate((input, input))
+                input = np.concatenate((input, input))
             input = input[:self.nPar]
             truth = d[1][:num_output]
             inputs.append(input.reshape((self.nPar, sz_in[1], 1)))
@@ -282,10 +284,10 @@ class DataSet:
         from multiprocessing.pool import ThreadPool
         import multiprocessing
 
-        #pool = ThreadPool(multiprocessing.cpu_count() - 2)
-        #pool.map(_reshuffle_b, self.data)
-        #pool.close()
-        #pool.join()
+        # pool = ThreadPool(multiprocessing.cpu_count() - 2)
+        # pool.map(_reshuffle_b, self.data)
+        # pool.close()
+        # pool.join()
 
         for bucket in self.data:
             _reshuffle_b(bucket)
@@ -302,7 +304,7 @@ class DataSet:
                 input_p, output_p = next(data_gen, (None, None))
                 if input_p is None:
                     break
-                inputs.append(input_p.reshape(self.nPar*sz_in[1]))
+                inputs.append(input_p.reshape(self.nPar * sz_in[1]))
                 outputs.append(output_p.reshape(num_output))
 
             pre_data.append((inputs, outputs))
@@ -311,21 +313,21 @@ class DataSet:
         return pre_data
 
     def gen_data(self, nPar, num_output):
-        #np.random.seed()
+        # np.random.seed()
         indices = range(len(self.data[self.bucket]))
 
         for a in indices:
             input0 = []
-            while nPar>len(input0):
+            while nPar > len(input0):
                 input = self.data[self.bucket][a][0]
                 np.random.shuffle(input)
-                if len(input0)==0:
-                    if nPar<len(input):
+                if len(input0) == 0:
+                    if nPar < len(input):
                         input0 = input[:nPar]
                     else:
                         input0 = input
                 else:
-                    if len(input)+len(input0)>nPar:
+                    if len(input) + len(input0) > nPar:
                         dl = nPar - len(input0)
                         input0 = np.concatenate((input0, input[:dl, :]))
                     else:
@@ -391,17 +393,19 @@ def get_queue_not(tr, pool):
 
     return queue
 
+
 def cal_diff(t, r):
     r = np.array(r)
     mm = np.median(r, 0)
-    #ss = np.std(r, 1)
-    #d0 = t[0]-mm[0]
-    #d1 = t[1]-mm[1]
+    # ss = np.std(r, 1)
+    # d0 = t[0]-mm[0]
+    # d1 = t[1]-mm[1]
     dd = np.linalg.norm(t - mm)
-    dd = dd*dd
+    dd = dd * dd
     # dd = dd*dd
 
     return dd, mm
+
 
 class sNet1(Network):
 
@@ -425,6 +429,7 @@ class sNet3_2(Network):
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
+
 class sNet3_stage(Network):
 
     def setup(self):
@@ -435,6 +440,7 @@ class sNet3_stage(Network):
          fc(3, relu=False, name='output_stage'))
 
         print("number of layers (stage) = {} {}".format(len(self.layers), nodes))
+
 
 class cNet(Network):
 
@@ -455,10 +461,10 @@ def run_data_stack(data, inputs, sess, xy, stack):
     truth = None
 
     for b in data:
-        length = b[0].shape[1] - 4*stack
-        feed = {inputs['input0']: b[0][:, :length] }
+        length = b[0].shape[1] - 4 * stack
+        feed = {inputs['input0']: b[0][:, :length]}
         for a in range(stack):
-            feed[inputs['input{}'.format(a+1)]] = b[0][:, length+4*a:length+4*(a+1)]
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
         result = []
         for a in range(stack):
             r = sess.run(xy[a], feed_dict=feed)
@@ -477,10 +483,10 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
     rst_dic = {}
     truth_dic = {}
     for b in data:
-        length = b[0].shape[1] - 4*stack
-        feed = {inputs['input0']: b[0][:, :length] }
+        length = b[0].shape[1] - 4 * stack
+        feed = {inputs['input0']: b[0][:, :length]}
         for a in range(stack):
-            feed[inputs['input{}'.format(a+1)]] = b[0][:, length+4*a:length+4*(a+1)]
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
         result = []
         for a in range(stack):
             r = sess.run(xy[a], feed_dict=feed)
@@ -489,14 +495,14 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
         for a in range(len(b[2])):
             if not b[2][a] in rst_dic:
                 rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:,a,:])
+            rst_dic[b[2][a]].append(result[:, a, :])
             truth_dic[b[2][a]] = b[1][a]
 
     results = []
     truth = []
 
     filename = '/home/weihao/tmp/test.csv'
-    if sys.platform=='darwin':
+    if sys.platform == 'darwin':
         filename = '/Users/weihao/tmp/test.csv'
     fp = open(filename, 'w')
     for id in rst_dic:
@@ -506,8 +512,8 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
         truth.append(truth_dic[id])
         t = truth_dic[id]
         if random.random() < 0.2:
-            r = np.linalg.norm(t-result)
-            mm = result[stack-1]
+            r = np.linalg.norm(t - result)
+            mm = result[stack - 1]
             fp.write('{},{},{},{},{},{},{}\n'.
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
     fp.close()
@@ -547,7 +553,7 @@ def run_stage_data(data,
     stage_result = {}
 
     for b in data:
-        feed = {inputs: b[0][:, :-stage_dup*num_att]}
+        feed = {inputs: b[0][:, :-stage_dup * num_att]}
         result = sess.run(xy, feed_dict=feed)
         if results is None:
             results = result
@@ -557,12 +563,12 @@ def run_stage_data(data,
             truth = np.concatenate((truth, b[1]))
 
         fc_input = sess.run(xy_fc2, feed_dict=feed)
-        start = b[0].shape[1] - stage_dup*num_att
+        start = b[0].shape[1] - stage_dup * num_att
         for evt in range(stage_dup):
             if not evt in stage_result:
                 stage_result[evt] = None
             input_array = np.concatenate(
-                (fc_input, b[0][:, start + evt*num_att: start + (evt+1) * num_att]), axis=1)
+                (fc_input, b[0][:, start + evt * num_att: start + (evt + 1) * num_att]), axis=1)
             r = sess.run(xy_stage, feed_dict={stage_input: input_array})
             fc_input = sess.run(st_fc2, feed_dict={stage_input: input_array})
             if stage_result[evt] is None:

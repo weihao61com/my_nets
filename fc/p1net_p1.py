@@ -27,7 +27,7 @@ class P1Net:
         self.output1 = tf.placeholder(tf.float32, [None, num_output])
         #self.reference1 = tf.placeholder(tf.float32, [None, num_ref])
 
-        self.input2 = tf.placeholder(tf.float32, [None, att+num_ref])
+        self.input2 = tf.placeholder(tf.float32, [None, 2*att+num_ref])
         self.output2 = tf.placeholder(tf.float32, [None, num_output])
         #self.reference2 = tf.placeholder(tf.float32, [None, num_ref])
         self.learning_rate = tf.placeholder(tf.float32)
@@ -68,14 +68,13 @@ class P1Net:
         for d in data:
             truth.append(d[2])
             input_data.append(d[0])
-            id.append(d[1][0])
+            id.append(d[1][:2].reshape(8))
 
         truth = np.array(truth)
         input_data = np.array(input_data)
         id = np.array(id)
 
         feed = {self.input1: input_data, self.output1: truth}
-        loss1 = 0
         _, loss1, reference = sess.run([self.opt1, self.loss1, self.reference1], feed_dict=feed)
 
         input_data = np.concatenate((reference, id), axis=1)
@@ -99,8 +98,12 @@ class P1Net:
 
         id = []
         #it = []
+        length = None
         for d in data:
-            id.append(d[1][0])
+            ds = d[1][:2]
+            if length is None:
+                length = ds.size
+            id.append(ds.reshape(length))
             #ts = d[2]
             #it.append(ts)
         ref = reference
@@ -168,8 +171,8 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/p1'
 
-    tr = DataSet(tr_data, batch_size, feature_len+1)
-    te = DataSet(te_data, batch_size, feature_len+1)
+    tr = DataSet(tr_data, batch_size, feature_len, nadd=2)
+    te = DataSet(te_data, batch_size, feature_len, nadd=2)
 
     att = te.sz[1]
     iterations = 100000
