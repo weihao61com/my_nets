@@ -218,12 +218,13 @@ class DataSet:
 
         return outputs
 
-    def prepare(self, rd=True, num_output=3, multi=1):
+    def prepare(self, rd=True, num_output=3, multi=1, rdd=True, idx=0):
         pre_data = []
-        self.reshuffle_data()
+        if rdd:
+            self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            data = self.create_bucket(d, num_output, multi)
+            data = self.create_bucket(d, num_output, multi, idx)
             if rd:
                 np.random.shuffle(data)
             ins = []
@@ -238,7 +239,7 @@ class DataSet:
 
         return pre_data
 
-    def create_bucket(self, data, num_output, multi):
+    def create_bucket(self, data, num_output, multi, idx):
         outputs = []
         # inputs = []
         # ids = []
@@ -250,11 +251,11 @@ class DataSet:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
                 num = int(np.ceil(len(input) / float(self.nPar)))
-            length = num * (self.nPar + self.nAdd)
+            length = num * (self.nPar + self.nAdd + idx)
             while len(input) < length:
                 input = np.concatenate((input, input))
-            input = input[:length]
-            for a in range(0, len(input), self.nPar):
+            input = input[(idx*num):length]
+            for a in range(0, len(input), self.nPar+self.nAdd):
                 it = input[a:a + self.nPar]
                 truth = d[1][:num_output]
                 output = (it.reshape(self.nPar * sz_in[1]), truth.reshape(num_output), self.id)

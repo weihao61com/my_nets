@@ -83,10 +83,10 @@ if __name__ == '__main__':
         st1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output, multi=1)
+            tr_pre_data = tr.prepare()
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy)
 
-            te_pre_data = te_set.prepare(num_output=num_output, multi=1)
+            te_pre_data = te_set.prepare()
             te_loss, te_median = run_data(te_pre_data, input, sess, xy)
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -97,8 +97,8 @@ if __name__ == '__main__':
 
             t_loss = 0
             t_count = 0
-            for _ in range(loop):
-                tr_pre_data = tr.prepare(num_output=num_output, multi=1) #.get()
+            for lp in range(loop):
+                tr_pre_data = tr.prepare(rdd=(lp%10==1), idx=lp%10, multi=5) #.get()
                 while tr_pre_data:
                     for b in tr_pre_data:
                         feed = {input: b[0], output: b[1]}
