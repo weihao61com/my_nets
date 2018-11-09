@@ -74,11 +74,11 @@ if __name__ == '__main__':
     #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
-    l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output))) * .01
-    l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))) * .1
+    l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
+    l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
     l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
-    loss = l5 + l4 + l3 #+ l2 + l1 + l0
+    loss = l5 + l4*.1 + l3*.01 #+ l2 + l1 + l0
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -115,7 +115,9 @@ if __name__ == '__main__':
 
             print str, str1
 
-            tl = 0
+            tl3 = 0
+            tl4 = 0
+            tl5 = 0
             nt = 0
             for _ in range(loop):
                 tr_pre_data = tr.prepare()
@@ -128,11 +130,13 @@ if __name__ == '__main__':
                             feed[input_dic['input{}'.format(a + 1)]] = \
                                 b[0][:, length + 4 * a:length + 4 * (a + 1)]
                         feed[output] = b[1]
-                        _, l = sess.run([opt,l5] , feed_dict=feed)
-                        tl += l
+                        _, ll3,ll4,ll5 = sess.run([opt,l3, l4, l5] , feed_dict=feed)
+                        tl3 += ll3
+                        tl4 += ll4
+                        tl5 += ll5
                         nt += len(b[1])
                     tr_pre_data = tr.get_next()
-            str1 = "{}".format(tl/nt)
+            str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)
 
         print netFile
