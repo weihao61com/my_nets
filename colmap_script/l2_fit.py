@@ -54,7 +54,8 @@ for a in range(zone):
     # ax1.scatter(da[:, 0], da[:, 2],  color='black')
     # ax1.plot(da[:, 0], pre2, color='blue', linewidth=3)
 
-    print v, pre1[-1], -v[1]/2/v[0], v[2]-v[1]*v[1]/4/v[0], 'k=', 2*mx*v[0]+v[1]
+    # print v, pre1[-1], -v[1]/2/v[0], v[2]-v[1]*v[1]/4/v[0], 'k=', 2*mx*v[0]+v[1]
+    print v, pre1[-1], 'k={}'.format( 2 * mx * v[0] + v[1])
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
 plt.show()
