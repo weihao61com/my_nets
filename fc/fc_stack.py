@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     att = te_set.sz[1]
     iterations = 10000
-    loop = 100
+    loop = 300
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
-    l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))) * .8
-    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))) * .9
-    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack], output))))
+    l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output))) * .01
+    l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output))) * .1
+    l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
     loss = l5 + l4 + l3 #+ l2 + l1 + l0
 
@@ -87,14 +87,14 @@ if __name__ == '__main__':
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
+    t00 = datetime.datetime.now()
 
     with tf.Session() as sess:
         sess.run(init)
         if renetFile:
             saver.restore(sess, renetFile)
 
-        t00 = datetime.datetime.now()
-
+        str1 = ''
         for a in range(iterations):
 
             tr_pre_data = tr.prepare()
@@ -104,20 +104,22 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.1f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
+            str = "it: {0} {1:.2f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
                   " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
                   "{12:.4f} {13:.4f}".format(
-                a*loop/1000.0, (t1 - t00).total_seconds(),
+                a*loop/1000.0, (t1 - t00).total_seconds()/3600.0,
                 tr_loss[stack-2], tr_loss[stack-1], tr_loss[stack],
                 te_loss[stack-2], te_loss[stack-1], te_loss[stack],
                 tr_median[stack-2], tr_median[stack-1], tr_median[stack],
                 te_median[stack-2], te_median[stack-1], te_median[stack])
 
-            print str
-            t00 = t1
+            print str, str1
 
+            tl = 0
+            nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare() #.get()
+                tr_pre_data = tr.prepare()
+
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = b[0].shape[1] - 4 * stack
@@ -126,9 +128,11 @@ if __name__ == '__main__':
                             feed[input_dic['input{}'.format(a + 1)]] = \
                                 b[0][:, length + 4 * a:length + 4 * (a + 1)]
                         feed[output] = b[1]
-                        sess.run(opt, feed_dict=feed)
+                        _, l = sess.run([opt,l5] , feed_dict=feed)
+                        tl += l
+                        nt += len(b[1])
                     tr_pre_data = tr.get_next()
-
+            str1 = "{}".format(tl/nt)
             saver.save(sess, netFile)
 
         print netFile
