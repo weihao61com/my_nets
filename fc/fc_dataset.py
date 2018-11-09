@@ -47,9 +47,9 @@ class sNet3(Network):
 
 class StackNet(Network):
 
-    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=32):
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        self.dim_inter = [1024, 256]
+        self.dim_inter = [256]
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
@@ -57,13 +57,13 @@ class StackNet(Network):
         self.out0 = self.dim_inter[0]
         self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
         self.biases0 = self.make_var('biases0', [self.out0])
+        #
+        # self.dim1 = self.out0
+        # self.out1 = self.dim_inter[1]
+        # self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
+        # self.biases1 = self.make_var('biases1', [self.out1])
 
-        self.dim1 = self.out0
-        self.out1 = self.dim_inter[1]
-        self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
-        self.biases1 = self.make_var('biases1', [self.out1])
-
-        self.dim2 = self.out1
+        self.dim2 = self.out0
         self.out2 = dim_ref
         self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
         self.biases2 = self.make_var('biases2', [self.out2])
@@ -81,17 +81,17 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(256, name='fc0').
-         fc(self.dim_ref, name='fc2')
-         # .fc(self.dim_output, relu=False, name='output0')
+         fc(1024, name='fc0').
+         fc(self.dim_ref, name='fc1')
+         .fc(self.dim_output, relu=False, name='output0')
          )
 
-        ref_out_name = 'fc2'
+        ref_out_name = 'fc1'
         for a in range(self.stack):
             input_name = 'input{}'.format(a + 1)
             ic_name = 'ic{}_in'.format(a)
             ifc0_name = 'ifc0{}_in'.format(a)
-            ifc1_name = 'ifc1{}_in'.format(a)
+            #ifc1_name = 'ifc1{}_in'.format(a)
             ifc2_name = 'ifc2{}_in'.format(a)
             output_name = 'output{}'.format(a + 1)
 
@@ -100,9 +100,9 @@ class StackNet(Network):
              .fc_w(name=ifc0_name,
                    weights=self.weights0,
                    biases=self.biases0)
-             .fc_w(name=ifc1_name,
-                   weights=self.weights1,
-                   biases=self.biases1)
+             #.fc_w(name=ifc1_name,
+             #      weights=self.weights1,
+             #      biases=self.biases1)
              .fc_w(name=ifc2_name,
                    weights=self.weights2,
                    biases=self.biases2)
@@ -488,7 +488,7 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
         for a in range(stack):
             feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
         result = []
-        for a in range(stack):
+        for a in range(stack+1):
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
         result = np.array(result)

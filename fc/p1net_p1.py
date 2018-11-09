@@ -14,20 +14,21 @@ if sys.platform=='darwin':
 
 
 class P1Net:
-    def __init__(self, nodes1, nodes2, nodes3, att, num_output, feature_len, lr):
+    def __init__(self, nodes1, nodes2, nodes3, att, num_output, feature_len, lr, nadd):
         num_ref = nodes1[-1]
         self.p1 = 'net1'
         self.p2 = 'net2'
         self.att = att
         self.step = 0
         self.lr = lr
+        self.nadd = nadd
 
         self.data_len = att*feature_len
         self.input1 = tf.placeholder(tf.float32, [None, att*feature_len])
         self.output1 = tf.placeholder(tf.float32, [None, num_output])
         #self.reference1 = tf.placeholder(tf.float32, [None, num_ref])
 
-        self.input2 = tf.placeholder(tf.float32, [None, 2*att+num_ref])
+        self.input2 = tf.placeholder(tf.float32, [None, self.nadd*att+num_ref])
         self.output2 = tf.placeholder(tf.float32, [None, num_output])
         #self.reference2 = tf.placeholder(tf.float32, [None, num_ref])
         self.learning_rate = tf.placeholder(tf.float32)
@@ -68,7 +69,7 @@ class P1Net:
         for d in data:
             truth.append(d[2])
             input_data.append(d[0])
-            id.append(d[1][:2].reshape(8))
+            id.append(d[1][:self.nadd].reshape(self.nadd*self.att))
 
         truth = np.array(truth)
         input_data = np.array(input_data)
@@ -100,7 +101,7 @@ class P1Net:
         #it = []
         length = None
         for d in data:
-            ds = d[1][:2]
+            ds = d[1][:self.nadd]
             if length is None:
                 length = ds.size
             id.append(ds.reshape(length))
@@ -161,6 +162,7 @@ if __name__ == '__main__':
     feature_len = int(js['feature'])
     lr = float(js['lr'])
     step = js['step']
+    nAddition = 10
 
     num_output = 3
     nodes1 = map(int, js["nodes1"].split(','))
@@ -171,8 +173,8 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/p1'
 
-    tr = DataSet(tr_data, batch_size, feature_len, nadd=2)
-    te = DataSet(te_data, batch_size, feature_len, nadd=2)
+    tr = DataSet(tr_data, batch_size, feature_len, nadd=nAddition)
+    te = DataSet(te_data, batch_size, feature_len, nadd=nAddition)
 
     att = te.sz[1]
     iterations = 100000
@@ -181,7 +183,7 @@ if __name__ == '__main__':
     #    loop=200
     print "input shape", att, "LR", lr, 'feature', feature_len
 
-    net = P1Net(nodes1, nodes2, nodes3, att, num_output, feature_len, lr)
+    net = P1Net(nodes1, nodes2, nodes3, att, num_output, feature_len, lr, nAddition)
     net.step = step
 
     with tf.Session() as sess:

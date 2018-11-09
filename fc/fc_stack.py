@@ -3,10 +3,13 @@ from fc_dataset import *
 import tensorflow as tf
 import datetime
 
-sys.path.append('..')
-from utils import Utils
+HOME = '{}/Projects/'.format(os.getenv('HOME'))
+sys.path.append('{}/my_nets'.format(HOME))
+sys.path.append('{}/my_nets/fc'.format(HOME))
 
-HOME = cwd = os.getcwd() + '/../../'
+from utils import Utils
+from fc_dataset import DataSet
+
 
 if __name__ == '__main__':
 
@@ -40,17 +43,17 @@ if __name__ == '__main__':
     tr = DataSet(tr_data, batch_size, feature_len+stack)
     te_set = DataSet(te_data, batch_size, feature_len+stack)
 
-    sz_in = te_set.sz
+    att = te_set.sz[1]
     iterations = 10000
     loop = 100
-    print "input shape", sz_in, "LR", lr, 'feature', feature_len
+    print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
 
-    inputs[0] = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
+    inputs[0] = tf.placeholder(tf.float32, [None, feature_len*att])
     output = tf.placeholder(tf.float32, [None, num_output])
     for a in range(stack):
-        inputs[a+1] = tf.placeholder(tf.float32, [None, sz_in[1]])
+        inputs[a+1] = tf.placeholder(tf.float32, [None, att])
 
     input_dic = {}
     for a in range(stack+1):
@@ -60,22 +63,22 @@ if __name__ == '__main__':
     net.real_setup(stack, verbose=False)
 
     xy = {}
-    for a in range(stack):
-        xy[a] = net.layers['output{}'.format(a+1)]
+    for a in range(stack+1):
+        xy[a] = net.layers['output{}'.format(a)]
 
     #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
     #loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
     #for a in range(stack):
     #    loss = tf.add(loss, tf.reduce_sum(tf.square(tf.subtract(xy[a+1], output))))
 
-    l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
-    l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
-    l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
-    l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-4], output)))) * .8
-    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))) * .9
-    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output))))
+    #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
+    #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
+    #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
+    l3 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))) * .8
+    l4 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))) * .9
+    l5 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack], output))))
 
-    loss = l5 + l4 # + l3 + l2 + l1 + l0
+    loss = l5 + l4 + l3 #+ l2 + l1 + l0
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -104,11 +107,11 @@ if __name__ == '__main__':
             str = "it: {0} {1:.1f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
                   " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
                   "{12:.4f} {13:.4f}".format(
-                a*loop, (t1 - t00).total_seconds(),
-                tr_loss[stack-3], tr_loss[stack-2], tr_loss[stack-1],
-                te_loss[stack-3], te_loss[stack-2], te_loss[stack-1],
-                tr_median[stack-3], tr_median[stack-2], tr_median[stack-1],
-                te_median[stack-3], te_median[stack-2], te_median[stack-1])
+                a*loop/1000.0, (t1 - t00).total_seconds(),
+                tr_loss[stack-2], tr_loss[stack-1], tr_loss[stack],
+                te_loss[stack-2], te_loss[stack-1], te_loss[stack],
+                tr_median[stack-2], tr_median[stack-1], tr_median[stack],
+                te_median[stack-2], te_median[stack-1], te_median[stack])
 
             print str
             t00 = t1
