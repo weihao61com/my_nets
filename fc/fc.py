@@ -89,12 +89,11 @@ if __name__ == '__main__':
             te_pre_data = te_set.prepare(num_output=num_output, multi=1)
             te_loss, te_median = run_data(te_pre_data, input, sess, xy)
 
-            t1 = datetime.datetime.now()
-            str = "iteration: {} {} {} {} {} time {}".format(
-                a*loop/1000.0, total_loss, te_loss,
-                tr_median, te_median, t1 - t00)
+            t1 = (datetime.datetime.now()-t00).seconds/3600.0
+            str = "iteration: {0} {1:.3f} {2} {3} {4} {5}".format(
+                a*loop/1000.0, t1, total_loss, te_loss,
+                tr_median, te_median)
             print str, st1
-            t00 = t1
 
             t_loss = 0
             t_count = 0
