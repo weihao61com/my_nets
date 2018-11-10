@@ -35,17 +35,18 @@ if __name__ == '__main__':
     lr = js['lr']
     stack = js['stack']
     num_output = js["num_output"]
+    step = js["step"]
 
     renetFile = None
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
-    tr = DataSet(tr_data, batch_size, feature_len+stack)
-    te_set = DataSet(te_data, batch_size, feature_len+stack)
+    tr = DataSet(tr_data, batch_size, feature_len + stack)
+    te = DataSet(te_data, batch_size, feature_len + stack)
 
-    att = te_set.sz[1]
+    att = te.sz[1]
     iterations = 10000
-    loop = 1000
+    loop = 100
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -100,11 +101,11 @@ if __name__ == '__main__':
             tr_pre_data = tr.prepare()
             tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack)
 
-            te_pre_data = te_set.prepare()
+            te_pre_data = te.prepare()
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.2f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
+            str = "it: {0} {1:.3f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
                   " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
                   "{12:.4f} {13:.4f}".format(
                 a*loop/1000.0, (t1 - t00).total_seconds()/3600.0,
@@ -120,21 +121,25 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare()
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
-                        length = b[0].shape[1] - 4 * stack
-                        feed = {input_dic['input0']: b[0][:, :length]}
-                        for a in range(stack):
-                            feed[input_dic['input{}'.format(a + 1)]] = \
-                                b[0][:, length + 4 * a:length + 4 * (a + 1)]
-                        feed[output] = b[1]
-                        _, ll3,ll4,ll5 = sess.run([opt,l3, l4, l5] , feed_dict=feed)
-                        tl3 += ll3
-                        tl4 += ll4
-                        tl5 += ll5
-                        nt += len(b[1])
+                        total_length = len(b[0])
+                        for c in range(0, total_length, step):
+                            length = b[0].shape[1] - att * stack
+                            feed = {input_dic['input0']: b[0][c:c + step, :length]}
+                            for d in range(stack):
+                                feed[input_dic['input{}'.format(d + 1)]] = \
+                                    b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
+                            feed[output] = b[1][c:c + step]
+                            _, ll3,ll4,ll5 = sess.run([opt, l3, l4, l5], feed_dict=feed)
+                            tl3 += ll3
+                            tl4 += ll4
+                            tl5 += ll5
+                            nt += len(b[0][c:c + step])
+                    tr_pre_data = tr.get_next()
+
                     tr_pre_data = tr.get_next()
             str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)

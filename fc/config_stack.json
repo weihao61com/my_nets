@@ -3,10 +3,11 @@
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "stack",
-    "_retrain": "stack",
+    "retrain": "stack",
     "netTest": "stack",
-    "feature": 40,
+    "feature": 20,
     "lr": 1e-4,
     "num_output": 3,
-    "stack": 2
+    "stack": 2,
+    "step": 500
 }
