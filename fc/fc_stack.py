@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     att = te_set.sz[1]
     iterations = 10000
-    loop = 300
+    loop = 1000
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -136,7 +136,7 @@ if __name__ == '__main__':
                         tl5 += ll5
                         nt += len(b[1])
                     tr_pre_data = tr.get_next()
-            str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
+            str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)
 
         print netFile

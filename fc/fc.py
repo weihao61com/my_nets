@@ -32,6 +32,7 @@ if __name__ == '__main__':
     batch_size = int(js['batch_size'])
     feature_len = int(js['feature'])
     lr = float(js['lr'])
+    step = js["step"]
 
     num_output = int(js["num_output"])
     nodes = map(int, js["nodes"].split(','))
@@ -98,13 +99,15 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(loop):
-                tr_pre_data = tr.prepare(rdd=(lp%10==1), idx=lp%10, multi=5) #.get()
+                tr_pre_data = tr.prepare(rdd=True, multi=10) #.get()
                 while tr_pre_data:
                     for b in tr_pre_data:
-                        feed = {input: b[0], output: b[1]}
-                        _, A = sess.run([opt, loss], feed_dict=feed)
-                        t_loss += A
-                        t_count += len(b[0])
+                        length = len(b[0])
+                        for c in range(0, length, step):
+                            feed = {input: b[0][c:c+step], output: b[1][c:c+step]}
+                            _, A = sess.run([opt, loss], feed_dict=feed)
+                            t_loss += A
+                            t_count += len(b[0][c:c+step])
                     tr_pre_data = tr.get_next()
                 st1 = '{}'.format(t_loss/t_count)
 
