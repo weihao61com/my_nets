@@ -17,6 +17,10 @@ if len(sys.argv)>1:
 if len(sys.argv)>2:
     filename = sys.argv[2]
 
+section = 0.5
+if len(sys.argv)>3:
+    section = float(sys.argv[3])
+
 da = np.loadtxt(filename, usecols=usecols)
 
 print 'max', max(da[:, 0])
@@ -31,7 +35,7 @@ mx = max(da[:, 0])
 
 #print da
 for a in range(zone):
-    length = int(len(da)/2)
+    length = int(len(da)*section)
     slope, intercept, r_value, p_value, std_err = stats.linregress(da[length:, 0], da[length:, a+1])
     pre1 = da[:, 0] *slope + intercept
 
@@ -50,7 +54,7 @@ for a in range(zone):
     # ax1.scatter(da[:, 0], da[:, 2],  color='black')
     # ax1.plot(da[:, 0], pre2, color='blue', linewidth=3)
 
-    print '{0:.9f} {1:.9f}'.format(pre1[-1],slope)
+    print '{0:.9f} {1:.9f} {2:.9f}'.format(pre1[-1], intercept, slope)
     # print slope, intercept, pre1[-1]
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
