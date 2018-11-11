@@ -36,6 +36,7 @@ if __name__ == '__main__':
     stack = js['stack']
     num_output = js["num_output"]
     step = js["step"]
+    stage = js["stage"]
 
     renetFile = None
     if 'retrain' in js:
@@ -79,12 +80,30 @@ if __name__ == '__main__':
     l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
     l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
-    loss = l5 + l4*.1 + l3*.01 #+ l2 + l1 + l0
+    loss = l5 + l4 + l3 #+ l2 + l1 + l0
 
-    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    opt = None
+
+    if stage<0:
+        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
-        minimize(loss)
+            minimize(loss)
+    if stage == 0:
+        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+                        beta2=0.999, epsilon=0.00000001,
+                        use_locking=False, name='Adam').\
+            minimize(l3)
+    if stage == 1:
+        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+                        beta2=0.999, epsilon=0.00000001,
+                        use_locking=False, name='Adam').\
+            minimize(l4)
+    if stage == 2:
+        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+                        beta2=0.999, epsilon=0.00000001,
+                        use_locking=False, name='Adam').\
+            minimize(l5)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
