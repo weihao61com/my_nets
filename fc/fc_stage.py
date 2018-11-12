@@ -3,10 +3,12 @@ from fc_dataset import *
 import tensorflow as tf
 import datetime
 
-sys.path.append( '..')
-from utils import Utils
+HOME = '{}/Projects/'.format(os.getenv('HOME'))
+sys.path.append('{}/my_nets'.format(HOME))
+sys.path.append('{}/my_nets/fc'.format(HOME))
 
-HOME = '/home/weihao/Projects/'
+from utils import Utils
+from fc_dataset import DataSet
 
 if __name__ == '__main__':
 
@@ -26,48 +28,52 @@ if __name__ == '__main__':
             te_data.append(HOME + js['te'])
 
     netFile = HOME + js['net'] + '/fc'
-    batch_size = int(js['batch_size'])
-    feature_len = int(js['feature'])
-    lr = float(js['lr'])
-
+    batch_size = js['batch_size']
+    feature_len = js['feature']
+    lr = js['lr']
+    stage = js["stage"]
     num_output = int(js["num_output"])
+    nodes0 = map(int, js["nodes0"].split(','))
+    nodes1 = map(int, js["nodes1"].split(','))
+    assert(nodes0[-2]==nodes1[-2])
+    num_ref = nodes0[-2]
+    nodes0.append(num_output)
+    nodes1.append(num_output)
 
     renetFile = None
     if 'retrain' in js:
         renetFile = HOME + '/' + js['retrain'] + '/fc'
 
-    stage_dup = 1
-    N_layer2 = 64
-
-    tr = DataSet(tr_data, batch_size, feature_len+stage_dup)
-    te = DataSet(te_data, batch_size, feature_len+stage_dup)
+    tr = DataSet(tr_data, batch_size, feature_len)
+    te = DataSet(te_data, batch_size, feature_len)
 
     num_att = te.sz[1]
     iterations = 10000
     loop = 10
-    print "input shape", te.sz, "LR", lr, 'feature', feature_len
+    print "Attribute", num_att, "LR", lr, 'feature', feature_len
 
-    input       = tf.placeholder(tf.float32, [None, feature_len* num_att])
-    stage_input = tf.placeholder(tf.float32, [None, num_att*stage_dup+N_layer2])
-    output      = tf.placeholder(tf.float32, [None, num_output])
+    input0 = tf.placeholder(tf.float32, [None, feature_len * num_att])
+    input1 = tf.placeholder(tf.float32, [None, num_att + num_ref])
+    output = tf.placeholder(tf.float32, [None, num_output])
 
-    net = sNet3_2({'data': input})
-    stage_net = sNet3_stage({'data': stage_input})
+    net = sNet3_2({'data0': input0})
+    net.real_setup(nodes0)
+    stage_net = sNet3_stage({'data1': input1})
+    stage_net.real_setup(nodes1)
 
-    xy = net.layers['output']
-    xy_fc2 = net.layers['fc2']
-    xy_stage = stage_net.layers['output_stage']
-    st_fc2 = stage_net.layers['fc2_stage']
+    xy = net.layers['output0']
+    xy_ref = net.layers['fc0_1']
+    xy_stage = stage_net.layers['output1']
+    st_ref = stage_net.layers['fc1_1']
 
-    #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
     loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
     loss_stage = tf.reduce_sum(tf.square(tf.subtract(xy_stage, output)))
 
-    opt = tf.train.AdamOptimizer(learning_rate=lr/40, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
         minimize(loss)
-    opt_stage = tf.train.AdamOptimizer(learning_rate=lr/100, beta1=0.9,
+    opt_stage = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
         minimize(loss_stage)
@@ -84,27 +90,27 @@ if __name__ == '__main__':
 
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr.prepare_stage()
             total_loss, tr_median, tr_r2 = \
-                run_stage_data(tr_pre_data, input, sess, xy, stage_input,
-                               xy_stage, stage_dup, xy_fc2, st_fc2)
+                run_stage_data(tr_pre_data, input0, input1, sess, xy, xy_ref,
+                               xy_stage, st_ref)
 
-            te_pre_data = te.prepare()
+            te_pre_data = te.prepare_stage()
             te_loss, te_median, te_r2= \
-                run_stage_data(te_pre_data, input, sess, xy, stage_input,
-                               xy_stage, stage_dup, xy_fc2, st_fc2)
+                run_stage_data(te_pre_data, input0, input1, sess, xy, xy_ref,
+                               xy_stage, st_ref)
 
             t1 = datetime.datetime.now()
-            str = "iteration: {0:d} {1:f} {2:f} {3:f} {4:f} {5:f} {6:f} {7:f} {8:f} {9:f}".\
-                      format(a*loop, total_loss, te_loss, te_loss-total_loss,
-                             tr_median, te_median, tr_r2[0][0],tr_r2[0][1],
-                             te_r2[0][0], te_r2[0][1]
+            str = "iteration: {0:d} {1:f} {2:f} {3:f} {4:f} {5:f} {6:f} {7:f} {8:f}".\
+                      format(a*loop, total_loss, te_loss,
+                             tr_median, te_median, tr_r2[0],tr_r2[1],
+                             te_r2[0], te_r2[1]
                              ) + ' time {}'.format(t1 - t00)
             print str
             t00 = t1
 
             for _ in range(loop):
-                tr_pre_data = tr.prepare() #.get()
+                tr_pre_data = tr.prepare_stage() #.get()
                 while tr_pre_data is not None:
                     for b in tr_pre_data:
                         b_array = b[0][:, :-stage_dup*num_att]

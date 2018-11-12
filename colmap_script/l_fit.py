@@ -44,8 +44,10 @@ for a in range(zone):
     ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
     ymin = np.min(da[:, a+1])
     ymax = np.max(da[:, a+1])
-    ax1.set_ylim([ymin, min(ymax,intercept-slope*20)])
-
+    if slope<0:
+        ax1.set_ylim([ymin, min(ymax,intercept-slope*100)])
+    else:
+        ax1.set_ylim([ymin, ymax])
     #
     # slope1, intercept1, r_value, p_value, std_err = stats.linregress(da[:, 0], da[:, 2])
     # pre2 = da[:, 0] *slope1 + intercept1

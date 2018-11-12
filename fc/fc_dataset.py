@@ -218,6 +218,29 @@ class DataSet:
 
         return outputs
 
+    def prepare_stage(self, rd=True, num_output=3, rdd=True):
+        pre_data = []
+        if rdd:
+            self.reshuffle_data()
+        self.id = 0
+        for d in self.data:
+            data = self.create_stage_data(d, num_output)
+            if rd:
+                np.random.shuffle(data)
+            i0 = []
+            i1 = []
+            outs = []
+            ids = []
+            for a in data:
+                i0.append(a[0])
+                i1.append(a[1])
+                outs.append(a[2])
+                ids.append(a[3])
+            dd = (np.array(i0), i1, np.array(outs), ids)
+            pre_data.append(dd)
+
+        return pre_data
+
     def prepare(self, rd=True, num_output=3, multi=1, rdd=True):
         pre_data = []
         if rdd:
@@ -239,7 +262,29 @@ class DataSet:
 
         return pre_data
 
+    def create_stage_data(self, data, num_output):
+        outputs = []
+        for d in data:
+            input = d[0]
+            while len(input) < self.nPar + 2:
+                input = np.concatenate((input, input))
+                input = input[:self.nPar+2]
+
+            i1 = input[:self.nPar].reshape(self.nPar * self.sz[1])
+            i2 = input[self.nPar:]
+            truth = d[1][:num_output]
+            output = (i1, i2,  truth.reshape(num_output), self.id)
+            outputs.append(output)
+
+        self.id += 1
+
+        return outputs
+
+
     def create_bucket(self, data, num_output, multi):
+        if multi==-2:
+            return self.create_stage_data(data, num_output)
+
         outputs = []
         # inputs = []
         # ids = []
@@ -422,11 +467,14 @@ class sNet1(Network):
 class sNet3_2(Network):
 
     def setup(self):
-        nodes = [256, 64]
-        (self.feed('data').
-         fc(nodes[0], name='fc1').
-         fc(nodes[1], name='fc2').
-         fc(3, relu=False, name='output'))
+        pass
+
+    def real_setup(self, nodes):
+        self.feed('data0')
+        for a in range(len(nodes) - 1):
+            name = 'fc0_{}'.format(a)
+            self.fc(nodes[a], name=name)
+        self.fc(nodes[-1], relu=False, name='output0')
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
@@ -434,13 +482,16 @@ class sNet3_2(Network):
 class sNet3_stage(Network):
 
     def setup(self):
-        nodes = [128, 64]
-        (self.feed('data').
-         fc(nodes[0], name='fc1_stage').
-         fc(nodes[1], name='fc2_stage').
-         fc(3, relu=False, name='output_stage'))
+        pass
 
-        print("number of layers (stage) = {} {}".format(len(self.layers), nodes))
+    def real_setup(self, nodes):
+        self.feed('data1')
+        for a in range(len(nodes) - 1):
+            name = 'fc1_{}'.format(a)
+            self.fc(nodes[a], name=name)
+        self.fc(nodes[-1], relu=False, name='output1')
+
+        print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
 class cNet(Network):
@@ -540,45 +591,51 @@ def run_data(data, inputs, sess, xy):
 
 
 def run_stage_data(data,
-                   inputs,
+                   input0,
+                   input1,
                    sess,
                    xy,
-                   stage_input,
+                   xy_ref,
                    xy_stage,
-                   stage_dup,
-                   xy_fc2,
-                   st_fc2):
+                   st_ref
+                   ):
     results = None
     truth = None
-    num_att = 4
-    stage_result = {}
+    stage_result = None
 
     for b in data:
-        feed = {inputs: b[0][:, :-stage_dup * num_att]}
+        feed = {input0: b[0]}
         result = sess.run(xy, feed_dict=feed)
         if results is None:
             results = result
-            truth = b[1]
+            truth = b[2]
         else:
             results = np.concatenate((results, result))
-            truth = np.concatenate((truth, b[1]))
+            truth = np.concatenate((truth, b[2]))
 
-        fc_input = sess.run(xy_fc2, feed_dict=feed)
-        start = b[0].shape[1] - stage_dup * num_att
-        for evt in range(stage_dup):
-            if not evt in stage_result:
-                stage_result[evt] = None
-            input_array = np.concatenate(
-                (fc_input, b[0][:, start + evt * num_att: start + (evt + 1) * num_att]), axis=1)
-            r = sess.run(xy_stage, feed_dict={stage_input: input_array})
-            fc_input = sess.run(st_fc2, feed_dict={stage_input: input_array})
-            if stage_result[evt] is None:
-                stage_result[evt] = r
-            else:
-                stage_result[evt] = np.concatenate((stage_result[evt], r))
+        #cnt = len(truth) - 1000
+        fc_input = sess.run(xy_ref, feed_dict=feed)
+        for a in range(len(b[1])):
+            evt = b[1][a]
+            fc_input_a = fc_input[a:a+1,:]
+            for c in range(len(evt)):
+                input_array = np.concatenate((fc_input_a, evt[c:c+1, :]), axis=1)
+                # input_array = input_array.reshape((1, len(input_array)))
+                feed = {input1: input_array}
+                if c == len(evt)-1 or c==5:
+                    r = sess.run(xy_stage, feed_dict=feed)
+                    if stage_result is None:
+                        stage_result = r
+                    else:
+                        stage_result = np.concatenate((stage_result, r))
+                    break
+                else:
+                    fc_input_a = sess.run(st_ref, feed_dict=feed)
+            #if len(stage_result) != a+1+cnt:
+            #    raise Exception()
+        print results.shape, truth.shape, stage_result.shape
 
     a, b = Utils.calculate_loss(results, truth)
-    avg = {}
-    for evt in range(stage_dup):
-        avg[evt] = Utils.calculate_loss(stage_result[evt], truth)
+    avg = Utils.calculate_loss(stage_result, truth)
+
     return a, b, avg

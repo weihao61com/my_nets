@@ -1,11 +1,14 @@
 {
-    "batch_size": "1000",
-    "te": "p_files/Test_heads.p",
-    "tr1": "p_files/Train_heads.p",
-    "net": "heads_stage0",
-    "retrain": "heads_stage0",
-    "netTest": "heads_stage0",
-    "feature": "50",
-    "lr": "1e-4",
-    "num_output": "3"
+    "batch_size": 1000,
+    "te": "p_files/heads_Test_cv_L.p",
+    "tr": "p_files/heads_Train_cv_L.p",
+    "net": "heads_stage",
+    "_retrain": "heads_stage",
+    "netTest": "heads_stage",
+    "feature": 20,
+    "lr": 1e-4,
+    "num_output": 3,
+    "stage": 0,
+    "nodes0": "1024, 256, 64",
+    "nodes1": "256, 256, 64"
 }
