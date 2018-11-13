@@ -55,17 +55,21 @@ def load_data(filename, verbose = True, max_len=2e6):
     t0 = datetime.datetime.now()
     if type(filename) is unicode:
         avg_param = 0
+        nr = 0
+        nt = 0
         with open(filename, 'r') as fp:
             data = pickle.load(fp)
             for d in data:
                 avg_param += len(d[0])
+                nr += (d[1]*d[1]).sum()
+                nt += 1
             length = len(data)
             avg_param /= length
             if length>max_len:
                 data = data[:max_len]
         if verbose:
             print "loading", filename, datetime.datetime.now()-t0, \
-                length, len(data), avg_param
+                length, len(data), avg_param, nr/nt
         return data
     data_out = None
     for f in filename:
