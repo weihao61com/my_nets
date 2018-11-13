@@ -27,7 +27,7 @@ if __name__ == '__main__':
         if key.startswith('te'):
             te_data.append(HOME + js['te'])
 
-    netFile = HOME + js['net'] + '/fc'
+    netFile = HOME + 'NNs/' + js['net'] + '/fc'
     batch_size = js['batch_size']
     feature_len = js['feature']
     lr = js['lr']
@@ -42,14 +42,14 @@ if __name__ == '__main__':
 
     renetFile = None
     if 'retrain' in js:
-        renetFile = HOME + '/' + js['retrain'] + '/fc'
+        renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
     tr = DataSet(tr_data, batch_size, feature_len)
     te = DataSet(te_data, batch_size, feature_len)
 
     num_att = te.sz[1]
     iterations = 10000
-    loop = 10
+    loop = 100
     print "Attribute", num_att, "LR", lr, 'feature', feature_len
 
     input0 = tf.placeholder(tf.float32, [None, feature_len * num_att])
@@ -73,7 +73,7 @@ if __name__ == '__main__':
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
         minimize(loss)
-    opt_stage = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    opt_stage = tf.train.AdamOptimizer(learning_rate=lr/10, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
         minimize(loss_stage)
@@ -88,10 +88,11 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
+        str1 = ''
         for a in range(iterations):
 
             tr_pre_data = tr.prepare_stage()
-            total_loss, tr_median, tr_r2 = \
+            tr_loss, tr_median, tr_r2 = \
                 run_stage_data(tr_pre_data, input0, input1, sess, xy, xy_ref,
                                xy_stage, st_ref)
 
@@ -101,32 +102,43 @@ if __name__ == '__main__':
                                xy_stage, st_ref)
 
             t1 = datetime.datetime.now()
-            str = "iteration: {0:d} {1:f} {2:f} {3:f} {4:f} {5:f} {6:f} {7:f} {8:f}".\
-                      format(a*loop, total_loss, te_loss,
-                             tr_median, te_median, tr_r2[0],tr_r2[1],
-                             te_r2[0], te_r2[1]
-                             ) + ' time {}'.format(t1 - t00)
-            print str
-            t00 = t1
+            str = "iteration: {0} {1:.3f} {2:f} {3:f} {4:f} {5:f} {6:f} {7:f} {8:f} {9:f}".\
+                      format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0,
+                             tr_loss, te_loss,
+                             tr_median, te_median,
+                             tr_r2[0], te_r2[0],
+                             tr_r2[1], te_r2[1]
+                             )
+            print str, str1
 
+            total_loss = 0
+            nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare_stage() #.get()
+                tr_pre_data = tr.prepare_stage()
                 while tr_pre_data is not None:
                     for b in tr_pre_data:
-                        b_array = b[0][:, :-stage_dup*num_att]
-                        sess.run(opt, feed_dict={input: b_array, output: b[1]})
-                        result = sess.run(xy, feed_dict={input: b_array})
-                        length = b[0].shape[1]
-                        d_truth = b[1] - result
-                        fc_input = sess.run(xy_fc2, feed_dict={input: b_array})
-                        start = length - stage_dup * num_att
-                        for evt in range(stage_dup):
-                            input_array = np.concatenate(
-                                (fc_input, b[0][:, start + evt * num_att: start + (evt + 1) * num_att]), axis=1)
-                            sess.run(opt_stage, feed_dict={stage_input: input_array, output: d_truth})
-                            fc_input = sess.run(st_fc2, feed_dict={stage_input: input_array})
+                        if stage == 0:
+                            feed = {input0: b[0], output: b[2]}
+                            _, l = sess.run([opt, loss], feed_dict=feed)
+                            total_loss += l
+                            nt += len(b[2])
+                        else:
+                            feed = {input0: b[0]}
+                            result = sess.run(xy_ref, feed_dict=feed)
+                            b1 = b[1]
+                            n1 = b1.shape[1]
 
+                            for a in range(n1):
+                                input_array = np.concatenate((result, b1[:,a,:]), axis=1)
+                                feed = {input1: input_array, output: b[2]}
+                                if a < n1-1:
+                                    _, result = sess.run([opt_stage, st_ref], feed_dict=feed)
+                                else:
+                                    _, l = sess.run([opt_stage, loss_stage], feed_dict=feed)
+                                    total_loss += l
+                                    nt += len(b[2])
                     tr_pre_data = tr.get_next()
+            str1 = '{}'.format(total_loss/nt)
 
             saver.save(sess, netFile)
 

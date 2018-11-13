@@ -236,7 +236,7 @@ class DataSet:
                 i1.append(a[1])
                 outs.append(a[2])
                 ids.append(a[3])
-            dd = (np.array(i0), i1, np.array(outs), ids)
+            dd = (np.array(i0), np.array(i1), np.array(outs), ids)
             pre_data.append(dd)
 
         return pre_data
@@ -263,18 +263,25 @@ class DataSet:
         return pre_data
 
     def create_stage_data(self, data, num_output):
+        multi = 10
+        f2 = 2
+        N1 = self.nPar
+        N2 = int(self.nPar*f2)
+        length = multi*(N1+N2)
         outputs = []
         for d in data:
             input = d[0]
-            while len(input) < self.nPar + 2:
+            while len(input) < length:
                 input = np.concatenate((input, input))
-                input = input[:self.nPar+2]
 
-            i1 = input[:self.nPar].reshape(self.nPar * self.sz[1])
-            i2 = input[self.nPar:]
-            truth = d[1][:num_output]
-            output = (i1, i2,  truth.reshape(num_output), self.id)
-            outputs.append(output)
+            input = input[:length]
+            for m in range(multi):
+                start = m*(N1+N2)
+                i1 = input[start:start+N1].reshape(N1 * self.sz[1])
+                i2 = input[start+N1:start+N1+N2]
+                truth = d[1][:num_output]
+                output = (i1, i2,  truth.reshape(num_output), self.id)
+                outputs.append(output)
 
         self.id += 1
 
@@ -613,27 +620,24 @@ def run_stage_data(data,
             results = np.concatenate((results, result))
             truth = np.concatenate((truth, b[2]))
 
-        #cnt = len(truth) - 1000
         fc_input = sess.run(xy_ref, feed_dict=feed)
-        for a in range(len(b[1])):
-            evt = b[1][a]
-            fc_input_a = fc_input[a:a+1,:]
-            for c in range(len(evt)):
-                input_array = np.concatenate((fc_input_a, evt[c:c+1, :]), axis=1)
-                # input_array = input_array.reshape((1, len(input_array)))
-                feed = {input1: input_array}
-                if c == len(evt)-1 or c==5:
-                    r = sess.run(xy_stage, feed_dict=feed)
-                    if stage_result is None:
-                        stage_result = r
-                    else:
-                        stage_result = np.concatenate((stage_result, r))
-                    break
+        b1 = b[1]
+        n1 = b1.shape[1]
+        for a in range(n1):
+            input_array = np.concatenate((fc_input, b1[:, a, :]), axis=1)
+            feed = {input1: input_array}
+
+            if a == n1-1:
+                r = sess.run(xy_stage, feed_dict=feed)
+                if stage_result is None:
+                    stage_result = r
                 else:
-                    fc_input_a = sess.run(st_ref, feed_dict=feed)
-            #if len(stage_result) != a+1+cnt:
-            #    raise Exception()
-        print results.shape, truth.shape, stage_result.shape
+                    stage_result = np.concatenate((stage_result, r))
+                break
+            else:
+                fc_input = sess.run(st_ref, feed_dict=feed)
+
+        #print results.shape, truth.shape, stage_result.shape
 
     a, b = Utils.calculate_loss(results, truth)
     avg = Utils.calculate_loss(stage_result, truth)
