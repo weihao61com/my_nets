@@ -124,13 +124,13 @@ if __name__ == '__main__':
                             nt += len(b[2])
                         else:
                             feed = {input0: b[0]}
-                            result = sess.run(xy_ref, feed_dict=feed)
+                            result, xy_out = sess.run([xy_ref, xy], feed_dict=feed)
                             b1 = b[1]
                             n1 = b1.shape[1]
 
                             for a in range(n1):
                                 input_array = np.concatenate((result, b1[:,a,:]), axis=1)
-                                feed = {input1: input_array, output: b[2]}
+                                feed = {input1: input_array, output: b[2]-xy_out}
                                 if a < n1-1:
                                     _, result = sess.run([opt_stage, st_ref], feed_dict=feed)
                                 else:

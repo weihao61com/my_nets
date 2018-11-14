@@ -264,7 +264,7 @@ class DataSet:
 
     def create_stage_data(self, data, num_output):
         multi = 10
-        f2 = 2
+        f2 = 1
         N1 = self.nPar
         N2 = int(self.nPar*f2)
         length = multi*(N1+N2)
@@ -640,6 +640,6 @@ def run_stage_data(data,
         #print results.shape, truth.shape, stage_result.shape
 
     a, b = Utils.calculate_loss(results, truth)
-    avg = Utils.calculate_loss(stage_result, truth)
+    avg = Utils.calculate_loss(stage_result, truth-results)
 
     return a, b, avg
