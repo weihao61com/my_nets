@@ -289,12 +289,9 @@ class DataSet:
 
 
     def create_bucket(self, data, num_output, multi):
-        if multi==-2:
-            return self.create_stage_data(data, num_output)
 
         outputs = []
-        # inputs = []
-        # ids = []
+
         sz_in = data[0][0].shape
 
         for d in data:

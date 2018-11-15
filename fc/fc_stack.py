@@ -76,34 +76,19 @@ if __name__ == '__main__':
     #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
+    l2 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))
     l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
     l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
     l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
-    loss = l5 + l4 + l3 #+ l2 + l1 + l0
+    loss = l5 + l4 + l3 + l2 #+ l1 + l0
 
     opt = None
 
-    if stage<0:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(loss)
-    if stage == 0:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l3)
-    if stage == 1:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l4)
-    if stage == 2:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l5)
+    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+                    beta2=0.999, epsilon=0.00000001,
+                    use_locking=False, name='Adam').\
+        minimize(loss)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -124,14 +109,9 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.3f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
-                  " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
-                  "{12:.4f} {13:.4f}".format(
-                a*loop/1000.0, (t1 - t00).total_seconds()/3600.0,
-                tr_loss[stack-2], tr_loss[stack-1], tr_loss[stack],
-                te_loss[stack-2], te_loss[stack-1], te_loss[stack],
-                tr_median[stack-2], tr_median[stack-1], tr_median[stack],
-                te_median[stack-2], te_median[stack-1], te_median[stack])
+            str = "it: {0} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            for s in range(stack+1):
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f}".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
 
@@ -152,7 +132,7 @@ if __name__ == '__main__':
                                 feed[input_dic['input{}'.format(d + 1)]] = \
                                     b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
-                            _, ll3,ll4,ll5 = sess.run([opt, l3, l4, l5], feed_dict=feed)
+                            _, ll3,ll4,ll5 = sess.run([opt, l2, l4, l5], feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
                             tl5 += ll5
