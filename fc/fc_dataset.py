@@ -47,7 +47,7 @@ class sNet3(Network):
 
 class StackNet(Network):
 
-    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=256):
         self.stack = stack
         self.dim_inter = [256]
         self.dim_ref = dim_ref
@@ -81,7 +81,7 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(1024, name='fc0').
+         fc(2048, name='fc0').
          fc(self.dim_ref, name='fc1')
          .fc(self.dim_output, relu=False, name='output0')
          )
@@ -536,6 +536,57 @@ def run_data_stack(data, inputs, sess, xy, stack):
             truth = np.concatenate((truth, b[1]))
 
     return Utils.calculate_stack_loss(results, truth)
+
+
+def run_data_stack_avg2(data, inputs, sess, xy, stack):
+    rst_dic = {}
+    truth_dic = {}
+    for b in data:
+        length = b[0].shape[1] - 4 * stack
+        feed = {inputs['input0']: b[0][:, :length]}
+        for a in range(stack):
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
+        result = []
+        for a in range(stack+1):
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
+        result = np.array(result)
+        for a in range(len(b[2])):
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
+
+    results = []
+    truth = []
+
+    filename = '/home/weihao/tmp/test.csv'
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/test.csv'
+    fp = open(filename, 'w')
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        results.append(result)
+        truth.append(truth_dic[id])
+        t = truth_dic[id]
+        if random.random() < 0.2:
+            r = np.linalg.norm(t - result)
+            mm = result[stack - 1]
+            fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+    fp.close()
+
+    results = np.array(results)
+    truth = np.array(truth)
+    L = []
+    M = []
+    for a in range(3):
+        diff = results[:, 0:a+1,:].sum(axis=1) - truth
+        r = np.linalg.norm(diff, axis=1)
+        L.append((r*r).mean())
+        M.append(np.median(r))
+    return L, M
 
 
 def run_data_stack_avg(data, inputs, sess, xy, stack):

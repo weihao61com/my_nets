@@ -4,7 +4,7 @@
     "tr": "p_files/heads_Train_cv.p",
     "_tr1": "p_files/office_Train_cv.p",
     "net": "heads",
-    "_retrain": "heads",
+    "retrain": "heads",
     "netTest": "heads",
     "feature": 20,
     "lr": 1e-4,

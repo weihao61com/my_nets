@@ -3,7 +3,7 @@
     "te": "p_files/heads_Test_cv_L.p",
     "tr": "p_files/heads_Train_cv_L.p",
     "net": "stack",
-    "retrain": "stack",
+    "_retrain": "stack",
     "netTest": "stack",
     "feature": 20,
     "lr": 1e-4,
