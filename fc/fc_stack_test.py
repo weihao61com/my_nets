@@ -19,6 +19,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         config_file = sys.argv[2]
 
+    multi = -1
+    if len(sys.argv)>3:
+        multi = int(sys.argv[3])
+
     js = Utils.load_json_file(config_file, False)
 
     te_data = []
@@ -54,8 +58,8 @@ if __name__ == '__main__':
     net.real_setup(stack, False)
 
     xy = {}
-    for a in range(stack):
-        xy[a] = net.layers['output{}'.format(a + 1)]
+    for a in range(stack+1):
+        xy[a] = net.layers['output{}'.format(a)]
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -66,17 +70,14 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
-        te_pre_data = te_set.prepare(multi=-1)
+        te_pre_data = te_set.prepare(multi=multi)
         te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
         t1 = datetime.datetime.now()
-        str = "RST: {0:.1f} " \
-              " {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f} {6:.4f}".format(
-            (t1 - t00).total_seconds(),
-            te_loss[stack - 3],
-            te_loss[stack - 2],
-            te_loss[stack - 1],
-            te_median[stack - 3],
-            te_median[stack - 2],
-            te_median[stack - 1])
+
+        str = "it: {0:.2f}".format((t1 - t00).total_seconds() / 3600.0)
+        for s in range(stack + 1):
+            str += " {0:.3f} {1:.3f}".format(te_loss[s], te_median[s])
+
+
         print str

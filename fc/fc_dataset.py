@@ -299,7 +299,7 @@ class DataSet:
             if multi > 0:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
-                num = int(np.ceil(len(input) / float(self.nPar)))
+                num = int(np.ceil(len(input) / float(self.nPar + self.nAdd))*abs(multi))
             length = num * (self.nPar + self.nAdd)
             while len(input) < length:
                 input = np.concatenate((input, input))

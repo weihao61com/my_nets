@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     att = te.sz[1]
     iterations = 10000
-    loop = 100
+    loop = 10
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -76,12 +76,12 @@ if __name__ == '__main__':
     #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
-    l2 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))
+    # l2 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))
     l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
     l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
     l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
-    loss = l5 + l4 + l3 + l2 #+ l1 + l0
+    loss = l5 + l4 + l3#  + l2 #+ l1 + l0
 
     opt = None
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
+                tr_pre_data = tr.prepare(multi=50)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                                 feed[input_dic['input{}'.format(d + 1)]] = \
                                     b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
-                            _, ll3,ll4,ll5 = sess.run([opt, l2, l4, l5], feed_dict=feed)
+                            _, ll3,ll4,ll5 = sess.run([opt, l3, l4, l5], feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
                             tl5 += ll5
