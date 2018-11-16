@@ -101,3 +101,6 @@ iteration: 1000 0.895871 1.803932 0.627861 1.098989
 
 [feature=20, (1024,128), 0.288 vs 0.678]
 
+/home/weihao/Projects/p_files/heads_Test_cv_1.p
+median heads 0.41379872862
+

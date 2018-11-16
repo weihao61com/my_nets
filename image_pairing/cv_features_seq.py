@@ -10,8 +10,8 @@ import pickle
 
 project_dir = '/home/weihao/Projects'
 
-range1 = -3
-range2 = 4
+range2 = 1
+range1 = -range2
 #key = 'heads'
 #mode = 'Train'
 key = '02'
@@ -37,7 +37,7 @@ print key, mode
 location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
 poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
-filename = '/home/weihao/Projects/p_files/{}_{}_cv.p'.format(key, mode)
+filename = '/home/weihao/Projects/p_files/{}_{}_cv_s{}.p'.format(key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
 print location, filename, output_file
 
@@ -74,7 +74,7 @@ for seq in poses_dic:
         for img_id2 in poses:
             if img_id2-img_id1 == 0:
                 continue
-            if range1 <= img_id2-img_id1 < range2:
+            if range1 <= img_id2-img_id1 <= range2:
                 pose2 = poses[img_id2]
                 vo.get_features(img_id1, pose1, pose2, isTest)
                 fs = vo.features

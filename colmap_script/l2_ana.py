@@ -1,6 +1,6 @@
 # from scipy import stats
 # from matplotlib.figure import figaspect
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
@@ -28,10 +28,17 @@ mx = max(da[:, 0])
 length = len(da)
 l2 =int(length/2)
 
+l3 = length-min(l2, 80)
+
+#for a in range(int(l2), 0, -1):
+
 for a in range(int(l2)):
-    v = p_fit(da[(l2-a):length-a, 0], da[(l2-a):length-a, 1])
-    pre1 = v[0] * da[(l2-a):length-a, 0] *da[(l2-a):length-a, 0] + v[1] * da[(l2-a):length-a, 0] + v[2]
-    mx = max(da[(l2-a):length-a, 0])
+    v = p_fit(da[(l3-a):length-a, 0], da[(l3-a):length-a, 1])
+    pre1 = v[0] * da[(l3-a):length-a, 0] *da[(l3-a):length-a, 0] + v[1] * da[(l3-a):length-a, 0] + v[2]
+    mx = max(da[(l3-a):length-a, 0])
     print '{2} {0:.9f} {1:.9f}'.format(pre1[-1], 2 * mx * v[0] + v[1], a)
+    plt.plot(da[(l3-a):length-a, 0], pre1, linewidth=2)
+
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
+#plt.show()
