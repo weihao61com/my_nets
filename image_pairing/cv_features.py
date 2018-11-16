@@ -12,7 +12,6 @@ num_match = 5
 key = 'heads'
 mode = 'Train'
 
-
 if len(sys.argv)>1:
     key = sys.argv[1]
 if len(sys.argv)>2:
@@ -66,8 +65,10 @@ for seq in poses_dic:
 
 for id in image_list:
     cnt = 0
-    while True:
-        idx = randint(0, length-1)
+    idxs = range(length)
+    np.random.shuffle(idxs)
+    for x in range(length):
+        idx = idxs[x]
         if idx != id:
             id1 = image_list[id]
             id2 = image_list[idx]
