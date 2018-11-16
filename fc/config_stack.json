@@ -5,10 +5,10 @@
     "net": "stack",
     "_retrain": "stack",
     "netTest": "stack",
-    "feature": 20,
+    "feature": 40,
     "lr": 1e-4,
     "num_output": 3,
-    "stack": 2,
+    "stack": 5,
     "step": 500,
     "stage": -1
 }

@@ -77,13 +77,19 @@ if __name__ == '__main__':
     #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
     # l2 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))
-    l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
-    l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
-    l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
+    #l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
+    #l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
+    #l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
 
-    loss = l5 + l4 + l3#  + l2 #+ l1 + l0
-
-    opt = None
+    ls = []
+    loss = None
+    for x in range(stack+1):
+        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
+        if loss is None:
+            loss = ll
+        else:
+            loss = loss + ll
+        ls.append(ll)
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
@@ -132,7 +138,7 @@ if __name__ == '__main__':
                                 feed[input_dic['input{}'.format(d + 1)]] = \
                                     b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
-                            _, ll3,ll4,ll5 = sess.run([opt, l3, l4, l5], feed_dict=feed)
+                            _, ll3,ll4,ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
                             tl5 += ll5

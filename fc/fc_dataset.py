@@ -47,7 +47,7 @@ class sNet3(Network):
 
 class StackNet(Network):
 
-    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=256):
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
         self.dim_inter = [256]
         self.dim_ref = dim_ref
@@ -81,7 +81,7 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(2048, name='fc0').
+         fc(1024, name='fc0').
          fc(self.dim_ref, name='fc1')
          .fc(self.dim_output, relu=False, name='output0')
          )
