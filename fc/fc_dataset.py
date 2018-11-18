@@ -81,7 +81,8 @@ class StackNet(Network):
 
         # base net
         (self.feed('input0').
-         fc(1024, name='fc0').
+         fc(2048, name='fc00').
+         fc(256, name='fc01').
          fc(self.dim_ref, name='fc1')
          .fc(self.dim_output, relu=False, name='output0')
          )
