@@ -579,8 +579,14 @@ def run_data_stack_avg2(data, inputs, sess, xy, stack):
     truth = np.array(truth)
     L = []
     M = []
+
     for a in range(3):
-        diff = results[:, 0:a+1,:].sum(axis=1) - truth
+        # diff = results[:, 0:a+1,:].sum(axis=1) - truth
+        if a == 0:
+            diff = results[:, a, :] - truth
+            r0 = results[:, 0, :]
+        else:
+            diff = results[:, a, :] + r0 - truth
         r = np.linalg.norm(diff, axis=1)
         L.append((r*r).mean())
         M.append(np.median(r))

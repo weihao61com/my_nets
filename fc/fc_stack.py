@@ -68,19 +68,6 @@ if __name__ == '__main__':
     for a in range(stack+1):
         xy[a] = net.layers['output{}'.format(a)]
 
-    #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
-    #loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
-    #for a in range(stack):
-    #    loss = tf.add(loss, tf.reduce_sum(tf.square(tf.subtract(xy[a+1], output))))
-
-    #l0 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-7], output)))) * .5
-    #l1 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-6], output)))) * .6
-    #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
-    # l2 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-3], output)))
-    #l3 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-2], output)))
-    #l4 = tf.reduce_sum(tf.square(tf.subtract(xy[stack-1], output)))
-    #l5 = tf.reduce_sum(tf.square(tf.subtract(xy[stack], output)))
-
     ls = []
     loss = None
     for x in range(stack+1):

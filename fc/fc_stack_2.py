@@ -78,32 +78,14 @@ if __name__ == '__main__':
     #l2 = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[stack-5], output)))) * .7
     l3 = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
     l4 = tf.reduce_sum(tf.square(tf.subtract(xy[0]+xy[1], output)))
-    l5 = tf.reduce_sum(tf.square(tf.subtract(xy[0]+xy[1]+xy[2], output)))
+    l5 = tf.reduce_sum(tf.square(tf.subtract(xy[0]+xy[2], output)))
 
     loss = l5 + l4 + l3 #+ l2 + l1 + l0
 
-    opt = None
-
-    if stage<0:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
             minimize(loss)
-    if stage == 0:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l3)
-    if stage == 1:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l4)
-    if stage == 2:
-        opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                        beta2=0.999, epsilon=0.00000001,
-                        use_locking=False, name='Adam').\
-            minimize(l5)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -124,14 +106,12 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg2(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.3f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}" \
-                  " {6:.4f} {7:.4f} {8:.4f} {9:.4f} {10:.4f} {11:.4f} " \
-                  "{12:.4f} {13:.4f}".format(
-                a*loop/1000.0, (t1 - t00).total_seconds()/3600.0,
-                tr_loss[stack-2], tr_loss[stack-1], tr_loss[stack],
-                te_loss[stack-2], te_loss[stack-1], te_loss[stack],
-                tr_median[stack-2], tr_median[stack-1], tr_median[stack],
-                te_median[stack-2], te_median[stack-1], te_median[stack])
+
+
+            t1 = datetime.datetime.now()
+            str = "it: {0:.2f} {1:.2f} ".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            for s in range(stack+1):
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
 
