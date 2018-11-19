@@ -8,7 +8,7 @@ from pose_ana import *
 import datetime
 import pickle
 
-num_match = 5
+num_match = 50
 key = 'heads'
 mode = 'Train'
 
@@ -109,10 +109,12 @@ for id in image_list:
     if id % 100 == 0:
         print id, len(data), datetime.datetime.now() - t0
 
-print 'Total data', len(data)
+print 'Total data', len(data), len(rs)
+
+with open(filename, 'w') as fp:
+    pickle.dump(data, fp)
+
 if isTest:
     fp.close()
     print '\nmedian', key, np.median(rs)
 
-with open(filename, 'w') as fp:
-    pickle.dump(data, fp)

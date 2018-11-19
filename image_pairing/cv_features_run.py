@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/heads_Test_cv_m1.p'
+filename = '/home/weihao/Projects/p_files/office_Train_cv.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -26,8 +26,9 @@ with open(filename, 'r') as f:
 
 print len(data)
 rs = []
+angs = []
 for d in data:
-    if random() < 10.1:
+    if random() < 0.01:
         d0 = d[0]
         d0[:, 0] = d0[:, 0] * w2 + w2
         d0[:, 1] = d0[:, 1] * h2 + h2
@@ -39,14 +40,15 @@ for d in data:
                                        method=cv2.RANSAC)
         mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
-        b = Utils.rotationMatrixToEulerAngles(R)
-        a = d[1]/180*np.pi
+        b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+        a = d[1]
         dr = a - b
-        r0 = np.linalg.norm(dr)* 180 / np.pi
+        r0 = np.linalg.norm(dr)
         fp.write('{},{},{},{},{},{},{}\n'.
                  format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
         rs.append(r0)
+        angs.append(np.linalg.norm(a))
 
-print '\nmedian', np.median(rs)
+print '\nmedian', np.median(rs), np.median(angs)
 fp.close()
 

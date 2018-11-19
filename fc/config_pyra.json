@@ -1,0 +1,13 @@
+{
+    "batch_size": 1000,
+    "te": "p_files/office_Test_cv_s1.p",
+    "tr": "p_files/office_Train_cv_s1.p",
+    "_tr1": "p_files/heads_Train_cv_m10.p",
+    "net": "pyra",
+    "_retrain": "pyra",
+    "netTest": "pyra",
+    "feature": 10,
+    "lr": 1e-4,
+    "base": 2,
+    "step": 500
+}

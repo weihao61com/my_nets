@@ -45,6 +45,53 @@ class sNet3(Network):
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
+class PyraNet(Network):
+    def parameters(self, feature_len):
+        self.att = 4
+        self.feature_len = feature_len
+        self.dim_ref = 64
+        self.dim_out = 3
+        self.num_base = 2
+
+        self.nodes = [2048, 256]
+
+        self.dim0 = self.feature_len*self.att
+        self.out0 = self.nodes[0]
+        self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
+        self.biases0 = self.make_var('biases0', [self.out0])
+
+        self.dim1 = self.out0
+        self.out1 = self.nodes[1]
+        self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
+        self.biases1 = self.make_var('biases1', [self.out1])
+
+        self.dim2 = self.out1
+        self.out2 = self.dim_out
+        self.weights2 = self.make_var('weights3', shape=[self.dim2, self.out2])
+        self.biases2 = self.make_var('biases3', [self.out2])
+
+    def setup(self):
+        pass
+
+    def real_setup(self, feature_len):
+        self.parameters(feature_len)
+
+        # base nets
+        for b in range(self.num_base):
+            (self.feed('input{}'.format(b)).
+             fc_w(name='fc0{}_in'.format(b), weights=self.weights0, biases=self.biases0).
+             fc_w(name='fc1{}_in'.format(b), weights=self.weights1, biases=self.biases1).
+             fc_w(name='output{}'.format(b), weights=self.weights2, biases=self.biases2)
+             )
+
+        # Addition net
+        (self.feed('fc10_in', 'fc11_in').
+         fc(2048, name='fc0').
+         fc(256, name='fc1').
+         fc(self.dim_out, relu=False, name='output{}'.format(self.num_base+1))
+         )
+
+
 class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
@@ -513,6 +560,7 @@ class cNet(Network):
               format(len(self.layers), nodes))
 
 
+
 def run_data_stack(data, inputs, sess, xy, stack):
     results = None
     truth = None
@@ -534,6 +582,56 @@ def run_data_stack(data, inputs, sess, xy, stack):
             truth = np.concatenate((truth, b[1]))
 
     return Utils.calculate_stack_loss(results, truth)
+
+def run_data_base(data, inputs, sess, xy, stack):
+    rst_dic = {}
+    truth_dic = {}
+    for b in data:
+        length = b[0].shape[1] - 4 * stack
+        feed = {inputs['input0']: b[0][:, :length]}
+        for a in range(stack):
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
+        result = []
+        for a in range(stack+1):
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
+        result = np.array(result)
+        for a in range(len(b[2])):
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
+
+    results = []
+    truth = []
+
+    filename = '/home/weihao/tmp/test.csv'
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/test.csv'
+    fp = open(filename, 'w')
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        results.append(result)
+        truth.append(truth_dic[id])
+        t = truth_dic[id]
+        if random.random() < 0.2:
+            r = np.linalg.norm(t - result)
+            mm = result[stack - 1]
+            fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+    fp.close()
+
+    results = np.array(results)
+    truth = np.array(truth)
+    L = []
+    M = []
+    for a in range(3):
+        diff = results[:, 0:a+1,:].sum(axis=1) - truth
+        r = np.linalg.norm(diff, axis=1)
+        L.append((r*r).mean())
+        M.append(np.median(r))
+    return L, M
 
 
 def run_data_stack_avg2(data, inputs, sess, xy, stack):
