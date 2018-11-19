@@ -45,54 +45,6 @@ class sNet3(Network):
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
-class PyraNet(Network):
-    def parameters(self, feature_len):
-        self.att = 4
-        self.feature_len = feature_len
-        self.dim_ref = 64
-        self.dim_out = 3
-        self.num_base = 2
-
-        self.nodes = [2048, 256]
-
-        self.dim0 = self.feature_len*self.att
-        self.out0 = self.nodes[0]
-        self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
-        self.biases0 = self.make_var('biases0', [self.out0])
-
-        self.dim1 = self.out0
-        self.out1 = self.nodes[1]
-        self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
-        self.biases1 = self.make_var('biases1', [self.out1])
-
-        self.dim2 = self.out1
-        self.out2 = self.dim_out
-        self.weights2 = self.make_var('weights3', shape=[self.dim2, self.out2])
-        self.biases2 = self.make_var('biases3', [self.out2])
-
-    def setup(self):
-        pass
-
-    def real_setup(self, feature_len):
-        self.parameters(feature_len)
-
-        # base nets
-        for b in range(self.num_base):
-            (self.feed('input{}'.format(b)).
-             fc_w(name='fc0{}_in'.format(b), weights=self.weights0, biases=self.biases0).
-             fc_w(name='fc1{}_in'.format(b), weights=self.weights1, biases=self.biases1).
-             fc_w(name='output{}'.format(b), weights=self.weights2, biases=self.biases2)
-             )
-
-        # Addition net
-        (self.feed('fc10_in', 'fc11_in').
-         concat(1, name='cc').
-         fc(2048, name='fc0').
-         fc(256, name='fc1').
-         fc(self.dim_out, relu=False, name='output{}'.format(self.num_base))
-         )
-
-
 class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):

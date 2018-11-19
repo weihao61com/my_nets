@@ -104,7 +104,7 @@ if __name__ == '__main__':
             t1 = datetime.datetime.now()
             str = "it: {0} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
             for s in range(stack+1):
-                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f}".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
 
