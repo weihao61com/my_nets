@@ -86,9 +86,10 @@ class PyraNet(Network):
 
         # Addition net
         (self.feed('fc10_in', 'fc11_in').
+         concat(1, name='cc').
          fc(2048, name='fc0').
          fc(256, name='fc1').
-         fc(self.dim_out, relu=False, name='output{}'.format(self.num_base+1))
+         fc(self.dim_out, relu=False, name='output{}'.format(self.num_base))
          )
 
 
@@ -583,16 +584,16 @@ def run_data_stack(data, inputs, sess, xy, stack):
 
     return Utils.calculate_stack_loss(results, truth)
 
-def run_data_base(data, inputs, sess, xy, stack):
+def run_data_base(data, inputs, sess, xy, base):
     rst_dic = {}
     truth_dic = {}
     for b in data:
-        length = b[0].shape[1] - 4 * stack
-        feed = {inputs['input0']: b[0][:, :length]}
-        for a in range(stack):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, length + 4 * a:length + 4 * (a + 1)]
+        length = b[0].shape[1]/base
+        feed = {} #inputs['input0']: b[0][:, :length]}
+        for a in range(base):
+            feed[inputs['input{}'.format(a)]] = b[0][:, length * a: length  * (a + 1)]
         result = []
-        for a in range(stack+1):
+        for a in range(base+1):
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
         result = np.array(result)
@@ -617,7 +618,7 @@ def run_data_base(data, inputs, sess, xy, stack):
         t = truth_dic[id]
         if random.random() < 0.2:
             r = np.linalg.norm(t - result)
-            mm = result[stack - 1]
+            mm = result[base - 1]
             fp.write('{},{},{},{},{},{},{}\n'.
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
     fp.close()
@@ -626,8 +627,8 @@ def run_data_base(data, inputs, sess, xy, stack):
     truth = np.array(truth)
     L = []
     M = []
-    for a in range(3):
-        diff = results[:, 0:a+1,:].sum(axis=1) - truth
+    for a in range(base+1):
+        diff = results[:, a, :] - truth
         r = np.linalg.norm(diff, axis=1)
         L.append((r*r).mean())
         M.append(np.median(r))

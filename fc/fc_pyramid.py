@@ -57,7 +57,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = PyraNet(input_dic)
-    net.real_setup(base)
+    net.real_setup(feature_len)
 
     xy = {}
     for a in range(base + 1):
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     ls = []
     loss = None
-    for x in range(base):
+    for x in range(base+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
@@ -97,9 +97,9 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_base(te_pre_data, input_dic, sess, xy, base)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.2f}".format(a * loop / 1000.0, (t1 - t00).total_seconds() / 3600.0)
+            str = "it: {0} {1:.2f} ".format(a * loop / 1000.0, (t1 - t00).total_seconds() / 3600.0)
             for s in range(base + 1):
-                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f}".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
 
@@ -114,11 +114,11 @@ if __name__ == '__main__':
                     for b in tr_pre_data:
                         total_length = len(b[0])
                         for c in range(0, total_length, step):
-                            length = b[0].shape[1] - att * stack
+                            length = b[0].shape[1]/base
                             feed = {input_dic['input0']: b[0][c:c + step, :length]}
-                            for d in range(stack):
-                                feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
+                            for d in range(base):
+                                feed[input_dic['input{}'.format(d)]] = \
+                                    b[0][c:c + step, length * d: length * (1 + d)]
                             feed[output] = b[1][c:c + step]
                             _, ll3, ll4, ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
                             tl3 += ll3
