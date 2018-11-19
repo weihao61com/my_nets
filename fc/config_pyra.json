@@ -9,5 +9,6 @@
     "feature": 10,
     "lr": 1e-4,
     "base": 2,
-    "step": 500
+    "step": 500,
+    "loop": 100
 }

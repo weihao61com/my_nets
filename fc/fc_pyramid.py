@@ -90,6 +90,7 @@ if __name__ == '__main__':
     lr = js['lr']
     base = js['base']
     step = js["step"]
+    loop = js["loop"]
     num_output = 3
 
     renetFile = None
@@ -101,7 +102,6 @@ if __name__ == '__main__':
 
     att = te.sz[1]
     iterations = 10000
-    loop = 10
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
