@@ -1,7 +1,7 @@
 {
     "batch_size": 1000,
     "te": "p_files/heads_Test_cv.p",
-    "tr": "p_files/heads_Test_cv.p",
+    "tr": "p_files/heads_Train_cv.p",
     "_tr1": "p_files/heads_Train_cv_m10.p",
     "net": "pyra",
     "_retrain": "pyra",
@@ -10,5 +10,5 @@
     "lr": 1e-4,
     "base": 2,
     "step": 500,
-    "loop": 100
+    "loop": 10
 }
