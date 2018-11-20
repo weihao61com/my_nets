@@ -62,7 +62,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(stack, verbose=False)
+    net.real_setup(stack, num_out=num_output, verbose=False)
 
     xy = {}
     for a in range(stack+1):
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     ls = []
     loss = None
     for x in range(stack+1):
-        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
+        ll = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[x], output))))
         if loss is None:
             loss = ll
         else:
@@ -95,10 +95,10 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr.prepare(num_output=num_output)
             tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack)
 
-            te_pre_data = te.prepare()
+            te_pre_data = te.prepare(num_output=num_output)
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=50)
+                tr_pre_data = tr.prepare(multi=50, num_output=num_output)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

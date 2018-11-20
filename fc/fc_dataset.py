@@ -124,8 +124,8 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack, verbose=True):
-        self.parameters(stack)
+    def real_setup(self, stack, num_out=3, verbose=True):
+        self.parameters(stack, dim_output=num_out)
 
         # base net
         (self.feed('input0').
@@ -727,8 +727,12 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
         if random.random() < 0.2:
             r = np.linalg.norm(t - result)
             mm = result[stack - 1]
-            fp.write('{},{},{},{},{},{},{}\n'.
+            if len(mm)==3:
+                fp.write('{},{},{},{},{},{},{}\n'.
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            else:
+                fp.write('{},{},{}\n'.
+                         format(t[0], mm[0], r))
     fp.close()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
