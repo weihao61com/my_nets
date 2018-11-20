@@ -53,7 +53,7 @@ class PyraNet(Network):
         self.dim_out = 3
         self.num_base = 2
 
-        self.nodes = [2048, 256]
+        self.nodes = [4096, 512]
 
         self.dim0 = self.feature_len*self.att
         self.out0 = self.nodes[0]
@@ -500,7 +500,7 @@ def cal_diff(t, r):
     # d0 = t[0]-mm[0]
     # d1 = t[1]-mm[1]
     dd = np.linalg.norm(t - mm)
-    dd = dd * dd
+    # dd = dd * dd
     # dd = dd*dd
 
     return dd, mm

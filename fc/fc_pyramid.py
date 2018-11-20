@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     att = te.sz[1]
     iterations = 10000
-    loop = 10
+    loop = 5
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -97,7 +97,7 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_base(te_pre_data, input_dic, sess, xy, base)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.2f} ".format(a * loop / 1000.0, (t1 - t00).total_seconds() / 3600.0)
+            str = "it: {0:.3f} {1:.2f} ".format(a * loop / 1000.0, (t1 - t00).total_seconds() / 3600.0)
             for s in range(base + 1):
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
@@ -115,10 +115,9 @@ if __name__ == '__main__':
                         total_length = len(b[0])
                         for c in range(0, total_length, step):
                             length = b[0].shape[1]/base
-                            feed = {input_dic['input0']: b[0][c:c + step, :length]}
+                            feed = {}
                             for d in range(base):
-                                feed[input_dic['input{}'.format(d)]] = \
-                                    b[0][c:c + step, length * d: length * (1 + d)]
+                                feed[input_dic['input{}'.format(d)]] = b[0][c:c + step, length * d: length * (1 + d)]
                             feed[output] = b[1][c:c + step]
                             _, ll3, ll4, ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
                             tl3 += ll3

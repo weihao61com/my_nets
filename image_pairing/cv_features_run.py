@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/office_Train_cv.p'
+filename = '/home/weihao/Projects/p_files/heads_Test_cv.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -28,7 +28,7 @@ print len(data)
 rs = []
 angs = []
 for d in data:
-    if random() < 0.01:
+    if random() < 0.1:
         d0 = d[0]
         d0[:, 0] = d0[:, 0] * w2 + w2
         d0[:, 1] = d0[:, 1] * h2 + h2
@@ -49,6 +49,6 @@ for d in data:
         rs.append(r0)
         angs.append(np.linalg.norm(a))
 
-print '\nmedian', np.median(rs), np.median(angs)
+print '\nmedian', filename, np.median(rs), np.median(angs)
 fp.close()
 

@@ -104,3 +104,6 @@ iteration: 1000 0.895871 1.803932 0.627861 1.098989
 heads_Test_cv_1.p median heads 0.41379872862
 heads_Test_cv_m5.p median heads 2.1223335316521887
 office_Test_cv_s1 median office 0.3139776077104028
+
+heads: 0.55, 0.22, 0.40, 0.11
+heads_m5: 2.13, 0.98, 1.30, 0.54
