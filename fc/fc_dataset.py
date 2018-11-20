@@ -53,7 +53,7 @@ class PyraNet(Network):
         self.dim_out = 3
         self.num_base = 2
 
-        self.nodes = [4096, 512]
+        self.nodes = [2048, 256]
 
         self.dim0 = self.feature_len*self.att
         self.out0 = self.nodes[0]
