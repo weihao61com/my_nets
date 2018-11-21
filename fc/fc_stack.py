@@ -97,10 +97,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare(num_output=num_output)
-            tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack)
+            tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack, 'tr')
 
             te_pre_data = te.prepare(num_output=num_output)
-            te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
+            te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'te')
 
             t1 = datetime.datetime.now()
             str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)

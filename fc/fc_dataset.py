@@ -692,7 +692,7 @@ def run_data_stack_avg2(data, inputs, sess, xy, stack):
     return L, M
 
 
-def run_data_stack_avg(data, inputs, sess, xy, stack):
+def run_data_stack_avg(data, inputs, sess, xy, stack, fname):
     rst_dic = {}
     truth_dic = {}
     for b in data:
@@ -714,9 +714,9 @@ def run_data_stack_avg(data, inputs, sess, xy, stack):
     results = []
     truth = []
 
-    filename = '/home/weihao/tmp/test.csv'
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
     if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/test.csv'
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
     fp = open(filename, 'w')
     for id in rst_dic:
         dst = np.array(rst_dic[id])
