@@ -738,7 +738,7 @@ def run_data_stack_avg(data, inputs, sess, xy, stack, fname):
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
 
-def run_data(data, inputs, sess, xy):
+def run_data(data, inputs, sess, xy, fname):
     results = None
     truth = None
 
@@ -751,6 +751,23 @@ def run_data(data, inputs, sess, xy):
         else:
             results = np.concatenate((results, result))
             truth = np.concatenate((truth, b[1]))
+
+
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+
+    for a in range(len(results)):
+        t = truth[a]
+        mm = results[a]
+        if len(mm) == 3:
+            fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+        else:
+            fp.write('{},{}\n'.
+                     format(t[0], mm[0]))
+    fp.close()
 
     return Utils.calculate_loss(results, truth)
 

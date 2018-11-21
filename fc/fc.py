@@ -64,8 +64,7 @@ if __name__ == '__main__':
         net.real_setup(nodes)
 
     xy = net.layers['output']
-    #loss = tf.reduce_sum(tf.square(tf.square(tf.subtract(xy, output))))
-    loss = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy, output))))
+    loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
 
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -85,10 +84,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare(num_output=num_output)
-            total_loss, tr_median = run_data(tr_pre_data, input, sess, xy)
+            total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, 'tr')
 
             te_pre_data = te_set.prepare(num_output=num_output)
-            te_loss, te_median = run_data(te_pre_data, input, sess, xy)
+            te_loss, te_median = run_data(te_pre_data, input, sess, xy, 'te')
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
             str = "iteration: {0} {1:.3f} {2} {3} {4} {5}".format(

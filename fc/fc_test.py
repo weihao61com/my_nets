@@ -7,6 +7,8 @@ sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils
 
 HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
 
 if __name__ == '__main__':
     config_file = HOME + "/my_nets/fc/config.json"
@@ -65,7 +67,7 @@ if __name__ == '__main__':
                     rst[nt].append(result[a])
                     truth[nt] = b[1][a]
 
-        fp = open('/home/weihao/tmp/test.csv', 'w')
+        fp = open('{}/../tmp/test.csv'.format(HOME), 'w')
         d = []
         for a in range(len(truth)):
             r, mm = cal_diff(truth[a], rst[a])
