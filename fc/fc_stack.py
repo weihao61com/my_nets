@@ -71,7 +71,8 @@ if __name__ == '__main__':
     ls = []
     loss = None
     for x in range(stack+1):
-        ll = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(xy[x], output))))
+        #ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
+        ll = tf.reduce_sum(tf.abs(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
         else:
@@ -102,7 +103,7 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
 
             t1 = datetime.datetime.now()
-            str = "it: {0} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
             for s in range(stack+1):
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 

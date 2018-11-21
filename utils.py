@@ -59,8 +59,8 @@ class Utils:
         for a in range(v1.shape[1]):
             diff = v1[:,a,:]- v2
             r = np.linalg.norm(diff, axis=1)
-            loss = np.linalg.norm(r)
-            L.append(loss*loss/len(r))
+            loss = np.mean(r)
+            L.append(loss)
             M.append(np.median(r))
         return L, M
 
