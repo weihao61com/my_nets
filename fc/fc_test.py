@@ -55,7 +55,7 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=1)
+            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=-1)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)
@@ -72,10 +72,9 @@ if __name__ == '__main__':
         for a in range(len(truth)):
             r, mm = cal_diff(truth[a], rst[a])
             if a==0:
-                print truth[a]
-                print mm, r
-                for b in rst[a]:
-                    print np.linalg.norm(b-truth[a]), b
+                print truth[a], mm, r
+                #for b in rst[a]:
+                #    print np.linalg.norm(b-truth[a]), b
             t = truth[a]
             #fp.write('{},{},{},{},{},{},{}\n'.
             #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))
