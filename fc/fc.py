@@ -107,7 +107,7 @@ if __name__ == '__main__':
                             _, A = sess.run([opt, loss], feed_dict=feed)
                             t_loss += A
                             t_count += len(b[0][c:c+step])
-                    tr_pre_data = tr.get_next()
+                    tr_pre_data = tr.get_next(num_output=num_output)
                 st1 = '{}'.format(t_loss/t_count)
 
             saver.save(sess, netFile)
