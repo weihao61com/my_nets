@@ -55,7 +55,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(stack, False)
+    net.real_setup(stack, verbose=False, num_out=num_output)
 
     xy = {}
     for a in range(stack+1):
@@ -70,8 +70,8 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
-        te_pre_data = te_set.prepare(multi=multi)
-        te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack)
+        te_pre_data = te_set.prepare(multi=multi, num_output=num_output)
+        te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'test')
 
         t1 = datetime.datetime.now()
 
