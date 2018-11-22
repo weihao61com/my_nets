@@ -619,8 +619,13 @@ def run_data_base(data, inputs, sess, xy, base):
         if random.random() < 0.2:
             r = np.linalg.norm(t - result)
             mm = result[base - 1]
-            fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            if len(t) == 3:
+                fp.write('{},{},{},{},{},{},{}\n'.
+                         format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            else:
+                fp.write('{},{}\n'.
+                         format(t[0], mm[0]))
+
     fp.close()
 
     results = np.array(results)

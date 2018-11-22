@@ -54,7 +54,7 @@ class PyraNet(Network):
              fc_w(name='fc0{}_in'.format(b), weights=self.weights0, biases=self.biases0).
              fc_w(name='fc1{}_in'.format(b), weights=self.weights1, biases=self.biases1).
              fc_w(name='fc2{}_in'.format(b), weights=self.weights2, biases=self.biases2).
-             fc_w(name='output{}'.format(b), weights=self.weights3, biases=self.biases3)
+             fc_w(name='output{}'.format(b), relu=False, weights=self.weights3, biases=self.biases3)
              )
 
         # Addition net
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     base = js['base']
     step = js["step"]
     loop = js["loop"]
-    num_output = 3
+    num_output = 1
 
     renetFile = None
     if 'retrain' in js:
@@ -146,10 +146,10 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr.prepare(num_output=num_output)
             tr_loss, tr_median = run_data_base(tr_pre_data, input_dic, sess, xy, base)
 
-            te_pre_data = te.prepare()
+            te_pre_data = te.prepare(num_output=num_output)
             te_loss, te_median = run_data_base(te_pre_data, input_dic, sess, xy, base)
 
             t1 = datetime.datetime.now()
@@ -164,7 +164,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=50)
+                tr_pre_data = tr.prepare(multi=50, num_output=num_output)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -181,9 +181,7 @@ if __name__ == '__main__':
                             tl4 += ll4
                             tl5 += ll5
                             nt += len(b[0][c:c + step])
-                    tr_pre_data = tr.get_next()
-
-                    tr_pre_data = tr.get_next()
+                    tr_pre_data = tr.get_next(num_output=num_output)
             str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3 / nt, tl4 / nt, tl5 / nt)
             saver.save(sess, netFile)
 
