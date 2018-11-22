@@ -27,6 +27,9 @@ with open(filename, 'r') as f:
 print len(data)
 rs = []
 angs = []
+rs0 = []
+rs1 = []
+rs2 = []
 for d in data:
     if random() < 0.1:
         d0 = d[0]
@@ -47,8 +50,14 @@ for d in data:
         fp.write('{},{},{},{},{},{},{}\n'.
                  format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
         rs.append(r0)
+        rs0.append(abs(dr[0]))
+        rs1.append(abs(dr[1]))
+        rs2.append(abs(dr[2]))
         angs.append(np.linalg.norm(a))
+        if len(rs)>500:
+            break
 
-print '\nmedian', filename, np.median(rs), np.median(angs)
+print '\nmedian', os.path.basename(filename), np.median(rs), np.median(angs),\
+    np.median(rs0),np.median(rs1),np.median(rs2)
 fp.close()
 
