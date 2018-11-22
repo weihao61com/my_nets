@@ -10,7 +10,7 @@ import pickle
 
 project_dir = '/home/weihao/Projects'
 
-range2 = 1
+range2 = 3
 range1 = -range2
 key = 'office'
 mode = 'Train'
