@@ -38,7 +38,7 @@ if __name__ == "__main__":
     key = 'heads'  # office" #heads
     mode = 'Test'
     max_image = 400000
-    max_match_per_image = 40
+    max_match_per_image = 20 # -3
     min_matching_point = 20
     seq = None
 
@@ -94,16 +94,16 @@ if __name__ == "__main__":
             a2 = pts2[:, 0]
             a3 = pts2[:, 1]
             features = np.zeros((len(pts1), 4))
-            features[:, 0] = (a0-a2)/w2
-            features[:, 1] = (a0+a2)/w2/2-1
-            features[:, 2] = (a1-a3)/h2
-            features[:, 3] = (a1+a3)/h2/2-1
+            features[:, 0] = (a0 - w2) / w2
+            features[:, 1] = (a1 - h2) / h2
+            features[:, 2] = (a2 - w2) / w2
+            features[:, 3] = (a3 - h2) / h2
             output.append([features, truth*180/np.pi])
             features = np.zeros((len(pts1), 4))
-            features[:, 0] = (a2-a0)/w2
-            features[:, 1] = (a0+a2)/w2/2-1
-            features[:, 2] = (a3-a1)/h2
-            features[:, 3] = (a1+a3)/h2/2-1
+            features[:, 2] = (a0 - w2) / w2
+            features[:, 3] = (a1 - h2) / h2
+            features[:, 0] = (a2 - w2) / w2
+            features[:, 1] = (a3 - h2) / h2
             output.append([features, -truth*180/np.pi])
 
             dr = truth - angles

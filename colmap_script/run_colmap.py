@@ -38,6 +38,33 @@ def run_cmd(cmd):
     print(cmd)
     os.system(cmd)
 
+def get_seq(filename):
+    strs = filename.split('.')
+    strs = strs[0].split('-')
+    id = int(strs[1])
+    seq = int(strs[0].split('_')[0])
+    return id, seq
+
+def create_image_seq_list(database_path, image_list, seq = 3):
+
+    image_pairs = {}
+    for img1 in image_list:
+        id1, seq1 = get_seq(img1)
+        for img2 in image_list:
+            id2, seq2 = get_seq(img2)
+            if seq1==seq2 and 0<abs(id1-id2)<=seq:
+                if img1 not in image_pairs:
+                    image_pairs[img1] = []
+                image_pairs[img1].append(img2)
+
+    total = 0
+    matches_list = os.path.join(database_path, MATCHES_LIST)
+    with open(matches_list, 'w') as fp:
+        for img in image_pairs:
+            for ig in image_pairs[img]:
+                fp.write('{} {}\n'.format(img, ig))
+                total += 1
+    print 'Total pair', total
 
 def create_image_list(database_path, image_list, pair_count = 100):
     if pair_count>len(image_list):
@@ -115,7 +142,11 @@ def run_colmap(project_dir, key, mode, max_image, max_match_per_image):
     cmd += ' --ImageReader.single_camera 1'
 
     run_cmd(cmd)
-    create_image_list(project_path, image_list, max_match_per_image*5)
+
+    if max_match_per_image<0:
+        create_image_seq_list(project_path, image_list, -max_match_per_image)
+    else:
+        create_image_list(project_path, image_list, max_match_per_image*5)
 
     cmd = '{} matches_importer'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)
