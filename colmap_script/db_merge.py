@@ -57,7 +57,10 @@ if __name__ == "__main__":
     if seq is None:
         run_colmap(project_dir, key, mode, max_image, max_match_per_image)
         output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
-        filename = '{}/p_files/{}_{}.p'.format(project_dir, mode, key)
+        if max_match_per_image>0:
+            filename = '{}/p_files/{}_{}_cm_m{}.p'.format(project_dir, mode, key, max_match_per_image)
+        else:
+            filename = '{}/p_files/{}_{}_cm_s{}.p'.format(project_dir, mode, key, -max_match_per_image)
     else:
         run_colmap_seq(project_dir, key, mode, max_image, max_match_per_image, seq)
         output_file = '{}/tmp/{}_{}_{}.csv'.format(project_dir, key, mode, seq)
@@ -99,12 +102,12 @@ if __name__ == "__main__":
             features[:, 2] = (a2 - w2) / w2
             features[:, 3] = (a3 - h2) / h2
             output.append([features, truth*180/np.pi])
-            features = np.zeros((len(pts1), 4))
-            features[:, 2] = (a0 - w2) / w2
-            features[:, 3] = (a1 - h2) / h2
-            features[:, 0] = (a2 - w2) / w2
-            features[:, 1] = (a3 - h2) / h2
-            output.append([features, -truth*180/np.pi])
+            # features = np.zeros((len(pts1), 4))
+            # features[:, 2] = (a0 - w2) / w2
+            # features[:, 3] = (a1 - h2) / h2
+            # features[:, 0] = (a2 - w2) / w2
+            # features[:, 1] = (a3 - h2) / h2
+            # output.append([features, -truth*180/np.pi])
 
             dr = truth - angles
             r0 = np.linalg.norm(dr) * 180 / np.pi

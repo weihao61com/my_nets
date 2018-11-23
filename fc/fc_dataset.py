@@ -764,14 +764,15 @@ def run_data(data, inputs, sess, xy, fname):
     fp = open(filename, 'w')
 
     for a in range(len(results)):
-        t = truth[a]
-        mm = results[a]
-        if len(mm) == 3:
-            fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-        else:
-            fp.write('{},{}\n'.
-                     format(t[0], mm[0]))
+        if random.random()<1000.0/len(results):
+            t = truth[a]
+            mm = results[a]
+            if len(mm) == 3:
+                fp.write('{},{},{},{},{},{},{}\n'.
+                         format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            else:
+                fp.write('{},{}\n'.
+                         format(t[0], mm[0]))
     fp.close()
 
     return Utils.calculate_loss(results, truth)

@@ -1,7 +1,7 @@
 {
     "batch_size": 1000,
-    "te": "p_files/heads_Test_cv_m5.p",
-    "tr": "p_files/heads_Train_cv_m5.p",
+    "te": "p_files/Test_heads_cm_m20.p",
+    "tr": "p_files/Train_heads_cm_m20.p",
     "net": "heads",
     "_retrain": "heads",
     "netTest": "heads",
