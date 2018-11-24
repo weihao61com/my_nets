@@ -31,33 +31,34 @@ rs0 = []
 rs1 = []
 rs2 = []
 for d in data:
-    if random() < 0.1:
-        d0 = d[0]
-        d0[:, 0] = d0[:, 0] * w2 + w2
-        d0[:, 1] = d0[:, 1] * h2 + h2
-        d0[:, 2] = d0[:, 2] * w2 + w2
-        d0[:, 3] = d0[:, 3] * h2 + h2
-        px_new = d0[:, :2]
-        px_last = d0[:, 2:]
-        E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=cam.mx,
-                                       method=cv2.RANSAC)
-        mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
+    if random() > 1000.0/len(data):
+        continue
 
-        b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
-        a = d[1]
-        dr = a - b
-        r0 = np.linalg.norm(dr)
-        fp.write('{},{},{},{},{},{},{}\n'.
-                 format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
-        rs.append(r0)
-        rs0.append(abs(dr[0]))
-        rs1.append(abs(dr[1]))
-        rs2.append(abs(dr[2]))
-        angs.append(np.linalg.norm(a))
-        if len(rs)>500:
-            break
+    d0 = d[0]
+    d0[:, 0] = d0[:, 0] * w2 + w2
+    d0[:, 1] = d0[:, 1] * h2 + h2
+    d0[:, 2] = d0[:, 2] * w2 + w2
+    d0[:, 3] = d0[:, 3] * h2 + h2
+    px_new = d0[:, :2]
+    px_last = d0[:, 2:]
+    E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=cam.mx,
+                                   method=cv2.RANSAC)
+    mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
-print '\nmedian', os.path.basename(filename), np.median(rs), np.median(angs),\
-    np.median(rs0),np.median(rs1),np.median(rs2)
+    b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+    a = d[1]
+    dr = a - b
+    r0 = np.linalg.norm(dr)
+    fp.write('{},{},{},{},{},{},{}\n'.
+             format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
+    rs.append(r0)
+    rs0.append(abs(dr[0]))
+    rs1.append(abs(dr[1]))
+    rs2.append(abs(dr[2]))
+    angs.append(np.linalg.norm(a))
+
+print '\nmedian {0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
+    os.path.basename(filename), np.median(rs), np.median(angs),
+    np.median(rs0),np.median(rs1),np.median(rs2))
 fp.close()
 

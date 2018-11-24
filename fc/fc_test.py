@@ -24,6 +24,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         loop = int(sys.argv[1])
 
+    multi = -1
     js = Utils.load_json_file(config_file, False)
 
     te_data = []
@@ -55,7 +56,7 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=-1)
+            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=multi)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)
