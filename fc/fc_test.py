@@ -74,8 +74,15 @@ if __name__ == '__main__':
             r, mm = cal_diff(truth[a], rst[a])
             if a==0:
                 print truth[a], mm, r
-                #for b in rst[a]:
-                #    print np.linalg.norm(b-truth[a]), b
+                diff = []
+                for b in rst[a]:
+                    # print np.linalg.norm(b-truth[a]), b, truth[a]
+                    diff.append(b-truth[a])
+                diff = np.array(diff)
+                for b in range(diff.shape[1]):
+                    hist, bins = np.histogram(diff[:,b])
+
+
             t = truth[a]
             #fp.write('{},{},{},{},{},{},{}\n'.
             #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))

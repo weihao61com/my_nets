@@ -550,12 +550,14 @@ class sNet3_stage(Network):
 class cNet(Network):
 
     def setup(self):
-        nodes = [16, 1024, 32]
+        pass
+
+    def real_setup(self, nodes):
         (self.feed('data')
-         .conv(1, 4, nodes[0], 1, 1, name='conv1', padding='VALID')
-         .fc(nodes[1], name='fc1')
-         .fc(nodes[2], name='fc2')
-         .fc(3, relu=False, name='output'))
+         .conv(1, 4, 16, 1, 1, name='conv1', padding='VALID')
+         .fc(nodes[0], name='fc1')
+         .fc(nodes[1], name='fc2')
+         .fc(nodes[2], relu=False, name='output'))
 
         print("number of layers = {} {}".
               format(len(self.layers), nodes))

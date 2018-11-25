@@ -59,6 +59,7 @@ if __name__ == '__main__':
 
     if net_type == 'cnn':
         net = cNet({'data': input})
+        net.real_setup(nodes)
     else:
         net = sNet3({'data': input})
         net.real_setup(nodes)
