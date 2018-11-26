@@ -39,12 +39,20 @@ if __name__ == '__main__':
     nodes = map(int, js["nodes"].split(','))
     nodes.append(num_output)
 
+    net_type = "fc"
+    if 'net_type' in js:
+        net_type = js['net_type']
+
     te_set = DataSet(te_data, batch_size, feature_len)
 
-    input = tf.placeholder(tf.float32, [None, feature_len*4])
-
-    net = sNet3({'data': input})
-    net.real_setup(nodes)
+    if net_type == 'cnn':
+        input = tf.placeholder(tf.float32, [None, feature_len, 4, 1])
+        net = cNet({'data': input})
+        net.real_setup(nodes)
+    else:
+        input = tf.placeholder(tf.float32, [None, feature_len * 4])
+        net = sNet3({'data': input})
+        net.real_setup(nodes)
 
     xy = net.layers['output']
 
@@ -56,7 +64,7 @@ if __name__ == '__main__':
         rst = {}
         truth = {}
         for _ in range(loop):
-            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=multi)
+            te_pre_data = te_set.prepare(rd=False, num_output=num_output, multi=multi, net_type=net_type)
             for b in te_pre_data:
                 feed = {input: b[0]}
                 result = sess.run(xy, feed_dict=feed)

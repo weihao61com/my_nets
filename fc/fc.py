@@ -54,13 +54,14 @@ if __name__ == '__main__':
     loop = 10
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
-    input = tf.placeholder(tf.float32, [None, feature_len* sz_in[1]])
     output = tf.placeholder(tf.float32, [None, num_output])
 
     if net_type == 'cnn':
+        input = tf.placeholder(tf.float32, [None, feature_len, sz_in[1], 1])
         net = cNet({'data': input})
         net.real_setup(nodes)
     else:
+        input = tf.placeholder(tf.float32, [None, feature_len * sz_in[1]])
         net = sNet3({'data': input})
         net.real_setup(nodes)
 
@@ -84,10 +85,10 @@ if __name__ == '__main__':
         st1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output)
+            tr_pre_data = tr.prepare(num_output=num_output, net_type=net_type)
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, 'tr')
 
-            te_pre_data = te_set.prepare(num_output=num_output)
+            te_pre_data = te_set.prepare(num_output=num_output, net_type=net_type)
             te_loss, te_median = run_data(te_pre_data, input, sess, xy, 'te')
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -99,7 +100,7 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=50, num_output=num_output)
+                tr_pre_data = tr.prepare(rdd=True, multi=50, num_output=num_output, net_type=net_type)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])

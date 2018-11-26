@@ -199,12 +199,12 @@ class DataSet:
         self.sz = self.data[0][0][0].shape
         self.id = None
 
-    def get_next(self, rd=True, num_output=3):
+    def get_next(self, rd=True, num_output=3, net_type='fc'):
         self.load_next_data()
 
         if self.index == 0:
             return None
-        return self.prepare(rd, num_output=num_output)
+        return self.prepare(rd, num_output=num_output, net_type=net_type)
 
     def load_next_data(self):
         self.bucket = 0
@@ -290,7 +290,7 @@ class DataSet:
 
         return pre_data
 
-    def prepare(self, rd=True, num_output=3, multi=1, rdd=True):
+    def prepare(self, rd=True, num_output=3, multi=1, rdd=True, net_type='fc'):
         pre_data = []
         if rdd:
             self.reshuffle_data()
@@ -303,7 +303,12 @@ class DataSet:
             outs = []
             ids = []
             for a in data:
-                ins.append(a[0])
+                if net_type == 'fc':
+                    ins.append(a[0])
+                elif net_type == 'cnn':
+                    ins.append(a[0].reshape((20,4,1)))
+                else:
+                    raise Exception()
                 outs.append(a[1])
                 ids.append(a[2])
             dd = (np.array(ins), np.array(outs), ids)
