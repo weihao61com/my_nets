@@ -6,11 +6,13 @@ import datetime
 sys.path.append('..')
 from utils import Utils
 
-HOME = cwd = os.getcwd() + '/../../'
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
 
 if __name__ == '__main__':
 
-    config_file = "config_stack.json"
+    config_file = HOME + "/my_nets/fc/config_stack.json"
 
     data_type = 'te'
     if len(sys.argv) > 1:
@@ -75,9 +77,9 @@ if __name__ == '__main__':
 
         t1 = datetime.datetime.now()
 
-        str = "it: {0:.2f}".format((t1 - t00).total_seconds() / 3600.0)
+        str = "it: {0:.2f}  ".format((t1 - t00).total_seconds() / 3600.0)
         for s in range(stack + 1):
-            str += " {0:.3f} {1:.3f}".format(te_loss[s], te_median[s])
+            str += "  {0:.4f} {1:.4f}  ".format(te_loss[s], te_median[s])
 
 
         print str

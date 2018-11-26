@@ -3,7 +3,10 @@ from fc_dataset import *
 import tensorflow as tf
 import datetime
 
-HOME = '{}/Projects/'.format(os.getenv('HOME'))
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
+
 sys.path.append('{}/my_nets'.format(HOME))
 sys.path.append('{}/my_nets/fc'.format(HOME))
 
@@ -71,8 +74,8 @@ if __name__ == '__main__':
     ls = []
     loss = None
     for x in range(stack+1):
-        #ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
-        ll = tf.reduce_sum(tf.abs(tf.subtract(xy[x], output)))
+        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
+        #ll = tf.reduce_sum(tf.abs(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
         else:
@@ -105,7 +108,7 @@ if __name__ == '__main__':
             t1 = datetime.datetime.now()
             str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
             for s in range(stack+1):
-                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
 

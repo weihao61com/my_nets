@@ -1,15 +1,20 @@
 import sys
 from fc_dataset import *
 import random
+import tensorflow as tf
+import datetime
 
 sys.path.append( '..')
 from utils import Utils
 
-HOME = '/home/weihao/Projects/Posenet/'
+
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
 
 if __name__ == '__main__':
 
-    config_file = "config_stage.json"
+    config_file = HOME + "/my_nets/fc/config_stage.json"
 
     data_type = 'te'
     if len(sys.argv)>2:
