@@ -3,10 +3,10 @@
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "heads",
-    "_retrain": "heads",
+    "retrain": "heads",
     "netTest": "heads",
-    "feature": 40,
-    "lr": 1e-4,
-    "num_output": 3,
-    "nodes": "1024, 128"
+    "feature": 20,
+    "lr": 1e-3,
+    "num_output": 1,
+    "nodes": "4096, 256, 32"
 }

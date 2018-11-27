@@ -69,7 +69,7 @@ class NNN:
                 self.D_weight.append(np.zeros(w.shape))
 
     def backward(self, grad, Zs, with_grad=False):
-        n1 =  np.linalg.norm(grad)
+        #n1 = np.linalg.norm(grad)
         if self.final_act:
             grad = grad * self.active_function(Zs[-1], True)
 
@@ -127,9 +127,9 @@ class NNN:
         p = self.gradient_momentum
         a = self.g2_momentum
         w = self.weights
-        output = '{0} {1} {2:.6f} {3} {4} {5:.6f}'. \
-            format(p[0][1][2], np.sqrt(a[0][1][2]), w[0][1][2],
-                   p[1][1][2], np.sqrt(a[1][1][2]), w[1][1][2]
+        output = '{0:.6f} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f}'. \
+            format(p[0][1][2]*100, np.sqrt(a[0][1][2])*100, w[0][1][2]*100,
+                   p[1][1][2]*100, np.sqrt(a[1][1][2])*100, w[1][1][2]*100
                )
 
         return output
@@ -196,9 +196,11 @@ if __name__ == '__main__':
         renetFile = HOME + 'NNs/' + js['retrain'] + '.p'
 
     tr = DataSet(tr_data, batch_size, feature_len)
-    te_set = DataSet(te_data, batch_size, feature_len)
+    te = DataSet(te_data, batch_size, feature_len)
+    tr.set_num_output(num_output)
+    te.set_num_output(num_output)
 
-    sz_in = te_set.sz
+    sz_in = te.sz
     iterations = 10000
     loop = 100
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
@@ -220,15 +222,15 @@ if __name__ == '__main__':
         tr_pre_data = tr.prepare(multi=1)
         total_loss, tr_median = nnn.run_data(tr_pre_data)
 
-        te_pre_data = te_set.prepare(multi=1)
+        te_pre_data = te.prepare(multi=1)
         te_loss, te_median = nnn.run_data(te_pre_data)
 
-        t1 = datetime.datetime.now()
-        str = "iteration: {0} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5} ".format(
-            a * loop, total_loss, te_loss,
-            tr_median, te_median, t1 - t00)
+        t1 = (datetime.datetime.now() - t00).seconds / 3600.0
+        str = "iteration: {0} {1:.3f} {2:.4f} {3:.4f} {4:.4f} {5:.4f} ".format(
+            a * loop / 1000.0, t1, total_loss, te_loss,
+            tr_median, te_median)
         print str + str1
-        t00 = t1
+        #t00 = t1
 
         loss = 0
         length = 0
@@ -243,6 +245,7 @@ if __name__ == '__main__':
                     length += len(b[0])
 
                 tr_pre_data = tr.get_next()
+        str1 = '{0:.4f}  {1}'.format(loss/length, str1)
             #if t%10 == 0:
             #    print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
             #    loss = 0

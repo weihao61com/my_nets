@@ -4,15 +4,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
+
+def get_numbers(str):
+    strs = str.split(',')
+    output = []
+    for s in strs:
+        if '-' in s:
+            num = s.split('-')
+            n1 = int(num[0])
+            n2 = int(num[1])
+            for a in range(n1, n2+1):
+                output.append(a)
+        else:
+            output.append(int(s))
+    return output
+
+
 filename = '/home/weihao/tmp/r.txt'
 if sys.platform=='darwin':
     filename = '/Users/weihao/tmp/r.txt'
 
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
-usecols = (1,9,10,11,12,13,14)
+usecols = (2,3,4,5,6)
 if len(sys.argv)>1:
-    usecols = map(int, sys.argv[1].split(','))
+    usecols = get_numbers(sys.argv[1])
 
 if len(sys.argv)>2:
     filename = sys.argv[2]
@@ -44,10 +60,11 @@ for a in range(zone):
     ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
     ymin = np.min(da[:, a+1])
     ymax = np.max(da[:, a+1])
-    if slope<0:
-        ax1.set_ylim([ymin, min(ymax,intercept-slope*100)])
-    else:
-        ax1.set_ylim([ymin, ymax])
+    if ymax>ymin:
+        if slope<0:
+            ax1.set_ylim([ymin, min(ymax,intercept-slope*100)])
+        else:
+            ax1.set_ylim([ymin, ymax])
     #
     # slope1, intercept1, r_value, p_value, std_err = stats.linregress(da[:, 0], da[:, 2])
     # pre2 = da[:, 0] *slope1 + intercept1

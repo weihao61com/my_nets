@@ -194,17 +194,25 @@ class DataSet:
         self.verbose = True
         self.cache = cache
         self.memories = {}
+        self.net_type = 'fc'
+        self.num_output = 3
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
         self.id = None
 
-    def get_next(self, rd=True, num_output=3, net_type='fc'):
+    def set_net_type(self, net_type):
+        self.net_type = net_type
+
+    def set_num_output(self, num_output):
+        self.num_output = num_output
+
+    def get_next(self, rd=True, net_type='fc'):
         self.load_next_data()
 
         if self.index == 0:
             return None
-        return self.prepare(rd, num_output=num_output, net_type=net_type)
+        return self.prepare(rd)
 
     def load_next_data(self):
         self.bucket = 0
@@ -231,28 +239,28 @@ class DataSet:
                 b = len(data)
             self.data.append(data[a:b])
 
-    def prepare_cnn(self, rd=False, num_output=3):
+    def prepare_cnn(self, rd=False):
         pre_data = []
         self.reshuffle_data()
         for d in self.data:
-            pre_data.append(self.create_bucket_cnn(d, num_output))
+            pre_data.append(self.create_bucket_cnn(d))
         if rd:
             np.random.shuffle(pre_data)
         return pre_data
 
-    def prepare_stack(self, rd=True, num_output=3):
+    def prepare_stack(self, rd=True):
         pre_data = []
         self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            data = self.create_stack(d, num_output)
+            data = self.create_stack(d)
             if rd:
                 np.random.shuffle(data)
             pre_data.append(data)
 
         return pre_data
 
-    def create_stack(self, data, num_output):
+    def create_stack(self, data):
         outputs = []
 
         for d in data:
@@ -260,20 +268,20 @@ class DataSet:
             if sz[0] < self.nPar + self.nAdd:
                 d[0] = np.concatenate((d[0], d[0]))
                 sz = d[0].shape
-            truth = d[1][:num_output]
+            truth = d[1][:self.num_output]
             d0 = d[0][:self.nPar].reshape(self.nPar * sz[1])
             d1 = d[0][self.nPar:]
             outputs.append([d0, d1, truth])
 
         return outputs
 
-    def prepare_stage(self, rd=True, num_output=3, rdd=True):
+    def prepare_stage(self, rd=True, rdd=True):
         pre_data = []
         if rdd:
             self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            data = self.create_stage_data(d, num_output)
+            data = self.create_stage_data(d)
             if rd:
                 np.random.shuffle(data)
             i0 = []
@@ -290,22 +298,22 @@ class DataSet:
 
         return pre_data
 
-    def prepare(self, rd=True, num_output=3, multi=1, rdd=True, net_type='fc'):
+    def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []
         if rdd:
             self.reshuffle_data()
         self.id = 0
         for d in self.data:
-            data = self.create_bucket(d, num_output, multi)
+            data = self.create_bucket(d, multi)
             if rd:
                 np.random.shuffle(data)
             ins = []
             outs = []
             ids = []
             for a in data:
-                if net_type == 'fc':
+                if self.net_type == 'fc':
                     ins.append(a[0])
-                elif net_type == 'cnn':
+                elif self.net_type == 'cnn':
                     ins.append(a[0].reshape((20,4,1)))
                 else:
                     raise Exception()
@@ -316,7 +324,7 @@ class DataSet:
 
         return pre_data
 
-    def create_stage_data(self, data, num_output):
+    def create_stage_data(self, data):
         multi = 10
         f2 = 1
         N1 = self.nPar
@@ -333,8 +341,8 @@ class DataSet:
                 start = m*(N1+N2)
                 i1 = input[start:start+N1].reshape(N1 * self.sz[1])
                 i2 = input[start+N1:start+N1+N2]
-                truth = d[1][:num_output]
-                output = (i1, i2,  truth.reshape(num_output), self.id)
+                truth = d[1][:self.num_output]
+                output = (i1, i2,  truth.reshape(self.num_output), self.id)
                 outputs.append(output)
 
         self.id += 1
@@ -342,7 +350,7 @@ class DataSet:
         return outputs
 
 
-    def create_bucket(self, data, num_output, multi):
+    def create_bucket(self, data, multi):
 
         outputs = []
 
@@ -360,15 +368,16 @@ class DataSet:
             input = input[:length]
             for a in range(0, len(input), self.nPar+self.nAdd):
                 it = input[a:a + self.nPar]
-                truth = d[1][:num_output]
-                output = (it.reshape(self.nPar * sz_in[1]), truth.reshape(num_output), self.id)
+                truth = d[1][:self.num_output]
+                output = (it.reshape(self.nPar * sz_in[1]),
+                          truth.reshape(self.num_output), self.id)
                 outputs.append(output)
 
             self.id += 1
 
         return outputs
 
-    def create_bucket_cnn(self, data, num_output):
+    def create_bucket_cnn(self, data):
         outputs = []
         inputs = []
         sz_in = data[0][0].shape
@@ -378,9 +387,9 @@ class DataSet:
             while len(input) < self.nPar:
                 input = np.concatenate((input, input))
             input = input[:self.nPar]
-            truth = d[1][:num_output]
+            truth = d[1][:self.num_output]
             inputs.append(input.reshape((self.nPar, sz_in[1], 1)))
-            outputs.append(truth.reshape(num_output))
+            outputs.append(truth.reshape(self.num_output))
 
         return inputs, outputs
 
@@ -396,10 +405,10 @@ class DataSet:
         for bucket in self.data:
             _reshuffle_b(bucket)
 
-    def prepare_slow(self, num_output=3):
+    def prepare_slow(self):
         pre_data = []
         for a in range(len(self.data)):
-            data_gen = self.gen_data(self.nPar, num_output)
+            data_gen = self.gen_data(self.nPar)
             sz_in = self.data[0][0][0].shape
             inputs = []
             outputs = []
@@ -409,14 +418,14 @@ class DataSet:
                 if input_p is None:
                     break
                 inputs.append(input_p.reshape(self.nPar * sz_in[1]))
-                outputs.append(output_p.reshape(num_output))
+                outputs.append(output_p.reshape(self.num_output))
 
             pre_data.append((inputs, outputs))
 
         self.bucket = len(pre_data)
         return pre_data
 
-    def gen_data(self, nPar, num_output):
+    def gen_data(self, nPar):
         # np.random.seed()
         indices = range(len(self.data[self.bucket]))
 
@@ -437,7 +446,7 @@ class DataSet:
                     else:
                         input0 = np.concatenate((input0, input))
 
-            output = self.data[self.bucket][a][1][:num_output]
+            output = self.data[self.bucket][a][1][:self.num_output]
             yield input0, output
 
     def q_fun(self, id, rst_dict):

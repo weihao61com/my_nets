@@ -47,9 +47,13 @@ if __name__ == '__main__':
         net_type = js['net_type']
 
     tr = DataSet(tr_data, batch_size, feature_len)
-    te_set = DataSet(te_data, batch_size, feature_len)
+    te = DataSet(te_data, batch_size, feature_len)
+    tr.set_net_type(net_type)
+    tr.set_num_output(num_output)
+    te.set_net_type(net_type)
+    te.set_num_output(num_output)
 
-    sz_in = te_set.sz
+    sz_in = te.sz
     iterations = 10000
     loop = 10
     if "loop" in js:
@@ -88,10 +92,10 @@ if __name__ == '__main__':
         st1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output, net_type=net_type)
+            tr_pre_data = tr.prepare()
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, 'tr')
 
-            te_pre_data = te_set.prepare(num_output=num_output, net_type=net_type)
+            te_pre_data = te.prepare()
             te_loss, te_median = run_data(te_pre_data, input, sess, xy, 'te')
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -103,7 +107,7 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=50, num_output=num_output, net_type=net_type)
+                tr_pre_data = tr.prepare(rdd=True, multi=50)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])
@@ -112,7 +116,7 @@ if __name__ == '__main__':
                             _, A = sess.run([opt, loss], feed_dict=feed)
                             t_loss += A
                             t_count += len(b[0][c:c+step])
-                    tr_pre_data = tr.get_next(num_output=num_output)
+                    tr_pre_data = tr.get_next()
                 st1 = '{}'.format(t_loss/t_count)
 
             saver.save(sess, netFile)
