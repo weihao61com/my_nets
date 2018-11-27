@@ -52,6 +52,9 @@ if __name__ == '__main__':
     sz_in = te_set.sz
     iterations = 10000
     loop = 10
+    if "loop" in js:
+        loop = js["loop"]
+
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     output = tf.placeholder(tf.float32, [None, num_output])
