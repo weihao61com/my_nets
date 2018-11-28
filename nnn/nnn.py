@@ -30,7 +30,7 @@ class NNN:
     def __init__(self, input_dim, output_dim, layers, final_layer_act=False):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.active_function = sigmoid
+        self.active_function = relu
         layers.append(output_dim)
         self.num_layers = len(layers)
         self.final_act = final_layer_act
@@ -150,20 +150,36 @@ class NNN:
         return A, Zs
 
     def run_data(self, data):
-        results = None
-        truth = None
-
+        rst_dic = {}
+        truth_dic = {}
         for b in data:
             inputs = b[0]
+            truth = b[1]
+            id = b[2]
             result, _ = self.run(inputs)
-            if results is None:
-                results = result
-                truth = b[1]
-            else:
-                results = np.concatenate((results, result))
-                truth = np.concatenate((truth, b[1]))
 
-        return Utils.calculate_loss(results, truth)
+            for a in range(len(id)):
+                if id[a] not in rst_dic:
+                    rst_dic[id[a]] = []
+                    truth_dic[id[a]] = truth[a]
+                rst_dic[id[a]].append(result[a])
+
+
+        results = []
+        truth = []
+
+        for id in rst_dic:
+            rst = np.median(np.array(rst_dic[id]), axis=0)
+            results.append(rst)
+            truth.append(truth_dic[id])
+
+        return Utils.calculate_loss(np.array(results), np.array(truth))
+
+
+def run_testing(te, nnn):
+    te_pre_data = te.prepare(multi=-1)
+    loss, median = nnn.run_data(te_pre_data)
+    print loss, median
 
 
 if __name__ == '__main__':
@@ -195,9 +211,15 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '.p'
 
-    tr = DataSet(tr_data, batch_size, feature_len)
+    testing = False
+    if len(sys.argv) > 2:
+        testing = True
+
+    if not testing:
+        tr = DataSet(tr_data, batch_size, feature_len)
+        tr.set_num_output(num_output)
+
     te = DataSet(te_data, batch_size, feature_len)
-    tr.set_num_output(num_output)
     te.set_num_output(num_output)
 
     sz_in = te.sz
@@ -213,6 +235,10 @@ if __name__ == '__main__':
             nnn = pickle.load(fp)
     else:
         nnn = NNN(D_in, D_out, nodes)
+
+    if testing:
+        run_testing(te, nnn)
+        exit(0)
 
     nnn.setup(lr)
 
