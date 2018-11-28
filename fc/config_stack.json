@@ -8,7 +8,8 @@
     "feature": 20,
     "lr": 2e-4,
     "num_output": 1,
-    "stack": 2,
+    "stack": 3,
     "step": 500,
-    "stage": -1
+    "stage": -1,
+    "net_type": "fc10"
 }

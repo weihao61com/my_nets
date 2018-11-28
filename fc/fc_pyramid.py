@@ -164,7 +164,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=50, num_output=num_output)
+                tr_pre_data = tr.prepare(multi=100)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -181,7 +181,7 @@ if __name__ == '__main__':
                             tl4 += ll4
                             tl5 += ll5
                             nt += len(b[0][c:c + step])
-                    tr_pre_data = tr.get_next(num_output=num_output)
+                    tr_pre_data = tr.get_next()
             str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3 / nt, tl4 / nt, tl5 / nt)
             saver.save(sess, netFile)
 

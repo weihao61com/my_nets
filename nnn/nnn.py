@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
         for t in range(loop):
             str1 = nnn.reset()
-            tr_pre_data = tr.prepare(multi=1)
+            tr_pre_data = tr.prepare(multi=50)
             while tr_pre_data:
                 for b in tr_pre_data:
                     loss += nnn.train(b[0], b[1])

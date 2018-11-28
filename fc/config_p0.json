@@ -1,14 +1,18 @@
 {
     "batch_size": 1000,
-    "te": "p_files/heads_Test_cv.p",
-    "tr": "p_files/heads_Train_cv.p",
-    "net": "heads_p1_0",
-    "retrain": "heads_p1_0",
-    "netTest": "heads",
+    "te": "p_files/kitty_02_Test_cv.p",
+    "tr": "p_files/kitty_00_Train_cv.p",
+    "_tr1": "p_files/chess_Train_cv_s3.p",
+    "_tr2": "p_files/fire_Train_cv_s3.p",
+    "_tr3": "p_files/office_Train_cv_s3.p",
+    "_tr4": "p_files/pumpkin_Train_cv_s3.p",
+    "_tr5": "p_files/redkitchen_Train_cv_s3.p",
+    "net": "heads",
+    "_retrain": "heads",
+    "netTest": "../tmp/heads",
     "feature": 20,
-    "lr": 1e-4,
-    "nodes1": "1024, 128",
-    "nodes2": "32",
-    "nodes3": "512",
-    "step": 0
+    "lr": 1.1e-4,
+    "num_output": 1,
+    "nodes": "4096, 512, 64",
+    "step": 500
 }

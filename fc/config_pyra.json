@@ -7,7 +7,7 @@
     "_retrain": "pyra",
     "netTest": "pyra",
     "feature": 20,
-    "lr": 1e-5,
+    "lr": 1e-4,
     "base": 2,
     "step": 500,
     "loop": 10

@@ -25,7 +25,7 @@ if __name__ == '__main__':
     if len(sys.argv)>3:
         multi = int(sys.argv[3])
 
-    js = Utils.load_json_file(config_file, False)
+    js = Utils.load_json_file(config_file)
 
     te_data = []
     for key in js:
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
-        te_pre_data = te_set.prepare(multi=multi, num_output=num_output)
+        te_pre_data = te_set.prepare(multi=multi, rd=False)
         te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'test')
 
         t1 = datetime.datetime.now()

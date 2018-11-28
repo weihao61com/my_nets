@@ -99,10 +99,10 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output)
+            tr_pre_data = tr.prepare()
             tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack, 'tr')
 
-            te_pre_data = te.prepare(num_output=num_output)
+            te_pre_data = te.prepare()
             te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'te')
 
             t1 = datetime.datetime.now()
@@ -117,7 +117,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=50, num_output=num_output)
+                tr_pre_data = tr.prepare(multi=50)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
