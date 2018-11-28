@@ -56,6 +56,7 @@ if __name__ == '__main__':
     sz_in = te.sz
     iterations = 10000
     loop = 10
+    t_scale = 10
     if "loop" in js:
         loop = js["loop"]
 
@@ -92,10 +93,10 @@ if __name__ == '__main__':
         st1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr.prepare(t_scale=t_scale)
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, 'tr')
 
-            te_pre_data = te.prepare()
+            te_pre_data = te.prepare(t_scale=t_scale)
             te_loss, te_median = run_data(te_pre_data, input, sess, xy, 'te')
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -107,7 +108,7 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=50)
+                tr_pre_data = tr.prepare(rdd=True, multi=1, t_scale=t_scale)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])

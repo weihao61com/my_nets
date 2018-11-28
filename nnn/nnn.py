@@ -55,7 +55,7 @@ class NNN:
             number = layer + 1
 
     def setup(self, lr, init=True):
-        self.beta1 = 0.99
+        self.beta1 = 0.9
         self.beta2 = 0.99
         self.eps_stable = 1e-8
 
@@ -124,6 +124,10 @@ class NNN:
 
             self.gradient_momentum[a] = v1
             self.g2_momentum[a] = v2
+
+            #if a==0:
+            #    print d0[1][2],self.gradient_momentum[a][1][2],\
+            #        np.sqrt(self.g2_momentum[a][1][2])
 
     def reset(self):
 
@@ -238,14 +242,15 @@ if __name__ == '__main__':
     if renetFile is not None:
         with open(renetFile, 'r') as fp:
             nnn = pickle.load(fp)
+        nnn.setup(lr, init=False)
     else:
         nnn = NNN(D_in, D_out, nodes, af=af)
+        nnn.setup(lr)
 
     if testing:
         run_testing(te, nnn)
         exit(0)
 
-    nnn.setup(lr)
 
     t00 = datetime.datetime.now()
     str1 = ''
@@ -269,7 +274,7 @@ if __name__ == '__main__':
 
         for t in range(loop):
             str1 = nnn.reset()
-            tr_pre_data = tr.prepare(multi=50, t_scale=t_scale)
+            tr_pre_data = tr.prepare(multi=1, t_scale=t_scale)
             while tr_pre_data:
                 for b in tr_pre_data:
                     loss += nnn.train(b[0], b[1])

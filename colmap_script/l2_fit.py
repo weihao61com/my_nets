@@ -17,6 +17,10 @@ def p_fit(x, y):
     v = np.polyfit(x, y, 2)
     return v
 
+section = 0.5
+if len(sys.argv)>3:
+    section = float(sys.argv[3])
+
 w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 usecols = (1,9,10,11,12,13,14)
@@ -40,9 +44,15 @@ mx = max(da[:, 0])
 
 #print da
 for a in range(zone):
-    length = int(len(da)/2)
+    length = int(len(da)*section)
     v = p_fit(da[length:, 0], da[length:, a+1])
     pre1 = v[0] * da[:, 0] *da[:, 0] + v[1] * da[:, 0] + v[2]
+
+    # 10mins later
+    m = mx+10.0/60
+    m = v[0] * m * m + v[1] * m + v[2]
+
+
 
     ax1 = fig.add_subplot(c, r, a+1)
     ax1.scatter(da[:, 0], da[:, a+1],  color='black', s=5)
@@ -61,7 +71,7 @@ for a in range(zone):
     # ax1.plot(da[:, 0], pre2, color='blue', linewidth=3)
 
     # print v, pre1[-1], -v[1]/2/v[0], v[2]-v[1]*v[1]/4/v[0], 'k=', 2*mx*v[0]+v[1]
-    print '{0:.9f} {1:.9f}'.format(pre1[-1], 2 * mx * v[0] + v[1])
+    print '{0:.9f} {1:.9f} {2:.9f}'.format(pre1[-1], 2 * mx * v[0] + v[1], m)
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
 plt.show()
