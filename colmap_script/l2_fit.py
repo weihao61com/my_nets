@@ -3,6 +3,11 @@ from matplotlib.figure import figaspect
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import os
+
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
+from utils import Utils
 
 filename = '/home/weihao/tmp/r.txt'
 if sys.platform=='darwin':
@@ -16,7 +21,7 @@ w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 usecols = (1,9,10,11,12,13,14)
 if len(sys.argv)>1:
-    usecols = map(int, sys.argv[1].split(','))
+    usecols = Utils.get_numbers(sys.argv[1])
 
 if len(sys.argv)>2:
     filename = sys.argv[2]
@@ -44,7 +49,6 @@ for a in range(zone):
     ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
     ymin = np.min(da[length:, a+1])
     ymax = np.max(da[length:, a+1])
-    print ymax, ymin
     if ymax>ymin:
         ax1.set_ylim([ymin, ymax*2-ymin])
 

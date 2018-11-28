@@ -3,22 +3,11 @@ from matplotlib.figure import figaspect
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import os
 
-
-def get_numbers(str):
-    strs = str.split(',')
-    output = []
-    for s in strs:
-        if '-' in s:
-            num = s.split('-')
-            n1 = int(num[0])
-            n2 = int(num[1])
-            for a in range(n1, n2+1):
-                output.append(a)
-        else:
-            output.append(int(s))
-    return output
-
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('{}/..'.format(this_file_path))
+from utils import Utils
 
 filename = '/home/weihao/tmp/r.txt'
 if sys.platform=='darwin':
@@ -28,7 +17,7 @@ w, h = figaspect(0.5)
 fig = plt.figure(figsize=(w, h))
 usecols = (2,3,4,5,6)
 if len(sys.argv)>1:
-    usecols = get_numbers(sys.argv[1])
+    usecols = Utils.get_numbers(sys.argv[1])
 
 if len(sys.argv)>2:
     filename = sys.argv[2]

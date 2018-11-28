@@ -32,6 +32,21 @@ class PinholeCamera:
 class Utils:
 
     @staticmethod
+    def get_numbers(str):
+        strs = str.split(',')
+        output = []
+        for s in strs:
+            if '-' in s:
+                num = s.split('-')
+                n1 = int(num[0])
+                n2 = int(num[1])
+                for a in range(n1, n2 + 1):
+                    output.append(a)
+            else:
+                output.append(int(s))
+        return output
+
+    @staticmethod
     def rotationMatrixToEulerAngles(R):
         sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
         singular = sy < 1e-6
