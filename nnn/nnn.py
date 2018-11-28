@@ -27,10 +27,13 @@ def relu(x, derivative=False):
 
 class NNN:
 
-    def __init__(self, input_dim, output_dim, layers, final_layer_act=False):
+    def __init__(self, input_dim, output_dim, layers, final_layer_act=False, af='relu'):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.active_function = relu
+        if af=='relu':
+            self.active_function = relu
+        else:
+            self.active_function = sigmoid
         layers.append(output_dim)
         self.num_layers = len(layers)
         self.final_act = final_layer_act
@@ -52,7 +55,7 @@ class NNN:
             number = layer + 1
 
     def setup(self, lr, init=True):
-        self.beta1 = 0.9
+        self.beta1 = 0.99
         self.beta2 = 0.99
         self.eps_stable = 1e-8
 
@@ -128,8 +131,8 @@ class NNN:
         a = self.g2_momentum
         w = self.weights
         output = '{0:.6f} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f}'. \
-            format(p[0][1][2]*100, np.sqrt(a[0][1][2])*100, w[0][1][2]*100,
-                   p[1][1][2]*100, np.sqrt(a[1][1][2])*100, w[1][1][2]*100
+            format(p[0][1][2], np.sqrt(a[0][1][2]), w[0][1][2],
+                   p[1][1][2], np.sqrt(a[1][1][2]), w[1][1][2]
                )
 
         return output
@@ -206,6 +209,7 @@ if __name__ == '__main__':
 
     num_output = int(js["num_output"])
     nodes = map(int, js["nodes"].split(','))
+    af = js["active_fun"]
 
     renetFile = None
     if 'retrain' in js:
@@ -224,7 +228,8 @@ if __name__ == '__main__':
 
     sz_in = te.sz
     iterations = 10000
-    loop = 100
+    t_scale =10
+    loop = js["loop"]
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     D_in = feature_len * sz_in[1]
@@ -234,7 +239,7 @@ if __name__ == '__main__':
         with open(renetFile, 'r') as fp:
             nnn = pickle.load(fp)
     else:
-        nnn = NNN(D_in, D_out, nodes)
+        nnn = NNN(D_in, D_out, nodes, af=af)
 
     if testing:
         run_testing(te, nnn)
@@ -245,10 +250,10 @@ if __name__ == '__main__':
     t00 = datetime.datetime.now()
     str1 = ''
     for a in range(iterations):
-        tr_pre_data = tr.prepare(multi=1)
+        tr_pre_data = tr.prepare(multi=1, t_scale=t_scale)
         total_loss, tr_median = nnn.run_data(tr_pre_data)
 
-        te_pre_data = te.prepare(multi=1)
+        te_pre_data = te.prepare(multi=1, t_scale=t_scale)
         te_loss, te_median = nnn.run_data(te_pre_data)
 
         t1 = (datetime.datetime.now() - t00).seconds / 3600.0
@@ -264,7 +269,7 @@ if __name__ == '__main__':
 
         for t in range(loop):
             str1 = nnn.reset()
-            tr_pre_data = tr.prepare(multi=50)
+            tr_pre_data = tr.prepare(multi=50, t_scale=t_scale)
             while tr_pre_data:
                 for b in tr_pre_data:
                     loss += nnn.train(b[0], b[1])

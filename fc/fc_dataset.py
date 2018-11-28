@@ -298,7 +298,7 @@ class DataSet:
 
         return pre_data
 
-    def prepare(self, rd=True, multi=1, rdd=True):
+    def prepare(self, rd=True, multi=1, rdd=True, t_scale=1):
         pre_data = []
         if rdd:
             self.reshuffle_data()
@@ -317,7 +317,7 @@ class DataSet:
                     ins.append(a[0].reshape((20,4,1)))
                 else:
                     raise Exception()
-                outs.append(a[1])
+                outs.append(a[1]*t_scale)
                 ids.append(a[2])
             dd = (np.array(ins), np.array(outs), ids)
             pre_data.append(dd)

@@ -1,11 +1,13 @@
 {
     "batch_size": 1000,
-    "te": "p_files/kitty_02_Test_cv.p",
-    "tr": "p_files/kitty_00_Train_cv.p",
-    "net": "nnn_relu",
-    "retrain": "nnn_relu",
+    "te": "p_files/heads_Test_cv.p",
+    "tr": "p_files/heads_Train_cv.p",
+    "net": "nnn",
+    "_retrain": "nnn",
     "feature": 20,
-    "lr": 1e-4,
+    "lr": 1e-3,
     "num_output": 1,
-    "nodes": "4096, 256, 32"
+    "nodes": "256, 32",
+    "active_fun": "relu",
+    "loop": 100
 }
