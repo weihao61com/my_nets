@@ -42,21 +42,21 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
-    net_type = "fc"
-    if 'net_type' in js:
-        net_type = js['net_type']
+    t_scale = js['t_scale']
+    net_type = js['net_type']
 
     tr = DataSet(tr_data, batch_size, feature_len)
     te = DataSet(te_data, batch_size, feature_len)
     tr.set_net_type(net_type)
-    tr.set_num_output(num_output)
     te.set_net_type(net_type)
+    tr.set_t_scale(t_scale)
+    te.set_t_scale(t_scale)
+    tr.set_num_output(num_output)
     te.set_num_output(num_output)
 
     sz_in = te.sz
     iterations = 10000
     loop = 10
-    t_scale = 10
     if "loop" in js:
         loop = js["loop"]
 
@@ -67,11 +67,11 @@ if __name__ == '__main__':
     if net_type == 'cnn':
         input = tf.placeholder(tf.float32, [None, feature_len, sz_in[1], 1])
         net = cNet({'data': input})
-        net.real_setup(nodes)
     else:
         input = tf.placeholder(tf.float32, [None, feature_len * sz_in[1]])
         net = sNet3({'data': input})
-        net.real_setup(nodes)
+
+    net.real_setup(nodes)
 
     xy = net.layers['output']
     loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
@@ -93,10 +93,10 @@ if __name__ == '__main__':
         st1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(t_scale=t_scale)
+            tr_pre_data = tr.prepare()
             total_loss, tr_median = run_data(tr_pre_data, input, sess, xy, 'tr')
 
-            te_pre_data = te.prepare(t_scale=t_scale)
+            te_pre_data = te.prepare()
             te_loss, te_median = run_data(te_pre_data, input, sess, xy, 'te')
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -108,7 +108,7 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=1, t_scale=t_scale)
+                tr_pre_data = tr.prepare(rdd=True, multi=100)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])

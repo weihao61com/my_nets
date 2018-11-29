@@ -196,10 +196,14 @@ class DataSet:
         self.memories = {}
         self.net_type = 'fc'
         self.num_output = 3
+        self.t_scale = 1
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
         self.id = None
+
+    def set_t_scale(self, scale):
+        self.t_scale = scale
 
     def set_net_type(self, net_type):
         self.net_type = net_type
@@ -298,7 +302,7 @@ class DataSet:
 
         return pre_data
 
-    def prepare(self, rd=True, multi=1, rdd=True, t_scale=1):
+    def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []
         if rdd:
             self.reshuffle_data()
@@ -317,7 +321,7 @@ class DataSet:
                     ins.append(a[0].reshape((20,4,1)))
                 else:
                     raise Exception()
-                outs.append(a[1]*t_scale)
+                outs.append(a[1]*self.t_scale)
                 ids.append(a[2])
             dd = (np.array(ins), np.array(outs), ids)
             pre_data.append(dd)
@@ -568,7 +572,7 @@ class cNet(Network):
 
     def real_setup(self, nodes):
         (self.feed('data')
-         .conv(1, 4, 16, 1, 1, name='conv1', padding='VALID')
+         .conv(1, 4, 128, 1, 1, name='conv1', padding='VALID')
          .fc(nodes[0], name='fc1')
          .fc(nodes[1], name='fc2')
          .fc(nodes[2], relu=False, name='output'))
