@@ -571,11 +571,11 @@ class cNet(Network):
         pass
 
     def real_setup(self, nodes):
-        (self.feed('data')
-         .conv(1, 4, 128, 1, 1, name='conv1', padding='VALID')
-         .fc(nodes[0], name='fc1')
-         .fc(nodes[1], name='fc2')
-         .fc(nodes[2], relu=False, name='output'))
+        self.feed('data').conv(1, 4, 128, 1, 1, name='conv1', padding='VALID')
+        for a in range(len(nodes) - 1):
+            name = 'fc1_{}'.format(a)
+            self.fc(nodes[a], name=name)
+         self.fc(nodes[2], relu=False, name='output')
 
         print("number of layers = {} {}".
               format(len(self.layers), nodes))

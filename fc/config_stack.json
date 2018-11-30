@@ -2,6 +2,11 @@
     "batch_size": 1000,
     "te": "p_files/heads_Test_cv_s3.p",
     "tr": "p_files/heads_Train_cv_s3.p",
+    "tr1": "p_files/chess_Train_cv_s3.p",
+    "tr2": "p_files/fire_Train_cv_s3.p",
+    "tr3": "p_files/office_Train_cv_s3.p",
+    "tr4": "p_files/pumpkin_Train_cv_s3.p",
+    "tr5": "p_files/redkitchen_Train_cv_s3.p",
     "net": "stack",
     "_retrain": "stack",
     "netTest": "stack",
@@ -12,6 +17,6 @@
     "step": 500,
     "stage": -1,
     "net_type": "fc",
-    "loop": 10,
+    "loop": 2,
     "t_scale": 10
 }

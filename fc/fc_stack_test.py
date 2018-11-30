@@ -38,10 +38,14 @@ if __name__ == '__main__':
     feature_len = js['feature']
     stack = js['stack']
     num_output = js["num_output"]
+    t_scale = js['t_scale']
+    net_type = js['net_type']
 
-    te_set = DataSet(te_data, batch_size, feature_len + stack)
-
-    sz_in = te_set.sz
+    te = DataSet(te_data, batch_size, feature_len + stack)
+    te.set_net_type(net_type)
+    te.set_t_scale(t_scale)
+    te.set_num_output(num_output)
+    sz_in = te.sz
 
     print "input shape", sz_in, 'feature', feature_len
 
@@ -72,7 +76,7 @@ if __name__ == '__main__':
 
         t00 = datetime.datetime.now()
 
-        te_pre_data = te_set.prepare(multi=multi, rd=False)
+        te_pre_data = te.prepare(multi=multi, rd=False)
         te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'test')
 
         t1 = datetime.datetime.now()
