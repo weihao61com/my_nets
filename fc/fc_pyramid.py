@@ -92,6 +92,7 @@ if __name__ == '__main__':
     step = js["step"]
     loop = js["loop"]
     num_output = 1
+    t_scale = js['t_scale']
 
     renetFile = None
     if 'retrain' in js:
@@ -99,6 +100,10 @@ if __name__ == '__main__':
 
     tr = DataSet(tr_data, batch_size, feature_len * base)
     te = DataSet(te_data, batch_size, feature_len * base)
+    tr.set_t_scale(t_scale)
+    te.set_t_scale(t_scale)
+    tr.set_num_output(num_output)
+    te.set_num_output(num_output)
 
     att = te.sz[1]
     iterations = 10000
@@ -146,10 +151,10 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare(num_output=num_output)
+            tr_pre_data = tr.prepare()
             tr_loss, tr_median = run_data_base(tr_pre_data, input_dic, sess, xy, base)
 
-            te_pre_data = te.prepare(num_output=num_output)
+            te_pre_data = te.prepare()
             te_loss, te_median = run_data_base(te_pre_data, input_dic, sess, xy, base)
 
             t1 = datetime.datetime.now()
@@ -164,7 +169,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=100)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
