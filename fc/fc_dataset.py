@@ -575,7 +575,7 @@ class cNet(Network):
         for a in range(len(nodes) - 1):
             name = 'fc1_{}'.format(a)
             self.fc(nodes[a], name=name)
-         self.fc(nodes[2], relu=False, name='output')
+        self.fc(nodes[2], relu=False, name='output')
 
         print("number of layers = {} {}".
               format(len(self.layers), nodes))
