@@ -40,6 +40,8 @@ if __name__ == '__main__':
     num_output = js["num_output"]
     step = js["step"]
     stage = js["stage"]
+    t_scale = js['t_scale']
+    net_type = js['net_type']
 
     renetFile = None
     if 'retrain' in js:
@@ -47,10 +49,16 @@ if __name__ == '__main__':
 
     tr = DataSet(tr_data, batch_size, feature_len + stack)
     te = DataSet(te_data, batch_size, feature_len + stack)
+    tr.set_net_type(net_type)
+    te.set_net_type(net_type)
+    tr.set_t_scale(t_scale)
+    te.set_t_scale(t_scale)
+    tr.set_num_output(num_output)
+    te.set_num_output(num_output)
 
     att = te.sz[1]
     iterations = 10000
-    loop = 10
+    loop = js["loop"]
     print "input attribute", att, "LR", lr, 'feature', feature_len
 
     inputs = {}
@@ -117,7 +125,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=50)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

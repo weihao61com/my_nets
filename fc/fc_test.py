@@ -39,6 +39,7 @@ if __name__ == '__main__':
     nodes = map(int, js["nodes"].split(','))
     nodes.append(num_output)
 
+    t_scale= js["t_scale"]
     net_type = "fc"
     if 'net_type' in js:
         net_type = js['net_type']
@@ -46,6 +47,7 @@ if __name__ == '__main__':
     te_set = DataSet(te_data, batch_size, feature_len)
     te_set.set_net_type(net_type)
     te_set.set_num_output(num_output)
+    te_set.set_t_scale(t_scale)
 
     if net_type == 'cnn':
         input = tf.placeholder(tf.float32, [None, feature_len, 4, 1])
