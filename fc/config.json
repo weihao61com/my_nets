@@ -15,7 +15,7 @@
     "feature": 20,
     "lr": 1.0e-4,
     "num_output": 1,
-    "nodes": "4096, 512, 64",
+    "nodes": "4096, 256, 64",
     "step": 500,
     "net_type": "cnn",
     "loop": 10,
