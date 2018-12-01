@@ -12,6 +12,6 @@
     "base": 2,
     "step": 500,
     "loop": 10,
-    "num_output": 1,
+    "num_output": 3,
     "t_scale": 10
 }

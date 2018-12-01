@@ -145,7 +145,6 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next()
 
                     tr_pre_data = tr.get_next()
-            nt /= 100.0
             str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)
 
