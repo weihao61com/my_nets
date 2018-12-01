@@ -49,7 +49,7 @@ for a in range(zone):
     ax1.scatter(da[:, 0], data,  color='black', s=5)
     ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
 
-    print slope, intercept, pre1[-1]
+    print '{0:12.6f} {1:12.6f} {2:12.6f}'.format(slope, intercept, pre1[-1])
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
 plt.show()
