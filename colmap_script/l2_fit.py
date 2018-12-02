@@ -52,8 +52,6 @@ for a in range(zone):
     m = mx+10.0/60
     m = v[0] * m * m + v[1] * m + v[2]
 
-
-
     ax1 = fig.add_subplot(c, r, a+1)
     ax1.scatter(da[:, 0], da[:, a+1],  color='black', s=5)
     ax1.plot(da[:, 0], pre1, color='blue', linewidth=2)
