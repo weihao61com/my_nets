@@ -15,10 +15,10 @@
     "feature": 20,
     "lr": 1e-4,
     "num_output": 3,
-    "stack": 2,
+    "stack": 20,
     "step": 500,
     "stage": -1,
     "net_type": "fc",
-    "loop": 40,
+    "loop": 10,
     "t_scale": 10
 }

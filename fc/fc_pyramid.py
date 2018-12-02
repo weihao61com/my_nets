@@ -13,14 +13,14 @@ from network import Network
 
 
 class PyraNet(Network):
-    def parameters(self, feature_len):
+    def parameters(self, feature_len, dim_out, base):
         self.att = 4
         self.feature_len = feature_len
         self.dim_ref = 64
-        self.dim_out = 3
-        self.num_base = 2
+        self.dim_out = dim_out
+        self.num_base = base
 
-        self.nodes = [4096, 1024, 256]
+        self.nodes = [1024, 128]
 
         self.dim0 = self.feature_len*self.att
         self.out0 = self.nodes[0]
@@ -32,12 +32,12 @@ class PyraNet(Network):
         self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
         self.biases1 = self.make_var('biases1', [self.out1])
 
-        self.dim2 = self.out1
-        self.out2 = self.nodes[2]
-        self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
-        self.biases2 = self.make_var('biases2', [self.out2])
+        # self.dim2 = self.out1
+        # self.out2 = self.nodes[2]
+        # self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
+        # self.biases2 = self.make_var('biases2', [self.out2])
 
-        self.dim3 = self.out2
+        self.dim3 = self.out1
         self.out3 = self.dim_out
         self.weights3 = self.make_var('weights3', shape=[self.dim3, self.out3])
         self.biases3 = self.make_var('biases3', [self.out3])
@@ -45,23 +45,23 @@ class PyraNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, feature_len):
-        self.parameters(feature_len)
+    def real_setup(self, feature_len,  dim_out, base):
+        self.parameters(feature_len,  dim_out, base)
 
         # base nets
         for b in range(self.num_base):
             (self.feed('input{}'.format(b)).
              fc_w(name='fc0{}_in'.format(b), weights=self.weights0, biases=self.biases0).
              fc_w(name='fc1{}_in'.format(b), weights=self.weights1, biases=self.biases1).
-             fc_w(name='fc2{}_in'.format(b), weights=self.weights2, biases=self.biases2).
+             # fc_w(name='fc2{}_in'.format(b), weights=self.weights2, biases=self.biases2).
              fc_w(name='output{}'.format(b), relu=False, weights=self.weights3, biases=self.biases3)
              )
 
         # Addition net
-        (self.feed('fc20_in', 'fc21_in').
+        (self.feed('fc10_in', 'fc11_in').
          concat(1, name='cc').
-         fc(2048, name='fc0').
-         fc(256, name='fc1').
+         fc(256, name='fc0').
+         fc(64, name='fc1').
          fc(self.dim_out, relu=False, name='output{}'.format(self.num_base))
          )
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     base = js['base']
     step = js["step"]
     loop = js["loop"]
-    num_output = 1
+    num_output = js['num_output']
     t_scale = js['t_scale']
 
     renetFile = None
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = PyraNet(input_dic)
-    net.real_setup(feature_len)
+    net.real_setup(feature_len,  num_output, base)
 
     xy = {}
     for a in range(base + 1):

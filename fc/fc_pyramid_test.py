@@ -33,7 +33,7 @@ if __name__ == '__main__':
     base = js['base']
     step = js["step"]
     loop = 1
-    num_output = 1
+    num_output = js['num_output']
     t_scale = js['t_scale']
 
     renetFile = HOME + 'NNs/' + js['netTest'] + '/fc'
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = PyraNet(input_dic)
-    net.real_setup(feature_len)
+    net.real_setup(feature_len, num_output, base)
 
     xy = {}
     for a in range(base + 1):
@@ -93,52 +93,37 @@ if __name__ == '__main__':
         rst = []
         truth = []
 
-        filename = '/home/weihao/tmp/test.csv'
-        if sys.platform == 'darwin':
-            filename = '/Users/weihao/tmp/test.csv'
-        fp = open(filename, 'w')
         for id in rst_dic:
             dst = np.array(rst_dic[id])
             result = np.median(dst, axis=0)
             rst.append(result)
             truth.append(truth_dic[id])
             t = truth_dic[id]
-            if random.random() < 0.2:
-                r = np.linalg.norm(t - result)
-                mm = result[base - 1]
-                if len(t) == 3:
-                    fp.write('{},{},{},{},{},{},{}\n'.
-                             format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-                else:
-                    fp.write('{},{}\n'.
-                             format(t[0], mm[0]))
 
         fp = open('{}/../tmp/test.csv'.format(HOME), 'w')
-        d = []
-        for a in range(len(truth)):
-            r, mm = cal_diff(truth[a], rst[a])
-            if a==0:
-                print truth[a], mm, r
-                diff = []
-                for b in rst[a]:
-                    # print np.linalg.norm(b-truth[a]), b, truth[a]
-                    diff.append(b-truth[a])
-                diff = np.array(diff)
-                for b in range(diff.shape[1]):
-                    hist, bins = np.histogram(diff[:,b])
-
-
-            t = truth[a]
-            #fp.write('{},{},{},{},{},{},{}\n'.
-            #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))
-            if random.random()<0.2:
-                if num_output==3:
-                    fp.write('{},{},{},{},{},{},{}\n'.
-                         format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
-                else:
-                    fp.write('{},{},{}\n'.
-                         format(t[0], mm[0], r))
-            d.append(r*r)
+        for bb in range(base+1):
+            d = []
+            for a in range(len(truth)):
+                mm = truth[a] - rst[a][bb, :]
+                r = np.linalg.norm(mm)
+                # if a==0:
+                #     print truth[a], mm, r
+                #     diff = []
+                #     for b in rst[a][bb, :]:
+                #         # print np.linalg.norm(b-truth[a]), b, truth[a]
+                #         diff.append(b-truth[a])
+                #     diff = np.array(diff)
+                #     for b in range(diff.shape[1]):
+                #         hist, bins = np.histogram(diff[:,b])
+                t = truth[a]
+                if random.random()<0.2:
+                    if num_output==3:
+                        fp.write('{},{},{},{},{},{},{}\n'.
+                             format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
+                    else:
+                        fp.write('{},{},{}\n'.
+                             format(t[0], mm[0], r))
+                d.append(r*r)
+            md = np.median(d)
+            print bb, len(truth), np.mean(d), np.sqrt(md)
         fp.close()
-        md = np.median(d)
-        print len(truth), np.mean(d), np.sqrt(md)

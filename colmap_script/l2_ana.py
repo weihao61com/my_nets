@@ -28,7 +28,7 @@ mx = max(da[:, 0])
 length = len(da)
 l2 =int(length/2)
 
-l3 = length-min(l2, 80)
+l3 = length-min(l2, 200)
 
 #for a in range(int(l2), 0, -1):
 
