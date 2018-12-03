@@ -183,7 +183,7 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, batch_size=500, npar=50, cache=True, nadd=0):
+    def __init__(self, dataset, batch_size=500, npar=50, cache=True, nadd=0, att=4):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
@@ -197,6 +197,7 @@ class DataSet:
         self.net_type = 'fc'
         self.num_output = 3
         self.t_scale = 1
+        self.att = att
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
@@ -318,7 +319,7 @@ class DataSet:
                 if self.net_type == 'fc':
                     ins.append(a[0])
                 elif self.net_type == 'cnn':
-                    ins.append(a[0].reshape((20,4,1)))
+                    ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
                 else:
                     raise Exception()
                 outs.append(a[1]*self.t_scale)
