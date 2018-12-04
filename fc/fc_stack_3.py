@@ -14,9 +14,56 @@ from utils import Utils
 from fc_dataset import DataSet
 
 
+def run_data_stack_avg3(data, inputs, sess, xy, fname):
+    rst_dic = {}
+    truth_dic = {}
+    length = 0
+    for b in data:
+        length = b[0].shape[1]/4
+        feed = {inputs['input0']: b[0]}
+        for a in range(length):
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, 4 * a:4 * (a + 1)]
+        result = []
+        for a in range(length+1):
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
+        result = np.array(result)
+        for a in range(len(b[2])):
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
+
+    results = []
+    truth = []
+
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        results.append(result)
+        truth.append(truth_dic[id])
+        t = truth_dic[id]
+        if random.random() < 0.2:
+            r = np.linalg.norm(t - result)
+            mm = result[length - 1]
+            if len(mm)==3:
+                fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            else:
+                fp.write('{},{},{}\n'.
+                         format(t[0], mm[0], r))
+    fp.close()
+
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+
+
 if __name__ == '__main__':
 
-    config_file = "config_stack.json"
+    config_file = "config_stack_3.json"
 
     if len(sys.argv)>1:
         config_file = sys.argv[1]
@@ -106,14 +153,14 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr.prepare()
-            tr_loss, tr_median = run_data_stack_avg(tr_pre_data, input_dic, sess, xy, stack, 'tr')
+            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr')
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg(te_pre_data, input_dic, sess, xy, stack, 'te')
+            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te')
 
             t1 = datetime.datetime.now()
             str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            for s in range(stack+1):
+            for s in range(0, feature_len+1, 5):
                 str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
@@ -129,11 +176,11 @@ if __name__ == '__main__':
                     for b in tr_pre_data:
                         total_length = len(b[0])
                         for c in range(0, total_length, step):
-                            length = b[0].shape[1] - att * stack
-                            feed = {input_dic['input0']: b[0][c:c + step, :length]}
-                            for d in range(stack):
+                            length = b[0].shape[1] - att * feature_len
+                            feed = {input_dic['input0']: b[0][c:c + step, :]}
+                            for d in range(feature_len):
                                 feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + step, length + 4 * d:length + 4 * (d + 1)]
+                                    b[0][c:c + step,  4 * d: 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
                             _, ll3,ll4,ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
                             tl3 += ll3
@@ -143,7 +190,6 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next()
 
                     tr_pre_data = tr.get_next()
-            nt /= 100.0
             str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)
 
