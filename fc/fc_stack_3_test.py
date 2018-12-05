@@ -8,18 +8,25 @@ from utils import Utils
 
 if __name__ == '__main__':
 
-    config_file = "config_stack_3.json"
+    data_type = 'te'
+    if len(sys.argv)>2:
+        data_type = sys.argv[2]
 
+    loop = 1
     if len(sys.argv)>1:
-        config_file = sys.argv[1]
+        loop = int(sys.argv[1])
 
+    config_file = "config_stack_3.json"
+    if len(sys.argv)>3:
+        config_file = sys.argv[3]
     cfg = Config(config_file)
 
-    tr = DataSet(cfg.tr_data, cfg.batch_size, cfg.feature_len)
-    te = DataSet(cfg.te_data, cfg.batch_size, cfg.feature_len)
-    tr.set_t_scale(cfg.t_scale)
+    data = cfg.te_data
+    if data_type == 'tr':
+        data = cfg.tr_data
+
+    te = DataSet(data, cfg.batch_size, cfg.feature_len)
     te.set_t_scale(cfg.t_scale)
-    tr.set_num_output(cfg.num_output)
     te.set_num_output(cfg.num_output)
 
     att = te.sz[1]
@@ -44,75 +51,61 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+1):
         xy[a] = net.layers['output{}'.format(a)]
 
-    ls = []
-    loss = None
-    for x in range(feature_len+1):
-        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
-        #ll = tf.reduce_sum(tf.abs(tf.subtract(xy[x], output)))
-        if loss is None:
-            loss = ll
-        else:
-            loss = loss + ll
-        ls.append(ll)
-
-    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
-                    beta2=0.999, epsilon=0.00000001,
-                    use_locking=False, name='Adam').\
-        minimize(loss)
-
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     t00 = datetime.datetime.now()
 
     with tf.Session() as sess:
         sess.run(init)
-        if renetFile:
-            saver.restore(sess, renetFile)
+        saver.restore(sess, cfg.netFile)
 
-        str1 = ''
-        for a in range(iterations):
+        rst_dic = {}
+        truth_dic = {}
+        for a in range(loop):
+            data = te.prepare(multi=-1)
 
-            tr_pre_data = tr.prepare()
-            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr')
+            for b in data:
+                feed = {input_dic['input0']: b[0]}
+                for a in range(cfg.feature_len):
+                    feed[input_dic['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
+                result = []
+                for a in range(cfg.feature_len+1):
+                    r = sess.run(xy[a], feed_dict=feed)
+                    result.append(r)
+                result = np.array(result)
+                for a in range(len(b[2])):
+                    if not b[2][a] in rst_dic:
+                        rst_dic[b[2][a]] = []
+                    rst_dic[b[2][a]].append(result[:, a, :])
+                    truth_dic[b[2][a]] = b[1][a]
 
-            te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te')
+        results = []
+        truth = []
 
-            t1 = datetime.datetime.now()
-            str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            for s in range(0, feature_len+1, 5  ):
-                str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+        fname = 'test'
+        filename = '/home/weihao/tmp/{}.csv'.format(fname)
+        if sys.platform == 'darwin':
+            filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+        fp = open(filename, 'w')
+        for id in rst_dic:
+            dst = np.array(rst_dic[id])
+            result = np.median(dst, axis=0)
+            results.append(result)
+            truth.append(truth_dic[id])
+            t = truth_dic[id]
+            if random.random() < 0.2:
+                r = np.linalg.norm(t - result)
+                mm = result[cfg.feature_len]
+                if len(mm)==3:
+                    fp.write('{},{},{},{},{},{},{}\n'.
+                         format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+                else:
+                    fp.write('{},{},{}\n'.
+                             format(t[0], mm[0], r))
+        fp.close()
 
-            print str, str1
+        M, L = Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+        for a in range(cfg.feature_len+1):
+            print a, M[a], L[a]
 
-            tl3 = 0
-            tl4 = 0
-            tl5 = 0
-            nt = 0
-            for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
-
-                while tr_pre_data:
-                    for b in tr_pre_data:
-                        total_length = len(b[0])
-                        for c in range(0, total_length, step):
-                            length = b[0].shape[1] - att * feature_len
-                            feed = {input_dic['input0']: b[0][c:c + step, :]}
-                            for d in range(feature_len):
-                                feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + step,  4 * d: 4 * (d + 1)]
-                            feed[output] = b[1][c:c + step]
-                            _, ll3,ll4,ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
-                            tl3 += ll3
-                            tl4 += ll4
-                            tl5 += ll5
-                            nt += len(b[0][c:c + step])
-                    tr_pre_data = tr.get_next()
-
-                    tr_pre_data = tr.get_next()
-            str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
-            saver.save(sess, netFile)
-
-        print netFile
-        saver.save(sess, netFile)
 

@@ -159,8 +159,15 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            for s in range(0, feature_len+1, 5  ):
+            s = 0
+            while True:
+                # for s in range(0, feature_len+1, 5  ):
                 str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                if s==feature_len:
+                    break
+                s += int(feature_len/2)
+                if s>feature_len:
+                    s = feature_len
 
             print str, str1
 
