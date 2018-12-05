@@ -2,63 +2,9 @@ import sys
 from fc_dataset import *
 import tensorflow as tf
 import datetime
-
-HOME = '/home/weihao/Projects/'
-if sys.platform=='darwin':
-    HOME = '/Users/weihao/Projects/'
-
-sys.path.append('{}/my_nets'.format(HOME))
-sys.path.append('{}/my_nets/fc'.format(HOME))
+import fc_const
 
 from utils import Utils
-from fc_dataset import DataSet
-
-def run_data_stack_avg3(data, inputs, sess, xy, fname):
-    rst_dic = {}
-    truth_dic = {}
-    length = 0
-    for b in data:
-        length = b[0].shape[1]/4
-        feed = {inputs['input0']: b[0]}
-        for a in range(length):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, 4 * a:4 * (a + 1)]
-        result = []
-        for a in range(length+1):
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
-
-    results = []
-    truth = []
-
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        if random.random() < 0.2:
-            r = np.linalg.norm(t - result)
-            mm = result[length - 1]
-            if len(mm)==3:
-                fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            else:
-                fp.write('{},{},{}\n'.
-                         format(t[0], mm[0], r))
-    fp.close()
-
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
-
 
 if __name__ == '__main__':
 
@@ -67,60 +13,35 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         config_file = sys.argv[1]
 
-    js = Utils.load_json_file(config_file)
+    cfg = Config(config_file)
 
-    tr_data = []
-    te_data = []
-    for key in js:
-        if key.startswith('tr'):
-            tr_data.append(HOME + js[key])
-        if key.startswith('te'):
-            te_data.append(HOME + js['te'])
-
-    netFile = HOME + 'NNs/' + js['net'] + '/fc'
-
-    batch_size = js['batch_size']
-    feature_len = js['feature']
-    lr = js['lr']
-    #stack = js['stack']
-    num_output = js["num_output"]
-    step = js["step"]
-    #stage = js["stage"]
-    t_scale = js['t_scale']
-    #net_type = js['net_type']
-
-    renetFile = None
-    if 'retrain' in js:
-        renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
-
-    tr = DataSet(tr_data, batch_size, feature_len)
-    te = DataSet(te_data, batch_size, feature_len)
-    tr.set_t_scale(t_scale)
-    te.set_t_scale(t_scale)
-    tr.set_num_output(num_output)
-    te.set_num_output(num_output)
+    tr = DataSet(cfg.tr_data, cfg.batch_size, cfg.feature_len)
+    te = DataSet(cfg.te_data, cfg.batch_size, cfg.feature_len)
+    tr.set_t_scale(cfg.t_scale)
+    te.set_t_scale(cfg.t_scale)
+    tr.set_num_output(cfg.num_output)
+    te.set_num_output(cfg.num_output)
 
     att = te.sz[1]
     iterations = 10000
-    loop = js["loop"]
-    print "input attribute", att, "LR", lr, 'feature', feature_len
+    print "input attribute", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     inputs = {}
 
-    inputs[0] = tf.placeholder(tf.float32, [None, feature_len*att])
-    output = tf.placeholder(tf.float32, [None, num_output])
-    for a in range(feature_len):
+    inputs[0] = tf.placeholder(tf.float32, [None, cfg.feature_len*att])
+    output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    for a in range(cfg.feature_len):
         inputs[a+1] = tf.placeholder(tf.float32, [None, att])
 
     input_dic = {}
-    for a in range(feature_len+1):
+    for a in range(cfg.feature_len+1):
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(feature_len, num_out=num_output, verbose=False)
+    net.real_setup(cfg.feature_len, num_out=cfg.num_output, verbose=False)
 
     xy = {}
-    for a in range(feature_len+1):
+    for a in range(cfg.feature_len+1):
         xy[a] = net.layers['output{}'.format(a)]
 
     ls = []

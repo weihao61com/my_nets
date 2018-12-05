@@ -1,12 +1,43 @@
 import sys
 import Queue
 import os
+import fc_const
+
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils
 from o2_load import *
 from network import Network
+
+
+class Config:
+    def __init__(self, config_file):
+        js = Utils.load_json_file(config_file)
+        self.tr_data = []
+        self.te_data = []
+        for key in js:
+            if key.startswith('tr'):
+                self.tr_data.append(HOME + js[key])
+            if key.startswith('te'):
+                self.te_data.append(HOME + js['te'])
+
+        self.netFile = fc_const.HOME + 'NNs/' + js['net'] + '/fc'
+        self.batch_size = js['batch_size']
+        self.feature_len = js['feature']
+        self.lr = js['lr']
+        self.num_output = js["num_output"]
+        self.step = js["step"]
+        self.t_scale = js['t_scale']
+
+        self.renetFile = None
+        if 'retrain' in js:
+            self.renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
+
+        self.loop = js["loop"]
 
 
 class P1Net1(Network):

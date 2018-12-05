@@ -4,7 +4,22 @@ import os
 import random
 import json
 from sortedcontainers import SortedDict
+import sys
 
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
+
+class config:
+    def __init__(self, config_file="config_stack_3.json"):
+        js = Utils.load_json_file(config_file)
+        self.tr_data = []
+        self.te_data = []
+        for key in js:
+            if key.startswith('tr'):
+                self.tr_data.append(HOME + js[key])
+            if key.startswith('te'):
+                self.te_data.append(HOME + js['te'])
 
 class datasource(object):
 
