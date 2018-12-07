@@ -70,7 +70,7 @@ for a in range(zone):
 
     # print v, pre1[-1], -v[1]/2/v[0], v[2]-v[1]*v[1]/4/v[0], 'k=', 2*mx*v[0]+v[1]
     dv = 2 * mx * v[0] + v[1]
-    print '{0:.9f} {1:.9f} {2:.9f} {3:.9f}'.format(pre1[-1], dv, m, dv/pre1[-1]*100)
+    print '{0:.9f} {1:.9f} {2:.9f} {3:6.2f}'.format(pre1[-1], dv, m, dv/pre1[-1]*100)
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
 plt.show()

@@ -129,8 +129,8 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        # self.dim_inter = [1024, 128]
-        self.dim_inter = [256]
+        self.dim_inter = [1024, 128]
+        # self.dim_inter = [256]
 
         self.dim_ref = dim_ref
         self.dim_output = dim_output
@@ -139,12 +139,12 @@ class StackNet(Network):
         self.out0 = self.dim_inter[0]
         self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
         self.biases0 = self.make_var('biases0', [self.out0])
-        #
-        # self.dim1 = self.out0
-        # self.out1 = self.dim_inter[1]
-        # self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
-        # self.biases1 = self.make_var('biases1', [self.out1])
-        self.out1 = self.out0
+
+        self.dim1 = self.out0
+        self.out1 = self.dim_inter[1]
+        self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
+        self.biases1 = self.make_var('biases1', [self.out1])
+        #self.out1 = self.out0
 
         self.dim2 = self.out1
         self.out2 = dim_ref
@@ -160,10 +160,10 @@ class StackNet(Network):
         pass
 
     def real_setup(self, stack, num_out=3, verbose=True):
-        nodes = [2048, 256]
-        ref_dim = 128
-        #nodes = [256, 128]
-        #ref_dim = 64
+        # nodes = [2048, 256]
+        # ref_dim = 128
+        nodes = [256, 128]
+        ref_dim = 64
 
         self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
 
