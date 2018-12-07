@@ -158,7 +158,7 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te')
 
             t1 = datetime.datetime.now()
-            str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
             s = 0
             while True:
                 # for s in range(0, feature_len+1, 5  ):

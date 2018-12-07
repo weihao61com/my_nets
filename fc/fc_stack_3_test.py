@@ -15,6 +15,7 @@ if __name__ == '__main__':
     loop = 1
     if len(sys.argv)>1:
         loop = int(sys.argv[1])
+    multi = 40
 
     config_file = "config_stack_3.json"
     if len(sys.argv)>3:
@@ -57,12 +58,12 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
-        saver.restore(sess, cfg.netFile)
+        saver.restore(sess, cfg.netTest)
 
         rst_dic = {}
         truth_dic = {}
         for a in range(loop):
-            data = te.prepare(multi=-1)
+            data = te.prepare(multi=multi)
 
             for b in data:
                 feed = {input_dic['input0']: b[0]}

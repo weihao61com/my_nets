@@ -26,6 +26,7 @@ class Config:
                 self.te_data.append(HOME + js['te'])
 
         self.netFile = fc_const.HOME + 'NNs/' + js['net'] + '/fc'
+        self.netTest = fc_const.HOME + 'NNs/' + js['netTest'] + '/fc'
         self.batch_size = js['batch_size']
         self.feature_len = js['feature']
         self.lr = js['lr']
@@ -128,7 +129,9 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
+        # self.dim_inter = [1024, 128]
         self.dim_inter = [256]
+
         self.dim_ref = dim_ref
         self.dim_output = dim_output
 
@@ -141,8 +144,9 @@ class StackNet(Network):
         # self.out1 = self.dim_inter[1]
         # self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
         # self.biases1 = self.make_var('biases1', [self.out1])
+        self.out1 = self.out0
 
-        self.dim2 = self.out0
+        self.dim2 = self.out1
         self.out2 = dim_ref
         self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
         self.biases2 = self.make_var('biases2', [self.out2])
@@ -156,22 +160,26 @@ class StackNet(Network):
         pass
 
     def real_setup(self, stack, num_out=3, verbose=True):
-        self.parameters(stack, dim_output=num_out)
+        nodes = [2048, 256]
+        ref_dim = 128
+        #nodes = [256, 128]
+        #ref_dim = 64
 
-        # base net
-        (self.feed('input0').
-         fc(2048, name='fc00').
-         fc(256, name='fc01').
-         fc(self.dim_ref, name='fc1')
-         .fc(self.dim_output, relu=False, name='output0')
-         )
+        self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
+
+        self.feed('input0')
+        for a in range(len(nodes)):
+            name = 'fc_0{}'.format(a)
+            self.fc(nodes[a], name=name)
+        self.fc(self.dim_ref, name='fc1')
+        self.fc(num_out, relu=False, name='output0')
 
         ref_out_name = 'fc1'
         for a in range(self.stack):
             input_name = 'input{}'.format(a + 1)
             ic_name = 'ic{}_in'.format(a)
             ifc0_name = 'ifc0{}_in'.format(a)
-            #ifc1_name = 'ifc1{}_in'.format(a)
+            ifc1_name = 'ifc1{}_in'.format(a)
             ifc2_name = 'ifc2{}_in'.format(a)
             output_name = 'output{}'.format(a + 1)
 
@@ -180,9 +188,9 @@ class StackNet(Network):
              .fc_w(name=ifc0_name,
                    weights=self.weights0,
                    biases=self.biases0)
-             #.fc_w(name=ifc1_name,
-             #      weights=self.weights1,
-             #      biases=self.biases1)
+             .fc_w(name=ifc1_name,
+                   weights=self.weights1,
+                   biases=self.biases1)
              .fc_w(name=ifc2_name,
                    weights=self.weights2,
                    biases=self.biases2)
@@ -190,12 +198,7 @@ class StackNet(Network):
                    weights=self.weights3,
                    biases=self.biases3)
              )
-            # (self.feed(input_name, ref_out_name)
-            #  .concat(1, name=ic_name)
-            #  .fc(128, name=ifc0_name)
-            #  .fc(64, name=ifc1_name)
-            #  .fc(3, relu=False, name=output_name)
-            #  )
+
             ref_out_name = ifc2_name
 
         if verbose:
