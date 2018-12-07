@@ -94,7 +94,7 @@ if __name__ == '__main__':
             truth.append(truth_dic[id])
             t = truth_dic[id]
             if random.random() < 0.2:
-                r = np.linalg.norm(t - result)
+                r = np.linalg.norm(t - result[cfg.feature_len])
                 mm = result[cfg.feature_len]
                 if len(mm)==3:
                     fp.write('{},{},{},{},{},{},{}\n'.

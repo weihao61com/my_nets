@@ -12,10 +12,10 @@
     "net": "s3",
     "_retrain": "s3",
     "netTest": "s3",
-    "feature": 10,
+    "feature": 20,
     "lr": 1e-4,
     "num_output": 3,
-    "step": 100,
+    "step": 500,
     "loop": 20,
     "t_scale": 10
 }
