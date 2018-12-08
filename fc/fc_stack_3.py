@@ -127,7 +127,6 @@ if __name__ == '__main__':
     loss = None
     for x in range(feature_len+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
-        #ll = tf.reduce_sum(tf.abs(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
         else:
@@ -162,7 +161,7 @@ if __name__ == '__main__':
             s = 0
             while True:
                 # for s in range(0, feature_len+1, 5  ):
-                str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
                 if s==feature_len:
                     break
                 s += int(feature_len/2)
@@ -176,7 +175,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
+                tr_pre_data = tr.prepare(multi=100)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -188,15 +187,15 @@ if __name__ == '__main__':
                                 feed[input_dic['input{}'.format(d + 1)]] = \
                                     b[0][c:c + step,  4 * d: 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
-                            _, ll3,ll4,ll5 = sess.run([opt, ls[0], ls[1], ls[-1]], feed_dict=feed)
+                            idx = int(feature_len/2)
+                            ll3,ll4,ll5, _ = sess.run([ls[0], ls[idx], ls[-1], opt],
+                                                      feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
                             tl5 += ll5
                             nt += len(b[0][c:c + step])
                     tr_pre_data = tr.get_next()
-
-                    tr_pre_data = tr.get_next()
-            str1 = "{0:.4f} {1:.4f} {2:.4f}".format(tl3/nt, tl4/nt, tl5/nt)
+            str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
             saver.save(sess, netFile)
 
         print netFile

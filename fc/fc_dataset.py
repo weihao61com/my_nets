@@ -201,6 +201,9 @@ class StackNet(Network):
 
             ref_out_name = ifc2_name
 
+        print self.dim_inter
+        print nodes
+
         if verbose:
             print("number of layers = {}".format(len(self.layers)))
             for l in sorted(self.layers.keys()):
