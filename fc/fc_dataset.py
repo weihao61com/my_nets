@@ -129,7 +129,7 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        self.dim_inter = [1024, 128]
+        self.dim_inter = [1024, 256]
         # self.dim_inter = [256]
 
         self.dim_ref = dim_ref
@@ -162,7 +162,7 @@ class StackNet(Network):
     def real_setup(self, stack, num_out=3, verbose=True):
         # nodes = [2048, 256]
         # ref_dim = 128
-        nodes = [256, 128]
+        nodes = [1024, 256]
         ref_dim = 64
 
         self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
@@ -202,7 +202,7 @@ class StackNet(Network):
             ref_out_name = ifc2_name
 
         print self.dim_inter
-        print nodes
+        print nodes, self.dim_ref
 
         if verbose:
             print("number of layers = {}".format(len(self.layers)))

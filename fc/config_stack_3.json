@@ -16,6 +16,6 @@
     "lr": 1e-4,
     "num_output": 3,
     "step": 100,
-    "loop": 50,
+    "loop": 10,
     "t_scale": 10
 }
