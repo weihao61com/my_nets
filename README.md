@@ -139,7 +139,13 @@ heads stack_20: 5.05 => 4.30
 
 kitty
 40 1.54799670445 0.604518618171
+40 1.55962407395 0.58117394374
+
 10 2.39953093635 0.784382280254
 
 heads
 20 46.70059234254409 4.390629619990731
+
+rm -r /Users/weihao/Projects/NNs/gpu
+scp -r weihao@debian-sensors:/home/weihao/Projects/NNs/s3 /Users/weihao/Projects/NNs/gpu
+python fc_stack_3_test.py 1 te config_stack_gpu.json

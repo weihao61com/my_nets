@@ -10,12 +10,12 @@
     "_tr4": "p_files/pumpkin_Train_cv_s3.p",
     "_tr5": "p_files/redkitchen_Train_cv_s3.p",
     "net": "s3",
-    "_retrain": "s3",
-    "netTest": "s3",
+    "retrain": "s3",
+    "netTest": "gpu",
     "feature": 20,
     "lr": 1e-4,
     "num_output": 3,
     "step": 100,
-    "loop": 50,
+    "loop": 10,
     "t_scale": 10
 }
