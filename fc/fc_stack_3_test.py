@@ -16,8 +16,6 @@ if __name__ == '__main__':
     multi = -1
     if len(sys.argv)>1:
         loop = int(sys.argv[1])
-    multi = 40
-
 
     config_file = "config_stack_3.json"
     if len(sys.argv)>3:
