@@ -36,8 +36,12 @@ for a in range(int(l2)):
     v = p_fit(da[(l3-a):length-a, 0], da[(l3-a):length-a, 1])
     pre1 = v[0] * da[(l3-a):length-a, 0] *da[(l3-a):length-a, 0] + v[1] * da[(l3-a):length-a, 0] + v[2]
     mx = max(da[(l3-a):length-a, 0])
-    print '{2} {0:.9f} {1:.9f}'.format(pre1[-1], 2 * mx * v[0] + v[1], a)
+    dv = 2 * mx * v[0] + v[1]
+    print '{0} {1:.9f} {2:.9f}'.format(a, pre1[-1], -dv/pre1[-1])
     plt.plot(da[(l3-a):length-a, 0], pre1, linewidth=2)
+    if a > 30:
+        break
+        
 
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]

@@ -20,17 +20,17 @@ class StackNet4(Network):
         ref_out_name = 'fc1'
 
         # base net
-        (self.feed('input').
+        (self.feed('input0').
          fc(2048, name='fc00').
          fc(256, name='fc01').
          fc(self.dim_ref, name=ref_out_name).
          fc(self.dim_output, relu=False, name='output0')
          )
 
-        (self.feed('input', ref_out_name).
+        (self.feed('input1', ref_out_name).
          concat(1, name='ic_in').
-         fc(2048, name='fc10').
-         fc(256, name='fc11').
+         fc(1024, name='fc10').
+         fc(128, name='fc11').
          fc(self.dim_output, relu=False, name='output1')
          )
 
@@ -44,7 +44,8 @@ def run_data_avg4(data, inputs, sess, xy, fname):
     truth_dic = {}
     length = len(xy)
     for b in data:
-        feed = {inputs['input']: b[0]}
+        sz = b[0].shape[1]/2
+        feed = {inputs['input0']: b[0][:, :sz], inputs['input1']: b[0][:, sz:]}
         result = []
         for a in range(length):
             r = sess.run(xy[a], feed_dict=feed)
@@ -80,8 +81,8 @@ if __name__ == '__main__':
 
     renetFile = cfg.renetFile
 
-    tr = DataSet(cfg.tr_data, cfg.batch_size, cfg.feature_len)
-    te = DataSet(cfg.te_data, cfg.batch_size, cfg.feature_len)
+    tr = DataSet(cfg.tr_data, cfg.batch_size, cfg.feature_len*2)
+    te = DataSet(cfg.te_data, cfg.batch_size, cfg.feature_len*2)
     tr.set_t_scale(cfg.t_scale)
     te.set_t_scale(cfg.t_scale)
     tr.set_num_output(cfg.num_output)
@@ -93,9 +94,10 @@ if __name__ == '__main__':
     print "input attribute", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     input0 = tf.placeholder(tf.float32, [None, cfg.feature_len*att])
+    input1 = tf.placeholder(tf.float32, [None, cfg.feature_len*att])
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
 
-    input_dic = {'input': input0}
+    input_dic = {'input0': input0, 'input1': input1}
 
     net = StackNet4(input_dic)
     net.real_setup(num_out=cfg.num_output, verbose=False)
@@ -149,8 +151,11 @@ if __name__ == '__main__':
                 while tr_pre_data:
                     for b in tr_pre_data:
                         total_length = len(b[0])
+                        sz = b[0].shape[1]/2
                         for c in range(0, total_length, step):
-                            feed = {input0:b[0][c:c + step, :], output:b[1][c:c + step]}
+                            feed = {input0:b[0][c:c + step, :sz],
+                                    input1:b[0][c:c + step, sz:],
+                                    output:b[1][c:c + step]}
                             ll0, ll1, _ = sess.run([loss0, loss1, opt], feed_dict=feed)
                             tl0 += ll0
                             tl1 += ll1
