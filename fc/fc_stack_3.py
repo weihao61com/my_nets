@@ -94,11 +94,14 @@ if __name__ == '__main__':
         renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
     tr = DataSet(tr_data, batch_size, feature_len)
-    te = DataSet(te_data, batch_size, feature_len)
     tr.set_t_scale(t_scale)
-    te.set_t_scale(t_scale)
     tr.set_num_output(num_output)
+    te = DataSet(te_data, batch_size, feature_len)
+    te.set_t_scale(t_scale)
     te.set_num_output(num_output)
+    tr0 = DataSet([tr_data[0]], batch_size, feature_len)
+    tr0.set_t_scale(t_scale)
+    tr0.set_num_output(num_output)
 
     att = te.sz[1]
     iterations = 10000
@@ -150,7 +153,7 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr.prepare()
+            tr_pre_data = tr0.prepare()
             tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr')
 
             te_pre_data = te.prepare()

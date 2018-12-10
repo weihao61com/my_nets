@@ -58,6 +58,7 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
+        print 'NET: ', cfg.netTest
         saver.restore(sess, cfg.netTest)
 
         rst_dic = {}
