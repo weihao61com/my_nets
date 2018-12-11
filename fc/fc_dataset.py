@@ -125,6 +125,92 @@ class PyraNet(Network):
          )
 
 
+class StackNet_cnn(Network):
+
+    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
+        self.stack = stack
+        self.dim_inter = [1024, 256]
+        # self.dim_inter = [256]
+
+        self.dim_ref = dim_ref
+        self.dim_output = dim_output
+
+        self.dim0 = dim_input + dim_ref
+        self.out0 = self.dim_inter[0]
+        self.weights0 = self.make_var('weights0', shape=[self.dim0, self.out0])
+        self.biases0 = self.make_var('biases0', [self.out0])
+
+        self.dim1 = self.out0
+        self.out1 = self.dim_inter[1]
+        self.weights1 = self.make_var('weights1', shape=[self.dim1, self.out1])
+        self.biases1 = self.make_var('biases1', [self.out1])
+        #self.out1 = self.out0
+
+        self.dim2 = self.out1
+        self.out2 = dim_ref
+        self.weights2 = self.make_var('weights2', shape=[self.dim2, self.out2])
+        self.biases2 = self.make_var('biases2', [self.out2])
+
+        self.dim3 = self.out2
+        self.out3 = self.dim_output
+        self.weights3 = self.make_var('weights3', shape=[self.dim3, self.out3])
+        self.biases3 = self.make_var('biases3', [self.out3])
+
+    def setup(self):
+        pass
+
+    def real_setup(self, stack, num_out=3, verbose=True):
+        # nodes = [2048, 256]
+        # ref_dim = 128
+        nodes = [1024, 256]
+        ref_dim = 64
+
+        self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
+
+        self.feed('input0').conv(1, 4, 128, 1, 1, name='conv1', padding='VALID')
+
+        for a in range(len(nodes)):
+            name = 'fc_0{}'.format(a)
+            self.fc(nodes[a], name=name)
+        self.fc(self.dim_ref, name='fc1')
+        self.fc(num_out, relu=False, name='output0')
+
+        ref_out_name = 'fc1'
+        for a in range(self.stack):
+            input_name = 'input{}'.format(a + 1)
+            ic_name = 'ic{}_in'.format(a)
+            ifc0_name = 'ifc0{}_in'.format(a)
+            ifc1_name = 'ifc1{}_in'.format(a)
+            ifc2_name = 'ifc2{}_in'.format(a)
+            output_name = 'output{}'.format(a + 1)
+
+            (self.feed(input_name, ref_out_name)
+             .concat(1, name=ic_name)
+             .fc_w(name=ifc0_name,
+                   weights=self.weights0,
+                   biases=self.biases0)
+             .fc_w(name=ifc1_name,
+                   weights=self.weights1,
+                   biases=self.biases1)
+             .fc_w(name=ifc2_name,
+                   weights=self.weights2,
+                   biases=self.biases2)
+             .fc_w(name=output_name, relu=False,
+                   weights=self.weights3,
+                   biases=self.biases3)
+             )
+
+            ref_out_name = ifc2_name
+
+        print self.dim_inter
+        print nodes, self.dim_ref
+
+        if verbose:
+            print("number of layers = {}".format(len(self.layers)))
+            for l in sorted(self.layers.keys()):
+                print l, self.layers[l].get_shape()
+
+
 class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
