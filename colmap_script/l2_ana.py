@@ -41,7 +41,7 @@ for a in range(int(l2)):
     plt.plot(da[(l3-a):length-a, 0], pre1, linewidth=2)
     if a > 30:
         break
-        
+
 
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
