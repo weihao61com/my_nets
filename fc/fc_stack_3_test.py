@@ -71,7 +71,7 @@ if __name__ == '__main__':
                 for a in range(cfg.feature_len):
                     feed[input_dic['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
                 result = []
-                for a in range(cfg.feature_len+1):
+                for a in range(0, cfg.feature_len+1, cfg.feature_len/2):
                     r = sess.run(xy[a], feed_dict=feed)
                     result.append(r)
                 result = np.array(result)
@@ -84,30 +84,31 @@ if __name__ == '__main__':
         results = []
         truth = []
 
-        fname = 'test'
-        filename = '/home/weihao/tmp/{}.csv'.format(fname)
-        if sys.platform == 'darwin':
-            filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-        fp = open(filename, 'w')
+        #fname = 'test'
+        #filename = '/home/weihao/tmp/{}.csv'.format(fname)
+        #if sys.platform == 'darwin':
+        #    filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+        #fp = open(filename, 'w')
         for id in rst_dic:
             dst = np.array(rst_dic[id])
             result = np.median(dst, axis=0)
+            # result = np.mean(dst, axis=0)
             results.append(result)
             truth.append(truth_dic[id])
             t = truth_dic[id]
-            if random.random() < 0.2:
-                r = np.linalg.norm(t - result[cfg.feature_len])
-                mm = result[cfg.feature_len]
-                if len(mm)==3:
-                    fp.write('{},{},{},{},{},{},{}\n'.
-                         format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-                else:
-                    fp.write('{},{},{}\n'.
-                             format(t[0], mm[0], r))
-        fp.close()
+            #if random.random() < 0.2:
+            #    r = np.linalg.norm(t - result[cfg.feature_len])
+            #    mm = result[cfg.feature_len]
+            #    if len(mm)==3:
+            #        fp.write('{},{},{},{},{},{},{}\n'.
+            #             format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            #    else:
+            #        fp.write('{},{},{}\n'.
+            #                 format(t[0], mm[0], r))
+        #fp.close()
 
         M, L = Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
-        for a in range(cfg.feature_len+1):
+        for a in range(len(M)):
             print a, M[a], L[a]
 
 

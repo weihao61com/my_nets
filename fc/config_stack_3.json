@@ -9,13 +9,13 @@
     "tr3": "p_files/office_Train_cv_s3.p",
     "tr4": "p_files/pumpkin_Train_cv_s3.p",
     "tr5": "p_files/redkitchen_Train_cv_s3.p",
-    "net": "s3_N",
-    "retrain": "s3",
-    "netTest": "s3_N",
+    "net": "s3",
+    "_retrain": "s3",
+    "netTest": "s3",
     "feature": 20,
     "lr": 1e-4,
     "num_output": 3,
-    "step": 100,
-    "loop": 2,
+    "step": 400,
+    "loop": 10,
     "t_scale": 10
 }
