@@ -140,6 +140,10 @@ if __name__ == '__main__':
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
+    # opt0 = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    #                 beta2=0.999, epsilon=0.00000001,
+    #                 use_locking=False, name='Adam').\
+    #     minimize(ls[0])
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -191,6 +195,7 @@ if __name__ == '__main__':
                                     b[0][c:c + step,  4 * d: 4 * (d + 1)]
                             feed[output] = b[1][c:c + step]
                             idx = int(feature_len/2)
+                            # _ = sess.run([opt0], feed_dict=feed)
                             ll3,ll4,ll5, _ = sess.run([ls[0], ls[idx], ls[-1], opt],
                                                       feed_dict=feed)
                             tl3 += ll3

@@ -18,14 +18,15 @@ def run_data_stack_avg3_1(data, inputs, sess, xy, fname):
     truth_dic = {}
     length = 0
     for b in data:
-        length = b[0].shape[1]/4
+        sz = b[0].shape
+        length = sz[1]
         feed = {inputs['input0']: b[0]}
         for a in range(length):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, 4 * a:4 * (a + 1)]
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, a, :, :].reshape((sz[0], sz[2]))
         r0 = sess.run(xy[0], feed_dict=feed)
         result = [r0]
         for a in range(length):
-            r = sess.run(xy[a+1], feed_dict=feed)+r0
+            r = sess.run(xy[a+1], feed_dict=feed)
             result.append(r)
         result = np.array(result)
         for a in range(len(b[2])):
@@ -90,6 +91,8 @@ if __name__ == '__main__':
     t_scale = js['t_scale']
     #net_type = js['net_type']
 
+    multi = -1
+
     renetFile = None
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
@@ -103,6 +106,10 @@ if __name__ == '__main__':
     tr0.set_num_output(num_output)
     tr.set_num_output(num_output)
     te.set_num_output(num_output)
+    tr.set_net_type('cnn')
+    tr0.set_net_type('cnn')
+    te.set_net_type('cnn')
+
 
     att = te.sz[1]
     iterations = 10000
@@ -111,7 +118,7 @@ if __name__ == '__main__':
 
     inputs = {}
 
-    inputs[0] = tf.placeholder(tf.float32, [None, feature_len*att])
+    inputs[0] = tf.placeholder(tf.float32, [None, feature_len, att, 1])
     output = tf.placeholder(tf.float32, [None, num_output])
     for a in range(feature_len):
         inputs[a+1] = tf.placeholder(tf.float32, [None, att])
@@ -130,7 +137,8 @@ if __name__ == '__main__':
     loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
     ls = [loss]
     for x in range(feature_len):
-        ll = tf.reduce_sum(tf.square(tf.subtract(tf.subtract(xy[x+1], xy[0]), output)))
+        # ll = tf.reduce_sum(tf.square(tf.subtract(tf.subtract(xy[x+1], xy[0]), output)))
+        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x+1], output)))
         loss = loss + ll
         ls.append(ll)
 
@@ -151,10 +159,10 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            tr_pre_data = tr0.prepare()
+            tr_pre_data = tr0.prepare(multi=multi)
             tr_loss, tr_median = run_data_stack_avg3_1(tr_pre_data, input_dic, sess, xy, 'tr')
 
-            te_pre_data = te.prepare()
+            te_pre_data = te.prepare(multi=multi)
             te_loss, te_median = run_data_stack_avg3_1(te_pre_data, input_dic, sess, xy, 'te')
 
             t1 = datetime.datetime.now()
@@ -170,7 +178,8 @@ if __name__ == '__main__':
                     s = feature_len
 
             print str, str1
-
+            if multi==-1:
+                break
             tl3 = 0
             tl4 = 0
             tl5 = 0
@@ -182,11 +191,12 @@ if __name__ == '__main__':
                     for b in tr_pre_data:
                         total_length = len(b[0])
                         for c in range(0, total_length, step):
-                            length = b[0].shape[1] - att * feature_len
-                            feed = {input_dic['input0']: b[0][c:c + step, :]}
+                            # length = b[0].shape[1] - att * feature_len
+                            feed = {input_dic['input0']: b[0][c:c + step, :, :, :]}
                             for d in range(feature_len):
+                                sz = b[0][c:c + step].shape
                                 feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + step,  4 * d: 4 * (d + 1)]
+                                    b[0][c:c + step,  d, :, :].reshape((sz[0], sz[2]))
                             feed[output] = b[1][c:c + step]
                             idx = int(feature_len/2)
                             ll3,ll4,ll5, _ = sess.run([ls[0], ls[idx], ls[-1], opt],
