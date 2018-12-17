@@ -30,14 +30,11 @@ class Stack:
         s1 = self.base_nn.reset()
         s2 = self.stack_nn.reset()
         s3 = self.final_nn.reset()
-        return s1 + ' ' + s2 + ' ' + s3
+        return '' #s1 + ' ' + s2 + ' ' + s3
 
     def run(self, inputs):
-        outputs = []
-        for a in inputs:
-            output= self._run(a)
-            outputs.append(output[0][-1])
-        return outputs
+        outputs = self._run(inputs)
+        return outputs[0]
 
     def _run(self, inputs):
         if inputs.shape[1] < self.feture * self.attribute:
@@ -46,7 +43,8 @@ class Stack:
         Zs = []
         Zo = []
         Zr = []
-        ref, Z = self.base_nn.run(inputs[:, -self.feture * self.attribute:])
+        ref, Z = self.base_nn.run(inputs)
+        # ref, Z = self.base_nn.run(inputs[:, -self.feture * self.attribute:])
         output, r = self.final_nn.run(ref)
         Zo.append(output)
         Zr.append(r)
@@ -75,39 +73,90 @@ class Stack:
             grad = self.stack_nn.backward(grad, Zs[-1-a], True)
             grad = grad[:, :-self.attribute]
 
-        print np.linalg.norm(grad)
+        # print np.linalg.norm(grad)
         self.base_nn.backward(grad, Zfinal)
 
     def train(self, inputs, outputs):
-        loss = 0
-        for a in range(len(inputs)):
-            loss += self._train(inputs[a], outputs[a])
-        return loss
+        #loss = 0
+        #for a in range(len(inputs)):
+        #    loss += self._train(inputs[a], outputs[a])
+        return self._train(inputs, outputs)
 
     def run_data(self, data):
-        results = None
-        truth = None
+
+        rst_dic = {}
+        tru_dic = {}
 
         for b in data:
-            inputs = b[0]
-            result = self.run(inputs)[0]
-            if results is None:
-                results = result
-                truth = b[1]
-            else:
-                results = np.concatenate((results, result))
-                truth = np.concatenate((truth, b[1]))
+            result = self.run(b[0])[-1]
+            for a in range(len(b[2])):
+                id = b[2][a]
+                if not id in rst_dic:
+                    rst_dic[id] = []
+                rst_dic[id].append(result[a, :])
+                tru_dic[id] = b[1][a]
+
+        results = []
+        truth = []
+
+        for id in rst_dic:
+            dst = np.array(rst_dic[id])
+            result = np.median(dst, axis=0)
+            results.append(result)
+            truth.append(tru_dic[id])
 
         return Utils.calculate_loss(np.array(results), np.array(truth))
 
+    def run_data_stack(self, data):
+
+        rst_dic = {}
+        tru_dic = {}
+
+        for b in data:
+            result = np.array(self.run(b[0]))
+            for a in range(len(b[2])):
+                id = b[2][a]
+                if not id in rst_dic:
+                    rst_dic[id] = []
+                rst_dic[id].append(result[:, a, :])
+                tru_dic[id] = b[1][a]
+
+        results = []
+        truth = []
+
+        for id in rst_dic:
+            dst = np.array(rst_dic[id])
+            result = np.median(dst, axis=0)
+            results.append(result)
+            truth.append(tru_dic[id])
+
+        results = np.array(results)
+        truth = np.array(truth)
+        M = []
+        L = []
+        for a in range(results.shape[1]):
+            l, m = Utils.calculate_loss(results[:, a, :], truth)
+            M.append(m)
+            L.append(l)
+        return L, M
+
+def run_test(stack, te):
+    L, M = stack.run_data_stack(te.prepare(multi=-1))
+    for a in range(len(L)):
+        print a, L[a], M[a]
+
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', help='config', required=False)
+    parser.add_argument('-t', '--test', help='test', required=False)
+    args = parser.parse_args()
 
-    config_file = "cstack.json"
+    config_file = "cstack.json" if args.config is None else args.config
+    mode = 'train' if args.test is None else args.test
 
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
-
+    iterations = 10000
     js = Utils.load_json_file(config_file)
 
     tr_data = []
@@ -135,12 +184,22 @@ if __name__ == '__main__':
     if 'retrain' in js:
         renetFile = HOME + 'NNs/' + js['retrain'] + '.p'
 
-    tr = DataSet(tr_data, batch_size)
-    te_set = DataSet(te_data, batch_size)
+    if mode == 'train':
+        tr = DataSet(tr_data, js['block'], feature_len)
+        # tr.set_t_scale(t_scale)
+        tr.set_num_output(num_output)
+        te = DataSet(te_data, js['block'], feature_len)
+        # te.set_t_scale(t_scale)
+        te.set_num_output(num_output)
+    else:
+        if mode == 'te':
+            te = DataSet(te_data, js['block'], feature_len)
+        else:
+            te = DataSet(tr_data, js['block'], feature_len)
+        te.set_num_output(num_output)
 
-    sz_in = te_set.sz
-    iterations = 10000
-    loop = 1000
+    sz_in = te.sz
+    loop = js['loop']
     print "input shape", sz_in, "LR", lr, 'feature', feature_len
 
     if renetFile is not None:
@@ -155,39 +214,35 @@ if __name__ == '__main__':
         stack = Stack(base_nn, stack_nn, final_nn, feature_len, num_att)
         stack.setup(lr, True)
 
-    t00 = datetime.datetime.now()
-    str1 = ''
-    for a in range(iterations):
-        # tr_pre_data = tr.prepare_stack()
-        # total_loss, tr_median = stack.run_data(tr_pre_data)
-        #
-        # te_pre_data = te_set.prepare_stack()
-        # te_loss, te_median = stack.run_data(te_pre_data)
-        #
-        # t1 = datetime.datetime.now()
-        # str = "iteration: {0} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5} ".format(
-        #     a * loop, total_loss, te_loss,
-        #     tr_median, te_median, t1 - t00)
-        # print str + str1
-        # t00 = t1
+    if mode=='train':
 
-        lt0 = datetime.datetime.now()
-        loss = 0
-        length = 0
-        for t in range(loop):
-            str1 = stack.reset()
+        t00 = datetime.datetime.now()
+        str1 = ''
+        for a in range(iterations):
+            total_loss, tr_median = stack.run_data(tr.prepare())
+            te_loss, te_median = stack.run_data(te.prepare())
+            t1 = datetime.datetime.now()
+            str = "it: {0:.3f} {1:.3f} {2:.5f} {3:.5f} {4:.5f} {5:.5f}".format(a * loop / 1000.0,
+                                               (t1 - t00).total_seconds() / 3600.0,
+                                               total_loss, te_loss,
+                                               tr_median, te_median,
+                                               )
+            print str + str1
+            loss = 0
+            length = 0
+            for t in range(loop):
+                #str1 = stack.reset()
+                #tr_pre_data = tr.prepare_stack()
+                tr_pre_data = tr.prepare(multi=1)
+                while tr_pre_data:
+                    for b in tr_pre_data:
+                        for c in range(0, len(b[2]), batch_size):
+                            loss += stack.train(b[0][c:c+batch_size], b[1][c:c+batch_size])
+                        length += len(b[0])
+                    tr_pre_data = tr.get_next()
 
-            tr_pre_data = tr.prepare_stack()
-            while tr_pre_data:
-                for b in tr_pre_data:
-                    loss += stack.train(b[0], b[1])
-                    length += len(b[0])
-                tr_pre_data = tr.get_next()
-            if t%1 == 0:
-                print 'its', t+a*loop, loss/length, str1, datetime.datetime.now()-lt0
-                loss = 0
-                length = 0
-                lt0 = datetime.datetime.now()
-
-        with open(netFile, 'w') as fp:
-            pickle.dump(stack, fp)
+            str1 = ' {0:.5f}'.format(loss/length)
+            with open(netFile, 'w') as fp:
+                pickle.dump(stack, fp)
+    else:
+        run_test(stack, te)

@@ -182,7 +182,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
+                tr_pre_data = tr.prepare(multi=1)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -204,8 +204,6 @@ if __name__ == '__main__':
                             nt += len(b[0][c:c + step])
                     tr_pre_data = tr.get_next()
             str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
-            saver.save(sess, netFile)
+            Utils.save_tf_data(saver, sess, netFile)
 
-        print netFile
-        saver.save(sess, netFile)
 

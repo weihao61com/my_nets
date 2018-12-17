@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
         str = "it: {0:.2f}  ".format((t1 - t00).total_seconds() / 3600.0)
         for s in range(stack + 1):
-            str += "  {0:.4f} {1:.4f}  ".format(te_loss[s], te_median[s])
+            str += "  {0:.4f} {1:.4f}  \n".format(te_loss[s], te_median[s])
 
 
         print str

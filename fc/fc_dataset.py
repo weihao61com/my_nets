@@ -129,7 +129,7 @@ class StackNet_cnn(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        self.dim_inter = [1024, 256]
+        self.dim_inter = [512, 64]
         # self.dim_inter = [256]
 
         self.dim_ref = dim_ref
@@ -162,7 +162,7 @@ class StackNet_cnn(Network):
     def real_setup(self, stack, num_out=3, verbose=True):
         # nodes = [2048, 256]
         # ref_dim = 128
-        nodes = [1024, 256]
+        nodes = [512, 64]
         ref_dim = 64
 
         self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
@@ -215,7 +215,7 @@ class StackNet(Network):
 
     def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        self.dim_inter = [1024, 256]
+        self.dim_inter = [512, 64]
         # self.dim_inter = [256]
 
         self.dim_ref = dim_ref
@@ -248,7 +248,7 @@ class StackNet(Network):
     def real_setup(self, stack, num_out=3, verbose=True):
         # nodes = [2048, 256]
         # ref_dim = 128
-        nodes = [1024, 256]
+        nodes = [512, 64]
         ref_dim = 64
 
         self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)

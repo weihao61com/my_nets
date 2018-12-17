@@ -5,6 +5,8 @@ import random
 import json
 from sortedcontainers import SortedDict
 import sys
+import pickle
+import shutil
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -377,3 +379,21 @@ class Utils:
         height_offset -= (height - output_side_length) / 2
         width_offset -= (width - output_side_length) / 2
         return cropped_img, [height_offset, width_offset]
+
+    @staticmethod
+    def save_p_data(nnn, netFile):
+        tmp_file = netFile + '.tmp'
+        with open(tmp_file, 'w') as fp:
+            pickle.dump(nnn, fp)
+        shutil.copy(tmp_file, netFile)
+        os.remove(tmp_file)
+
+    @staticmethod
+    def save_tf_data(saver, sess, netFile):
+        net_dir = netFile[:-3]
+        tmp_dir = net_dir + '_tmp'
+        tmp_file = tmp_dir + '/fc'
+        saver.save(sess, tmp_file)
+        if os.path.exists(net_dir):
+            shutil.rmtree(net_dir)
+        shutil.move(tmp_dir, net_dir)

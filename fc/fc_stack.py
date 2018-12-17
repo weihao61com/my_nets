@@ -90,6 +90,7 @@ if __name__ == '__main__':
             loss = loss + ll
         ls.append(ll)
 
+    loss =ls[-1]
     opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "it: {0:.2f} {1:.2f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            for s in range(stack+1):
+            for s in range(0, stack+1, stack):
                 str += " {0:.5f} {1:.5f} {2:.5f} {3:.5f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
 
             print str, str1
