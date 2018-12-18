@@ -175,7 +175,7 @@ if __name__ == '__main__':
     reference = js["nodes_reference"]
     base_nodes = map(int, js["nodes_base"].split(','))
     stack_nodes = map(int, js["nodes_stack"].split(','))
-    final_nodes = map(int, js["nodes_final"].split(','))
+    final_nodes = [] #map(int, js["nodes_final"].split(','))
 
     num_att = 4
     num_output = 3

@@ -11,6 +11,5 @@
     "loop": 20,
     "nodes_reference": 32,
     "nodes_base": "512, 64",
-    "nodes_stack": "512, 64",
-    "nodes_final": "64"
+    "nodes_stack": "512, 64"
 }
