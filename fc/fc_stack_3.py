@@ -88,6 +88,10 @@ if __name__ == '__main__':
     #stage = js["stage"]
     t_scale = js['t_scale']
     #net_type = js['net_type']
+    nodes_base = map(int, js['nodes_base'].split(','))
+    nodes_stack = map(int, js['nodes_stack'].split(','))
+    nodes_reference = js['nodes_reference']
+    nodes = [nodes_base, nodes_stack, nodes_reference]
 
     renetFile = None
     if 'retrain' in js:
@@ -120,7 +124,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(feature_len, num_out=num_output, verbose=False)
+    net.real_setup(feature_len, nodes, num_out=num_output, verbose=False)
 
     xy = {}
     for a in range(feature_len+1):

@@ -213,10 +213,9 @@ class StackNet_cnn(Network):
 
 class StackNet(Network):
 
-    def parameters(self, stack, dim_input=4, dim_output=3, dim_ref=128):
+    def parameters(self, stack, nodes, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
-        self.dim_inter = [512, 64]
-        # self.dim_inter = [256]
+        self.dim_inter = nodes
 
         self.dim_ref = dim_ref
         self.dim_output = dim_output
@@ -245,13 +244,12 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack, num_out=3, verbose=True):
-        # nodes = [2048, 256]
-        # ref_dim = 128
-        nodes = [512, 64]
-        ref_dim = 64
+    def real_setup(self, stack, ns, num_out=3, verbose=True):
 
-        self.parameters(stack, dim_output=num_out, dim_ref=ref_dim)
+        nodes = ns[0]
+        ref_dim = ns[2]
+
+        self.parameters(stack, ns[1], dim_output=num_out, dim_ref=ref_dim)
 
         self.feed('input0')
         for a in range(len(nodes)):
