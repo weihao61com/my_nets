@@ -46,7 +46,8 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(cfg.feature_len, num_out=cfg.num_output, verbose=False)
+    # net.real_setup(cfg.feature_len, num_out=cfg.num_output, verbose=False)
+    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, verbose=False)
 
     xy = {}
     for a in range(cfg.feature_len+1):

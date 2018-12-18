@@ -33,6 +33,10 @@ class Config:
         self.num_output = js["num_output"]
         self.step = js["step"]
         self.t_scale = js['t_scale']
+        nodes_base = map(int, js['nodes_base'].split(','))
+        nodes_stack = map(int, js['nodes_stack'].split(','))
+        nodes_reference = js['nodes_reference']
+        self.nodes = [nodes_base, nodes_stack, nodes_reference]
 
         self.renetFile = None
         if 'retrain' in js:
