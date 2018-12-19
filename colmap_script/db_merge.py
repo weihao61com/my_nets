@@ -38,6 +38,7 @@ if __name__ == "__main__":
     key = 'heads'  # office" #heads
     mode = 'Test'
     max_image = 400000
+    # negative for sequence
     max_match_per_image = 20 # -3
     min_matching_point = 20
     seq = None

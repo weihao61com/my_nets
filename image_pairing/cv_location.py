@@ -88,6 +88,20 @@ class VisualOdometry2:
         # print pose.filename, len(fs[1])
         return fs
 
+    def get_match_point_2(self, curent_feature):
+        matches = self.matcher.knnMatch(self.feature[1], curent_feature[1], k=2)
+        pts1 = []
+        # ratio test as per Lowe's paper
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.5 * n.distance:
+                values = (self.feature[0][m.queryIdx],
+                          curent_feature[0][m.trainIdx],
+                          curent_feature[0][n.trainIdx],
+                          m.distance, n.distance)
+                pts1.append(values)
+
+        return pts1
+
     def get_match_point(self, curent_feature):
         matches = self.matcher.knnMatch(self.feature[1], curent_feature[1], k=2)
         pts2 = []
@@ -102,6 +116,42 @@ class VisualOdometry2:
         pts2 = np.array(pts2)
 
         return pts1, pts2
+
+    def get_features_2(self, id1, pose1, pose2):
+
+        self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+        self.pose_T = pose1.tran - pose2.tran
+        if id1 != self.id:
+            self.id = id1
+            self.feature = self.get_feature(pose1)
+
+        px = self.get_match_point_2(self.get_feature(pose2))
+        if len(px) > 20:
+            features = []
+            for p in px:
+                p0 = p[0].pt
+                p1 = p[1].pt
+                p2 = p[2].pt
+                d1 = p[3]
+                d2 = d1 / p[4]
+                a0 = p[0].angle/180*np.pi - np.pi
+                a1 = a0 - p[1].angle/180*np.pi
+                a2 = a0 - p[2].angle/180*np.pi
+                s0 = p[0].size
+                s1 = p[1].size
+                s2 = p[2].size
+                r0 = p[0].response
+                r1 = p[1].response
+                r2 = p[2].response
+                f = [p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], d1, d2,
+                     a0, a1, a2, s0, s1, s2, r0, r1, r2]
+                features.append(f)
+
+            self.features = np.array(features)
+            self.truth = np.concatenate(
+                (Utils.rotationMatrixToEulerAngles(self.pose_R)*180/np.pi, self.pose_T))
+        else:
+            self.features = []
 
     def get_features(self, id1, pose1, pose2, proc=False):
 

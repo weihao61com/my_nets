@@ -10,7 +10,7 @@ import pickle
 
 project_dir = '/home/weihao/Projects'
 
-range2 = 2
+range2 = 3
 range1 = -range2
 key = 'heads'
 mode = 'Train'
@@ -37,7 +37,7 @@ print key, mode
 location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
 poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
-filename = '/home/weihao/Projects/p_files/{}_{}_cv_s{}.p'.format(key, mode, range2)
+filename = '/home/weihao/Projects/p_files/{}_{}_cv_s{}_2.p'.format(key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
 print location, filename, output_file
 
@@ -76,42 +76,21 @@ for seq in poses_dic:
                 continue
             if range1 <= img_id2-img_id1 <= range2:
                 pose2 = poses[img_id2]
-                vo.get_features(img_id1, pose1, pose2, isTest)
+                vo.get_features_2(img_id1, pose1, pose2)
                 fs = vo.features
                 if len(fs) > mini_features_matches:
                     fs[:, 0] = (fs[:, 0]-w2)/w2
                     fs[:, 1] = (fs[:, 1]-h2)/h2
                     fs[:, 2] = (fs[:, 2]-w2)/w2
                     fs[:, 3] = (fs[:, 3]-h2)/h2
-                    data.append([fs, vo.truth*180/np.pi])
+                    fs[:, 4] = (fs[:, 4]-w2)/w2
+                    fs[:, 5] = (fs[:, 5]-h2)/h2
+                    data.append([fs, vo.truth])
 
-                    if isTest:
-                        pose1 = poses[img_id1]
-
-                        b = Utils.rotationMatrixToEulerAngles(vo.R)
-                        a = Utils.rotationMatrixToEulerAngles(vo.pose_R)
-                        c = Utils.rotationMatrixToEulerAngles(pose1.m3x3)
-                        d = pose1.tran
-                        dr = a - b
-                        r0 = np.linalg.norm(dr) * 180 / np.pi
-                        if random()<0.1:
-                            fp.write('{},{},{},{},{},{},{},{},{},'
-                                 '{},{},{},{},{},{},{},{},{},{}\n'.
-                                 format(pose1.filename, pose2.filename,
-                                        vo.matches, vo.inline,
-                                        a[0], a[1], a[2], b[0], b[1], b[2],
-                                        c[0], c[1], c[2], d[0], d[1], d[2],
-                                        r0, vo.m1, vo.m2
-                                        ))
-                        rs.append(r0)
         nt += 1
         if nt % 100 == 0:
             print nt, img_id1, len(data), datetime.datetime.now() - t0
             t0 = datetime.datetime.now()
-
-if isTest:
-    fp.close()
-    print '\nmedian', key, np.median(rs)
 
 print 'Total data', len(data)
 
