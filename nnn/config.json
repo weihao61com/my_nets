@@ -1,13 +1,17 @@
 {
-    "batch_size": 1000,
+    "batch_size": 1,
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "net": "nnn",
+    "netTest": "nnn",
     "_retrain": "nnn",
     "feature": 20,
-    "lr": 1e-3,
-    "num_output": 1,
-    "nodes": "256, 32",
+    "lr": 1e-4,
+    "num_output": 3,
+    "nodes": "256, 1024, 128",
     "active_fun": "relu",
-    "loop": 100
+    "memory_size": 5000,
+    "loop": 100,
+    "t_scale": 10
+
 }

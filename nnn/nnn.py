@@ -10,7 +10,7 @@ sys.path.append('{}/my_nets'.format(HOME))
 sys.path.append('{}/my_nets/fc'.format(HOME))
 
 from utils import Utils
-from fc_dataset import DataSet
+from fc_dataset import DataSet, Config
 
 
 def add_1(inputs):
@@ -193,72 +193,62 @@ if __name__ == '__main__':
 
     config_file = "config.json"
 
-    if len(sys.argv) > 1:
+    if len(sys.argv)>1:
         config_file = sys.argv[1]
 
-    js = Utils.load_json_file(config_file)
+    cfg = Config(config_file)
+    batch_size = cfg.batch_size
 
-    tr_data = []
-    te_data = []
-    for key in js:
-        if key.startswith('tr'):
-            tr_data.append(HOME + js[key])
-        if key.startswith('te'):
-            te_data.append(HOME + js['te'])
+    tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
+    te = DataSet(cfg.te_data, cfg.memory_size, cfg.feature_len)
+    tr.set_net_type(cfg.net_type)
+    te.set_net_type(cfg.net_type)
+    tr.set_t_scale(cfg.t_scale)
+    te.set_t_scale(cfg.t_scale)
+    tr.set_num_output(cfg.num_output)
+    te.set_num_output(cfg.num_output)
 
-    netFile = HOME + 'NNs/' + js['net'] + '.p'
-    batch_size = int(js['batch_size'])
-    feature_len = int(js['feature'])
-    lr = float(js['lr'])
+    att = te.sz[1]
+    iterations = 100000
 
-    num_output = int(js["num_output"])
-    nodes = map(int, js["nodes"].split(','))
-    af = js["active_fun"]
+    print "input shape", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
-    renetFile = None
-    if 'retrain' in js:
-        renetFile = HOME + 'NNs/' + js['retrain'] + '.p'
-
-    testing = False
+    testing = None
     if len(sys.argv) > 2:
-        testing = True
+        if sys.argv[2].startswith('te'):
+            testing = te
+        else:
+            testing = tr
 
-    if not testing:
-        tr = DataSet(tr_data, batch_size, feature_len)
-        tr.set_num_output(num_output)
-
-    te = DataSet(te_data, batch_size, feature_len)
-    te.set_num_output(num_output)
-
-    sz_in = te.sz
+    att = te.sz[1]
     iterations = 10000
-    t_scale =10
-    loop = js["loop"]
-    print "input shape", sz_in, "LR", lr, 'feature', feature_len
+    loop = cfg.loop
+    print "input shape", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
-    D_in = feature_len * sz_in[1]
-    D_out = num_output
+    D_in = cfg.feature_len * att
+    D_out = cfg.num_output
+    netFile = cfg.netFile[:-3] + '.p'
 
-    if renetFile is not None:
+    if cfg.renetFile is not None:
+        renetFile = cfg.renetFile[:-3] + '.p'
         with open(renetFile, 'r') as fp:
             nnn = pickle.load(fp)
-        nnn.setup(lr, init=False)
+        nnn.setup(cfg.lr, init=False)
     else:
-        nnn = NNN(D_in, D_out, nodes, af=af)
-        nnn.setup(lr)
+        nnn = NNN(D_in, D_out, cfg.nodes[0], af=cfg.af)
+        nnn.setup(cfg.lr)
 
     if testing:
         run_testing(te, nnn)
         exit(0)
 
-
     t00 = datetime.datetime.now()
     str1 = ''
     for a in range(iterations):
-        tr_pre_data = tr.prepare(multi=1, t_scale=t_scale)
+        tr_pre_data = tr.prepare()
         total_loss, tr_median = nnn.run_data(tr_pre_data)
 
-        te_pre_data = te.prepare(multi=1, t_scale=t_scale)
+        te_pre_data = te.prepare()
         te_loss, te_median = nnn.run_data(te_pre_data)
 
         t1 = (datetime.datetime.now() - t00).seconds / 3600.0
@@ -271,14 +261,15 @@ if __name__ == '__main__':
         loss = 0
         length = 0
         lt0 = datetime.datetime.now()
-
         for t in range(loop):
             str1 = nnn.reset()
-            tr_pre_data = tr.prepare(multi=1, t_scale=t_scale)
+            tr_pre_data = tr.prepare()
             while tr_pre_data:
                 for b in tr_pre_data:
-                    loss += nnn.train(b[0], b[1])
-                    length += len(b[0])
+                    for c in range(0, len(b[2]), batch_size):
+
+                        loss += nnn.train(b[0][c:c + batch_size], b[1][c:c + batch_size])
+                        length += len(b[0][c:c + batch_size])
 
                 tr_pre_data = tr.get_next()
         str1 = '{0:.4f}  {1}'.format(loss/length, str1)

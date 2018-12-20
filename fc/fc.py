@@ -7,10 +7,6 @@ import os
 sys.path.append('..')
 from utils import Utils
 
-HOME = '/home/weihao/Projects/'
-if sys.platform=='darwin':
-    HOME = '/Users/weihao/Projects/'
-
 if __name__ == '__main__':
 
     config_file = "config.json"
@@ -18,65 +14,37 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         config_file = sys.argv[1]
 
-    js = Utils.load_json_file(config_file)
+    cfg = Config(config_file)
 
-    tr_data = []
-    te_data = []
-    for key in js:
-        if key.startswith('tr'):
-            tr_data.append(HOME + js[key])
-        if key.startswith('te'):
-            te_data.append(HOME + js['te'])
+    tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
+    te = DataSet(cfg.te_data, cfg.memory_size, cfg.feature_len)
+    tr.set_net_type(cfg.net_type)
+    te.set_net_type(cfg.net_type)
+    tr.set_t_scale(cfg.t_scale)
+    te.set_t_scale(cfg.t_scale)
+    tr.set_num_output(cfg.num_output)
+    te.set_num_output(cfg.num_output)
 
-    netFile = HOME + 'NNs/' + js['net'] + '/fc'
-    batch_size = int(js['batch_size'])
-    feature_len = int(js['feature'])
-    lr = float(js['lr'])
-    step = js["step"]
+    att = te.sz[1]
+    iterations = 100000
 
-    num_output = int(js["num_output"])
-    nodes = map(int, js["nodes"].split(','))
-    nodes.append(num_output)
+    print "input shape", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
-    renetFile = None
-    if 'retrain' in js:
-        renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
+    output = tf.placeholder(tf.float32, [None, cfg.num_output])
 
-    t_scale = js['t_scale']
-    net_type = js['net_type']
-
-    tr = DataSet(tr_data, batch_size, feature_len)
-    te = DataSet(te_data, batch_size, feature_len)
-    tr.set_net_type(net_type)
-    te.set_net_type(net_type)
-    tr.set_t_scale(t_scale)
-    te.set_t_scale(t_scale)
-    tr.set_num_output(num_output)
-    te.set_num_output(num_output)
-
-    sz_in = te.sz
-    iterations = 10000
-    loop = 10
-    if "loop" in js:
-        loop = js["loop"]
-
-    print "input shape", sz_in, "LR", lr, 'feature', feature_len
-
-    output = tf.placeholder(tf.float32, [None, num_output])
-
-    if net_type == 'cnn':
-        input = tf.placeholder(tf.float32, [None, feature_len, sz_in[1], 1])
+    if cfg.net_type == 'cnn':
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len, att, 1])
         net = cNet({'data': input})
     else:
-        input = tf.placeholder(tf.float32, [None, feature_len * sz_in[1]])
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len * att])
         net = sNet3({'data': input})
 
-    net.real_setup(nodes)
+    net.real_setup(cfg.nodes[0], cfg.num_output)
 
     xy = net.layers['output']
     loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
 
-    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
                         use_locking=False, name='Adam').\
         minimize(loss)
@@ -86,8 +54,8 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
-        if renetFile:
-            saver.restore(sess, renetFile)
+        if cfg.renetFile:
+            saver.restore(sess, cfg.renetFile)
 
         t00 = datetime.datetime.now()
         st1 = ''
@@ -101,27 +69,25 @@ if __name__ == '__main__':
 
             t1 = (datetime.datetime.now()-t00).seconds/3600.0
             str = "iteration: {0} {1:.3f} {2} {3} {4} {5}".format(
-                a*loop/1000.0, t1, total_loss, te_loss,
+                a*cfg.loop/1000.0, t1, total_loss, te_loss,
                 tr_median, te_median)
             print str, st1
 
             t_loss = 0
             t_count = 0
-            for lp in range(loop):
+            for lp in range(cfg.loop):
                 tr_pre_data = tr.prepare(rdd=True, multi=10)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])
-                        for c in range(0, length, step):
-                            feed = {input: b[0][c:c+step], output: b[1][c:c+step]}
+                        for c in range(0, length, cfg.memory_size):
+                            feed = {input: b[0][c:c+cfg.memory_size], output: b[1][c:c+cfg.memory_size]}
                             _, A = sess.run([opt, loss], feed_dict=feed)
                             t_loss += A
-                            t_count += len(b[0][c:c+step])
+                            t_count += len(b[0][c:c+cfg.memory_size])
                     tr_pre_data = tr.get_next()
                 st1 = '{}'.format(t_loss/t_count)
 
-            saver.save(sess, netFile)
+            saver.save(sess, cfg.netFile)
 
-        print netFile
-        saver.save(sess, netFile)
 

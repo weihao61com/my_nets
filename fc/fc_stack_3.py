@@ -67,72 +67,72 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         config_file = sys.argv[1]
 
-    js = Utils.load_json_file(config_file)
+    cfg = Config(config_file)
 
-    tr_data = []
-    te_data = []
-    for key in js:
-        if key.startswith('tr'):
-            tr_data.append(HOME + js[key])
-        if key.startswith('te'):
-            te_data.append(HOME + js['te'])
+    # tr_data = []
+    # te_data = []
+    # for key in js:
+    #     if key.startswith('tr'):
+    #         tr_data.append(HOME + js[key])
+    #     if key.startswith('te'):
+    #         te_data.append(HOME + js['te'])
+    #
+    # netFile = HOME + 'NNs/' + js['net'] + '/fc'
+    #
+    # batch_size = js['batch_size']
+    # feature_len = js['feature']
+    # lr = js['lr']
+    # #stack = js['stack']
+    # num_output = js["num_output"]
+    # step = js["step"]
+    # #stage = js["stage"]
+    # t_scale = js['t_scale']
+    # #net_type = js['net_type']
+    # nodes_base = map(int, js['nodes_base'].split(','))
+    # nodes_stack = map(int, js['nodes_stack'].split(','))
+    # nodes_reference = js['nodes_reference']
+    # nodes = [nodes_base, nodes_stack, nodes_reference]
+    #
+    # renetFile = None
+    # if 'retrain' in js:
+    #     renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
-    netFile = HOME + 'NNs/' + js['net'] + '/fc'
-
-    batch_size = js['batch_size']
-    feature_len = js['feature']
-    lr = js['lr']
-    #stack = js['stack']
-    num_output = js["num_output"]
-    step = js["step"]
-    #stage = js["stage"]
-    t_scale = js['t_scale']
-    #net_type = js['net_type']
-    nodes_base = map(int, js['nodes_base'].split(','))
-    nodes_stack = map(int, js['nodes_stack'].split(','))
-    nodes_reference = js['nodes_reference']
-    nodes = [nodes_base, nodes_stack, nodes_reference]
-
-    renetFile = None
-    if 'retrain' in js:
-        renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
-
-    tr = DataSet(tr_data, batch_size, feature_len)
-    tr.set_t_scale(t_scale)
-    tr.set_num_output(num_output)
-    te = DataSet(te_data, batch_size, feature_len)
-    te.set_t_scale(t_scale)
-    te.set_num_output(num_output)
-    tr0 = DataSet([tr_data[0]], batch_size, feature_len)
-    tr0.set_t_scale(t_scale)
-    tr0.set_num_output(num_output)
+    tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
+    tr.set_t_scale(cfg.t_scale)
+    tr.set_num_output(cfg.num_output)
+    te = DataSet(cfg.te_data, cfg.memory_size, cfg.feature_len)
+    te.set_t_scale(cfg.t_scale)
+    te.set_num_output(cfg.num_output)
+    tr0 = DataSet([cfg.tr_data[0]], cfg.memory_size, cfg.feature_len)
+    tr0.set_t_scale(cfg.t_scale)
+    tr0.set_num_output(cfg.num_output)
 
     att = te.sz[1]
     iterations = 10000
-    loop = js["loop"]
-    print "input attribute", att, "LR", lr, 'feature', feature_len
+    loop = cfg.loop
+    print "input attribute", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     inputs = {}
 
-    inputs[0] = tf.placeholder(tf.float32, [None, feature_len*att])
-    output = tf.placeholder(tf.float32, [None, num_output])
-    for a in range(feature_len):
+    inputs[0] = tf.placeholder(tf.float32, [None, cfg.feature_len*att])
+    output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    for a in range(cfg.feature_len):
         inputs[a+1] = tf.placeholder(tf.float32, [None, att])
 
     input_dic = {}
-    for a in range(feature_len+1):
+    for a in range(cfg.feature_len+1):
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(feature_len, nodes, num_out=num_output, verbose=False)
+    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, verbose=False)
 
     xy = {}
-    for a in range(feature_len+1):
+    for a in range(cfg.feature_len+1):
         xy[a] = net.layers['output{}'.format(a)]
 
     ls = []
     loss = None
-    for x in range(feature_len+1):
+    for x in range(cfg.feature_len+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
@@ -140,8 +140,7 @@ if __name__ == '__main__':
             loss = loss + ll
         ls.append(ll)
 
-    loss = ls[-1]
-    opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
@@ -156,8 +155,8 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
-        if renetFile:
-            saver.restore(sess, renetFile)
+        if cfg.renetFile:
+            saver.restore(sess, cfg.renetFile)
 
         str1 = ''
         for a in range(iterations):
@@ -173,14 +172,14 @@ if __name__ == '__main__':
             s = 1
             while True:
                 # for s in range(0, feature_len+1, 5  ):
-                if s>feature_len:
-                    s = feature_len
+                if s>cfg.feature_len:
+                    s = cfg.feature_len
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-                if s==feature_len:
+                if s==cfg.feature_len:
                     break
-                s += int(feature_len/2)
-                if s>feature_len:
-                    s = feature_len
+                s += int(cfg.feature_len/2)
+                if s>cfg.feature_len:
+                    s = cfg.feature_len
 
             print str, str1
 
@@ -194,23 +193,23 @@ if __name__ == '__main__':
                 while tr_pre_data:
                     for b in tr_pre_data:
                         total_length = len(b[0])
-                        for c in range(0, total_length, step):
-                            length = b[0].shape[1] - att * feature_len
-                            feed = {input_dic['input0']: b[0][c:c + step, :]}
-                            for d in range(feature_len):
+                        for c in range(0, total_length, cfg.batch_size):
+                            length = b[0].shape[1] - att * cfg.feature_len
+                            feed = {input_dic['input0']: b[0][c:c + cfg.batch_size, :]}
+                            for d in range(cfg.feature_len):
                                 feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + step,  4 * d: 4 * (d + 1)]
-                            feed[output] = b[1][c:c + step]
-                            idx = int(feature_len/2)
+                                    b[0][c:c + cfg.batch_size,  4 * d: 4 * (d + 1)]
+                            feed[output] = b[1][c:c + cfg.batch_size]
+                            idx = int(cfg.feature_len/2)
                             # _ = sess.run([opt0], feed_dict=feed)
                             ll3,ll4,ll5, _ = sess.run([ls[0], ls[idx], ls[-1], opt],
                                                       feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
                             tl5 += ll5
-                            nt += len(b[0][c:c + step])
+                            nt += len(b[0][c:c + cfg.batch_size])
                     tr_pre_data = tr.get_next()
             str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
-            Utils.save_tf_data(saver, sess, netFile)
+            Utils.save_tf_data(saver, sess, cfg.netFile)
 
 

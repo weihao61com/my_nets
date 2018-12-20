@@ -19,11 +19,15 @@ class Config:
         js = Utils.load_json_file(config_file)
         self.tr_data = []
         self.te_data = []
+        self.nodes = []
         for key in js:
             if key.startswith('tr'):
                 self.tr_data.append(HOME + js[key])
             if key.startswith('te'):
-                self.te_data.append(HOME + js['te'])
+                self.te_data.append(HOME + js[key])
+            if key.startswith('nodes'):
+                self.nodes.append(map(int, js[key].split(',')))
+
 
         self.netFile = fc_const.HOME + 'NNs/' + js['net'] + '/fc'
         self.netTest = fc_const.HOME + 'NNs/' + js['netTest'] + '/fc'
@@ -31,18 +35,22 @@ class Config:
         self.feature_len = js['feature']
         self.lr = js['lr']
         self.num_output = js["num_output"]
-        self.step = js["step"]
+        self.memory_size = js["memory_size"]
         self.t_scale = js['t_scale']
-        nodes_base = map(int, js['nodes_base'].split(','))
-        nodes_stack = map(int, js['nodes_stack'].split(','))
-        nodes_reference = js['nodes_reference']
-        self.nodes = [nodes_base, nodes_stack, nodes_reference]
+
+        self.net_type = 'fc'
+        if 'net_type' in js:
+            self.net_type = js['net_type']
 
         self.renetFile = None
         if 'retrain' in js:
             self.renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
 
         self.loop = js["loop"]
+
+        self.af = None
+        if 'af' in js:
+            self.af = js['af']
 
 
 class P1Net1(Network):
@@ -70,13 +78,13 @@ class sNet3(Network):
     def setup(self):
         pass
 
-    def real_setup(self, nodes):
+    def real_setup(self, nodes, outputs):
         self.feed('data')
-        for a in range(len(nodes) - 1):
+        for a in range(len(nodes)):
             name = 'fc_{}'.format(a)
             self.fc(nodes[a], name=name)
 
-        self.fc(nodes[-1], relu=False, name='output')
+        self.fc(outputs, relu=False, name='output')
 
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
@@ -251,9 +259,9 @@ class StackNet(Network):
     def real_setup(self, stack, ns, num_out=3, verbose=True):
 
         nodes = ns[0]
-        ref_dim = ns[2]
+        ref_dim = ns[1][0]
 
-        self.parameters(stack, ns[1], dim_output=num_out, dim_ref=ref_dim)
+        self.parameters(stack, ns[2], dim_output=num_out, dim_ref=ref_dim)
 
         self.feed('input0')
         for a in range(len(nodes)):
@@ -289,8 +297,8 @@ class StackNet(Network):
 
             ref_out_name = ifc2_name
 
-        print self.dim_inter
-        print nodes, self.dim_ref
+        print 'stack', self.dim_inter
+        print 'base', nodes, self.dim_ref
 
         if verbose:
             print("number of layers = {}".format(len(self.layers)))
@@ -696,15 +704,15 @@ class cNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, nodes):
+    def real_setup(self, nodes, outputs):
         self.feed('data').conv(1, 4, 128, 1, 1, name='conv1', padding='VALID')
-        for a in range(len(nodes) - 1):
+        for a in range(len(nodes)):
             name = 'fc1_{}'.format(a)
             self.fc(nodes[a], name=name)
-        self.fc(nodes[-1], relu=False, name='output')
+        self.fc(outputs, relu=False, name='output')
 
-        print("number of layers = {} {}".
-              format(len(self.layers), nodes))
+        print("number of layers = {} {} {}".
+              format(len(self.layers), nodes, outputs))
 
 
 def run_data_stack(data, inputs, sess, xy, stack):
