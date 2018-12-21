@@ -13,12 +13,12 @@
     "_retrain": "s3",
     "netTest": "s3",
     "feature": 20,
-    "lr": 1e-4,
+    "lr": 1e-5,
     "num_output": 3,
     "memory_size": 5000,
     "loop": 10,
     "t_scale": 1,
-    "nodes_reference": "32",
+    "nodes_reference": "64",
     "nodes_base": "512, 64",
-    "nodes_stack": "1024, 128"
+    "nodes_stack": "512, 64"
 }
