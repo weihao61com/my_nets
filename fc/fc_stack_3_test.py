@@ -47,7 +47,8 @@ if __name__ == '__main__':
 
     net = StackNet(input_dic)
     # net.real_setup(cfg.feature_len, num_out=cfg.num_output, verbose=False)
-    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, verbose=False)
+    #net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, verbose=False)
+    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, att=att, verbose=False)
 
     xy = {}
     for a in range(cfg.feature_len+1):
@@ -72,7 +73,7 @@ if __name__ == '__main__':
                 for a in range(cfg.feature_len):
                     feed[input_dic['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
                 result = []
-                for a in range(0, cfg.feature_len+1, 1): # cfg.feature_len/2):
+                for a in range(0, cfg.feature_len+1, cfg.feature_len/2):
                     r = sess.run(xy[a], feed_dict=feed)
                     result.append(r)
                 result = np.array(result)

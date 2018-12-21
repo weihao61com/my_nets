@@ -3,6 +3,7 @@ import numpy as np
 from imagery_utils import Pose
 import os
 import sys
+
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils, PinholeCamera

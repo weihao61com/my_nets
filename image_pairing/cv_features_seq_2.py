@@ -8,7 +8,7 @@ from pose_ana import *
 import datetime
 import pickle
 
-project_dir = '/home/weihao/Projects'
+HOME = '/Users/weihao/Projects'
 
 range2 = 3
 range1 = -range2
@@ -34,11 +34,11 @@ print key, mode
 #key = 'kitty_{}'.format(key)
 
 
-location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
+location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
 poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
-filename = '/home/weihao/Projects/p_files/{}_{}_cv_s{}_2.p'.format(key, mode, range2)
-output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)
+filename = '{}/p_files/{}_{}_cv_s{}_2.p'.format(HOME, key, mode, range2)
+output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)
 print location, filename, output_file
 
 for p in poses_dic:

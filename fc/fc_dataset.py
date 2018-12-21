@@ -16,42 +16,39 @@ from network import Network
 
 class Config:
     def __init__(self, config_file):
-        js = Utils.load_json_file(config_file)
+        self.js = Utils.load_json_file(config_file)
+
         self.tr_data = []
         self.te_data = []
         self.nodes = []
-        for key in js:
+        for key in self.js:
             if key.startswith('tr'):
-                self.tr_data.append(HOME + js[key])
+                self.tr_data.append(HOME + self.js[key])
             if key.startswith('te'):
-                self.te_data.append(HOME + js[key])
+                self.te_data.append(HOME + self.js[key])
             if key.startswith('nodes'):
-                self.nodes.append(map(int, js[key].split(',')))
+                self.nodes.append(map(int, self.js[key].split(',')))
 
-
-        self.netFile = fc_const.HOME + 'NNs/' + js['net'] + '/fc'
-        self.netTest = fc_const.HOME + 'NNs/' + js['netTest'] + '/fc'
-        self.batch_size = js['batch_size']
-        self.feature_len = js['feature']
-        self.lr = js['lr']
-        self.num_output = js["num_output"]
-        self.memory_size = js["memory_size"]
-        self.t_scale = js['t_scale']
-
-        self.net_type = 'fc'
-        if 'net_type' in js:
-            self.net_type = js['net_type']
+        self.netFile = fc_const.HOME + 'NNs/' + self.js['net'] + '/fc'
+        self.netTest = fc_const.HOME + 'NNs/' + self.js['netTest'] + '/fc'
+        self.batch_size = self.get_data('batch_size')
+        self.feature_len = self.get_data('feature')
+        self.lr = self.get_data('lr')
+        self.num_output = self.get_data("num_output")
+        self.memory_size = self.get_data("memory_size")
+        self.t_scale = self.get_data('t_scale')
+        self.net_type = self.get_data('net_type', 'fc')
+        self.loop = self.get_data('loop')
+        self.af = self.get_data('af', 'af')
 
         self.renetFile = None
-        if 'retrain' in js:
-            self.renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
+        if 'retrain' in self.js:
+            self.renetFile = HOME + 'NNs/' + self.js['retrain'] + '/fc'
 
-        self.loop = js["loop"]
 
-        self.af = None
-        if 'af' in js:
-            self.af = js['af']
 
+    def get_data(self, str, dv=None):
+        return self.js[str] if str in self.js else dv
 
 class P1Net1(Network):
 
@@ -256,12 +253,12 @@ class StackNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, stack, ns, num_out=3, verbose=True):
+    def real_setup(self, stack, ns, num_out=3, att=4, verbose=True):
 
         nodes = ns[0]
         ref_dim = ns[1][0]
 
-        self.parameters(stack, ns[2], dim_output=num_out, dim_ref=ref_dim)
+        self.parameters(stack, ns[2], dim_output=num_out, dim_ref=ref_dim, dim_input=att)
 
         self.feed('input0')
         for a in range(len(nodes)):

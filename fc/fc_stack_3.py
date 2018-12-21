@@ -13,15 +13,15 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils
 from fc_dataset import DataSet
 
-def run_data_stack_avg3(data, inputs, sess, xy, fname):
+def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
     rst_dic = {}
     truth_dic = {}
     length = 0
     for b in data:
-        length = b[0].shape[1]/4
+        length = b[0].shape[1]/att
         feed = {inputs['input0']: b[0]}
         for a in range(length):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, 4 * a:4 * (a + 1)]
+            feed[inputs['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
         result = []
         for a in range(length+1):
             r = sess.run(xy[a], feed_dict=feed)
@@ -124,7 +124,7 @@ if __name__ == '__main__':
         input_dic['input{}'.format(a)] = inputs[a]
 
     net = StackNet(input_dic)
-    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, verbose=False)
+    net.real_setup(cfg.feature_len, cfg.nodes, num_out=cfg.num_output, att=att, verbose=False)
 
     xy = {}
     for a in range(cfg.feature_len+1):
@@ -162,10 +162,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr')
+            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', att)
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te')
+            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', att)
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
@@ -198,7 +198,7 @@ if __name__ == '__main__':
                             feed = {input_dic['input0']: b[0][c:c + cfg.batch_size, :]}
                             for d in range(cfg.feature_len):
                                 feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + cfg.batch_size,  4 * d: 4 * (d + 1)]
+                                    b[0][c:c + cfg.batch_size,  att * d: att * (d + 1)]
                             feed[output] = b[1][c:c + cfg.batch_size]
                             idx = int(cfg.feature_len/2)
                             # _ = sess.run([opt0], feed_dict=feed)

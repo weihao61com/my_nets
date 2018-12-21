@@ -12,6 +12,6 @@
     "active_fun": "relu",
     "memory_size": 5000,
     "loop": 100,
-    "t_scale": 10
+    "t_scale": 1
 
 }
