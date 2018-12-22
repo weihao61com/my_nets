@@ -69,34 +69,6 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    # tr_data = []
-    # te_data = []
-    # for key in js:
-    #     if key.startswith('tr'):
-    #         tr_data.append(HOME + js[key])
-    #     if key.startswith('te'):
-    #         te_data.append(HOME + js['te'])
-    #
-    # netFile = HOME + 'NNs/' + js['net'] + '/fc'
-    #
-    # batch_size = js['batch_size']
-    # feature_len = js['feature']
-    # lr = js['lr']
-    # #stack = js['stack']
-    # num_output = js["num_output"]
-    # step = js["step"]
-    # #stage = js["stage"]
-    # t_scale = js['t_scale']
-    # #net_type = js['net_type']
-    # nodes_base = map(int, js['nodes_base'].split(','))
-    # nodes_stack = map(int, js['nodes_stack'].split(','))
-    # nodes_reference = js['nodes_reference']
-    # nodes = [nodes_base, nodes_stack, nodes_reference]
-    #
-    # renetFile = None
-    # if 'retrain' in js:
-    #     renetFile = HOME + 'NNs/' + js['retrain'] + '/fc'
-
     tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
     tr.set_t_scale(cfg.t_scale)
     tr.set_num_output(cfg.num_output)
@@ -140,6 +112,7 @@ if __name__ == '__main__':
             loss = loss + ll
         ls.append(ll)
 
+    loss = ls[-1]
     opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
