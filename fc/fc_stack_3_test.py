@@ -26,9 +26,7 @@ if __name__ == '__main__':
     if data_type == 'tr':
         data = cfg.tr_data
 
-    te = DataSet(data, cfg.batch_size, cfg.feature_len)
-    te.set_t_scale(cfg.t_scale)
-    te.set_num_output(cfg.num_output)
+    te = DataSet(data, cfg)
 
     att = te.sz[1]
     iterations = 10000
@@ -73,7 +71,7 @@ if __name__ == '__main__':
                 for a in range(cfg.feature_len):
                     feed[input_dic['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
                 result = []
-                for a in range(0, cfg.feature_len+1, cfg.feature_len/2):
+                for a in range(0, cfg.feature_len+1,1): # cfg.feature_len/2):
                     r = sess.run(xy[a], feed_dict=feed)
                     result.append(r)
                 result = np.array(result)

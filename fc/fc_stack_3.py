@@ -69,15 +69,9 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
-    tr.set_t_scale(cfg.t_scale)
-    tr.set_num_output(cfg.num_output)
-    te = DataSet(cfg.te_data, cfg.memory_size, cfg.feature_len)
-    te.set_t_scale(cfg.t_scale)
-    te.set_num_output(cfg.num_output)
-    tr0 = DataSet([cfg.tr_data[0]], cfg.memory_size, cfg.feature_len)
-    tr0.set_t_scale(cfg.t_scale)
-    tr0.set_num_output(cfg.num_output)
+    tr = DataSet(cfg.tr_data, cfg)
+    te = DataSet(cfg.te_data, cfg)
+    tr0 = DataSet([cfg.tr_data[0]], cfg)
 
     att = te.sz[1]
     iterations = 10000
@@ -112,7 +106,6 @@ if __name__ == '__main__':
             loss = loss + ll
         ls.append(ll)
 
-    loss = ls[-1]
     opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
@@ -142,7 +135,7 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            s = 1
+            s = 0
             while True:
                 # for s in range(0, feature_len+1, 5  ):
                 if s>cfg.feature_len:

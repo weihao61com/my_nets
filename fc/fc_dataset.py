@@ -17,6 +17,12 @@ from network import Network
 class Config:
     def __init__(self, config_file):
         self.js = Utils.load_json_file(config_file)
+        self.net_type = 'fc'
+        self.af = 'af'
+        self.renetFile = None
+
+        for str in self.js:
+            setattr(self, str, self.js[str])
 
         self.tr_data = []
         self.te_data = []
@@ -29,26 +35,14 @@ class Config:
             if key.startswith('nodes'):
                 self.nodes.append(map(int, self.js[key].split(',')))
 
-        self.netFile = fc_const.HOME + 'NNs/' + self.js['net'] + '/fc'
-        self.netTest = fc_const.HOME + 'NNs/' + self.js['netTest'] + '/fc'
-        self.batch_size = self.get_data('batch_size')
-        self.feature_len = self.get_data('feature')
-        self.lr = self.get_data('lr')
-        self.num_output = self.get_data("num_output")
-        self.memory_size = self.get_data("memory_size")
-        self.t_scale = self.get_data('t_scale')
-        self.net_type = self.get_data('net_type', 'fc')
-        self.loop = self.get_data('loop')
-        self.af = self.get_data('af', 'af')
-
-        self.renetFile = None
-        if 'retrain' in self.js:
-            self.renetFile = HOME + 'NNs/' + self.js['retrain'] + '/fc'
-
-
+        self.netFile = fc_const.HOME + 'NNs/' + self.netFile + '/fc'
+        self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
+        if self.renetFile is not None:
+            self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
 
     def get_data(self, str, dv=None):
         return self.js[str] if str in self.js else dv
+
 
 class P1Net1(Network):
 
@@ -219,8 +213,102 @@ class StackNet_cnn(Network):
             for l in sorted(self.layers.keys()):
                 print l, self.layers[l].get_shape()
 
-
 class StackNet(Network):
+
+    def parameters(self, stack, nodes, dim_input=4, dim_output=3, dim_ref=128):
+        self.stack = stack
+        self.dim_inter = nodes[0]
+        self.dim_inter.append(dim_ref)
+        self.dim_inter.append(dim_output)
+
+        self.dim_ref = dim_ref
+        self.dim_output = dim_output
+
+        self.dim = []
+        self.outs = []
+        self.weights = []
+        self.biases = []
+
+        a = 0
+        self.dim.append(dim_input + dim_ref)
+        self.outs.append(self.dim_inter[a])
+        self.weights.append(self.make_var('weights{}'.format(a),
+                                          shape=[self.dim[a], self.outs[a]]))
+        self.biases.append(self.make_var('biases{}'.format(a), [self.outs[a]]))
+
+        for a in range(1, len(self.dim_inter)):
+            self.dim.append(self.outs[a-1])
+            self.outs.append(self.dim_inter[a])
+            self.weights.append(self.make_var('weights{}'.format(a),
+                                              shape=[self.dim[a], self.outs[a]]))
+            self.biases.append(self.make_var('biases{}'.format(a), [self.outs[a]]))
+
+        self.cnn = None
+        if len(nodes)>1:
+            self.cnn = nodes[1]
+
+
+    def setup(self):
+        pass
+
+    def real_setup(self, stack, ns, num_out=3, att=4, verbose=True):
+
+        nodes = ns[0]
+        ref_dim = ns[1][0]
+
+        self.parameters(stack, ns[2:], dim_output=num_out, dim_ref=ref_dim, dim_input=att)
+
+        self.feed('input0')
+        for a in range(len(nodes)):
+            name = 'fc_0{}'.format(a)
+            self.fc(nodes[a], name=name)
+        self.fc(self.dim_ref, name='fc1')
+        self.fc(num_out, relu=False, name='output0')
+
+        ref_out_name = 'fc1'
+        for a in range(self.stack):
+            input_name = 'input{}'.format(a + 1)
+            ic_name = 'ic{}_in'.format(a)
+
+            self.feed(input_name, ref_out_name).concat(1, name=ic_name)
+
+            for b in range(len(self.dim)-1):
+                ifc_name = 'ifc{}_{}_in'.format(b, a)
+                # ifc1_name = 'ifc1{}_in'.format(a)
+                # ifc2_name = 'ifc2{}_in'.format(a)
+                self.fc_w(name=ifc_name,
+                       weights=self.weights[b],
+                       biases=self.biases[b])
+                 # .fc_w(name=ifc1_name,
+                 #       weights=self.weights1,
+                 #       biases=self.biases1)
+                 # .fc_w(name=ifc2_name,
+                 #       weights=self.weights2,
+                 #       biases=self.biases2)
+                 # .fc_w(name=output_name, relu=False,
+                 #       weights=self.weights3,
+                 #       biases=self.biases3)
+                 # )
+
+            b = len(self.dim)-1
+            output_name = 'output{}'.format(a + 1)
+            self.fc_w(name=output_name, relu=False,
+                        weights=self.weights[b],
+                        biases=self.biases[b])
+
+            ref_out_name = ifc_name
+
+
+        print 'stack', self.dim_inter
+        print 'base', nodes, self.dim_ref
+
+        if verbose:
+            print("number of layers = {}".format(len(self.layers)))
+            for l in sorted(self.layers.keys()):
+                print l, self.layers[l].get_shape()
+
+
+class StackNet0(Network):
 
     def parameters(self, stack, nodes, dim_input=4, dim_output=3, dim_ref=128):
         self.stack = stack
@@ -313,12 +401,12 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, batch_size=500, npar=50, cache=True, nadd=0, att=4):
+    def __init__(self, dataset, cfg, nadd=0, cache=True): #batch_size=500, npar=50, cache=True, nadd=0, att=4):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
-        self.batch_size = batch_size
-        self.nPar = npar
+        self.batch_size = cfg.memory_size
+        self.nPar = cfg.feature_len
         self.nAdd = nadd
         self.data = None
         self.verbose = True
@@ -326,23 +414,15 @@ class DataSet:
         self.memories = {}
         self.net_type = 'fc'
         self.num_output = 3
-        self.t_scale = 1
-        self.att = att
+        self.t_scale = cfg.t_scale
+        self.net_type = self.net_type
+        self.num_output = self.num_output
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
         self.id = None
 
-    def set_t_scale(self, scale):
-        self.t_scale = scale
-
-    def set_net_type(self, net_type):
-        self.net_type = net_type
-
-    def set_num_output(self, num_output):
-        self.num_output = num_output
-
-    def get_next(self, rd=True, net_type='fc'):
+    def get_next(self, rd=True):
         self.load_next_data()
 
         if self.index == 0:
