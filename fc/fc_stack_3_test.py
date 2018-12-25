@@ -7,19 +7,20 @@ import fc_const
 from utils import Utils
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', help='config', default="config_stack_3.json")
+    parser.add_argument('-t', '--test', help='test', default='te')
+    parser.add_argument('-l', '--loop', help='loop', default='1')
+    parser.add_argument('-m', '--multi', help='loop', default='-1')
+    args = parser.parse_args()
 
-    data_type = 'te'
-    if len(sys.argv)>2:
-        data_type = sys.argv[2]
+    data_type = args.test
+    loop = int(args.loop)
+    multi = int(args.multi)
+    config_file = args.config
+    print data_type, loop, multi, config_file
 
-    loop = 1
-    multi = -1
-    if len(sys.argv)>1:
-        loop = int(sys.argv[1])
-
-    config_file = "config_stack_3.json"
-    if len(sys.argv)>3:
-        config_file = sys.argv[3]
     cfg = Config(config_file)
 
     data = cfg.te_data
