@@ -16,27 +16,21 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    tr = DataSet(cfg.tr_data, cfg.memory_size, cfg.feature_len)
-    te = DataSet(cfg.te_data, cfg.memory_size, cfg.feature_len)
-    tr.set_net_type(cfg.net_type)
-    te.set_net_type(cfg.net_type)
-    tr.set_t_scale(cfg.t_scale)
-    te.set_t_scale(cfg.t_scale)
-    tr.set_num_output(cfg.num_output)
-    te.set_num_output(cfg.num_output)
+    tr = DataSet(cfg.tr_data, cfg)
+    te = DataSet(cfg.te_data, cfg)
 
-    att = te.sz[1]
+    cfg.att = te.sz[1]
     iterations = 100000
 
-    print "input shape", att, "LR", cfg.lr, 'feature', cfg.feature_len
+    print "input shape", cfg.att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
 
     if cfg.net_type == 'cnn':
-        input = tf.placeholder(tf.float32, [None, cfg.feature_len, att, 1])
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len, cfg.att, 1])
         net = cNet({'data': input})
     else:
-        input = tf.placeholder(tf.float32, [None, cfg.feature_len * att])
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len * cfg.att])
         net = sNet3({'data': input})
 
     net.real_setup(cfg.nodes[0], cfg.num_output)

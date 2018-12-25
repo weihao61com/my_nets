@@ -20,6 +20,7 @@ class Config:
         self.net_type = 'fc'
         self.af = 'af'
         self.renetFile = None
+        self.att = None
 
         for str in self.js:
             setattr(self, str, self.js[str])
@@ -279,16 +280,6 @@ class StackNet(Network):
                 self.fc_w(name=ifc_name,
                        weights=self.weights[b],
                        biases=self.biases[b])
-                 # .fc_w(name=ifc1_name,
-                 #       weights=self.weights1,
-                 #       biases=self.biases1)
-                 # .fc_w(name=ifc2_name,
-                 #       weights=self.weights2,
-                 #       biases=self.biases2)
-                 # .fc_w(name=output_name, relu=False,
-                 #       weights=self.weights3,
-                 #       biases=self.biases3)
-                 # )
 
             b = len(self.dim)-1
             output_name = 'output{}'.format(a + 1)
@@ -401,22 +392,22 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, cfg, nadd=0, cache=True): #batch_size=500, npar=50, cache=True, nadd=0, att=4):
+    def __init__(self, dataset, cfg, cache=True):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
         self.batch_size = cfg.memory_size
         self.nPar = cfg.feature_len
-        self.nAdd = nadd
+        self.nAdd = cfg.add_len
         self.data = None
         self.verbose = True
         self.cache = cache
         self.memories = {}
-        self.net_type = 'fc'
         self.num_output = 3
         self.t_scale = cfg.t_scale
-        self.net_type = self.net_type
+        self.net_type = cfg.net_type
         self.num_output = self.num_output
+        self.att = cfg.att
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape

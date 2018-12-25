@@ -241,6 +241,12 @@ class Network(object):
             fc = op(feed_in, weights, biases, name=scope.name)
             return fc
 
+    @layer
+    def fc_w2(self, input, name, ws, relu=True):
+        with tf.variable_scope(name) as scope:
+            op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
+            fc = op(input, ws[0], ws[1], name=scope.name)
+            return fc
 
     @layer
     def softmax(self, input, name):
