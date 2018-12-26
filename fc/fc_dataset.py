@@ -407,11 +407,11 @@ class DataSet:
         self.t_scale = cfg.t_scale
         self.net_type = cfg.net_type
         self.num_output = self.num_output
-        self.att = cfg.att
 
         self.load_next_data()
         self.sz = self.data[0][0][0].shape
         self.id = None
+        self.att = self.sz[1]
 
     def get_next(self, rd=True):
         self.load_next_data()

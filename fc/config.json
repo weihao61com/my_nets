@@ -18,7 +18,7 @@
     "nodes": "4095, 512",
     "memory_size": 5000,
     "net_type": "cnn",
-    "loop": 100,
+    "loop": 20,
     "t_scale": 10,
     "add_len": 0
 }

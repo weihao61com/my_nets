@@ -70,7 +70,7 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(cfg.loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=10)
+                tr_pre_data = tr.prepare(rdd=True, multi=1)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])
