@@ -573,9 +573,9 @@ class DataSet:
                 input = np.concatenate((input, input))
             input = input[:length]
             for a in range(0, len(input), self.nPar+self.nAdd):
-                it = input[a:a + self.nPar]
+                it = input[a:a + self.nPar+self.nAdd]
                 truth = d[1][:self.num_output]
-                output = (it.reshape(self.nPar * sz_in[1]),
+                output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
                           truth.reshape(self.num_output), self.id)
                 outputs.append(output)
 

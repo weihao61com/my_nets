@@ -242,7 +242,8 @@ class Network(object):
             return fc
 
     @layer
-    def fc_w2(self, input, name, ws, relu=True):
+    def fc_w2(self, input, ws, name, relu=True):
+        #print 'fc_w2', name, input.get_shape(), ws[0].get_shape()
         with tf.variable_scope(name) as scope:
             op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
             fc = op(input, ws[0], ws[1], name=scope.name)

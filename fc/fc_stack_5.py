@@ -19,9 +19,9 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
     length = 0
     for b in data:
         length = b[0].shape[1]/att
-        feed = {inputs['input0']: b[0]}
+        feed = {}
         for a in range(length):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a)]] = b[0][:, att * a:att * (a + 1)]
         result = []
         for a in range(length+1):
             r = sess.run(xy[a], feed_dict=feed)
@@ -76,15 +76,15 @@ class StackNet5(Network):
         # feature
         ws = []
         ins = cfg.att
-        nodes = cfg.nodes[0]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
+        nodes_in = cfg.nodes[0]
+        for a in range(len(nodes_in)):
+            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes_in[a]))
+            ins = nodes_in[a]
         self.ws.append(ws)
 
         # average
         ws = []
-        ins = nodes[-1] * cfg.feature_len
+        ins = nodes_in[-1] * cfg.feature_len
         nodes = cfg.nodes[1]
         for a in range(len(nodes)):
             ws.append(self.create_ws('average_{}'.format(a), ins, nodes[a]))
@@ -93,7 +93,7 @@ class StackNet5(Network):
 
         # stack
         ws = []
-        ins = nodes[-1] + cfg.att
+        ins = nodes[-1] + nodes_in[-1]
         nodes = cfg.nodes[2]
         for a in range(len(nodes)):
             ws.append(self.create_ws('stacker_{}'.format(a), ins, nodes[a]))
@@ -110,59 +110,72 @@ class StackNet5(Network):
             ins = nodes[a]
         self.ws.append(ws)
 
-        print len(self.ws)
-
-
     def setup(self):
         pass
 
     def real_setup(self, cfg, verbose=True):
-
-        #stack = cfg.feature_len
-        #nodes = cfg.nodes
-        #num_out = cfg.num_output
-        #att = cfg.att
-
         self.parameters(cfg)
 
-        self.feed('input0')
-        for a in range(len(nodes)):
-            name = 'fc_0{}'.format(a)
-            self.fc(nodes[a], name=name)
-        self.fc(self.dim_ref, name='fc1')
-        self.fc(num_out, relu=False, name='output0')
+        # inputs nets
+        all_inputs = []
+        for a in range(cfg.feature_len + cfg.add_len):
+            self.feed('input_{}'.format(a))
+            n = None
+            for b in range(len(self.ws[0])):
+                n = 'input_{}_{}'.format(a, b)
+                self.fc_w2(ws=self.ws[0][b], name=n)
+            all_inputs.append(n)
 
-        ref_out_name = 'fc1'
-        for a in range(self.stack):
-            input_name = 'input{}'.format(a + 1)
-            ic_name = 'ic{}_in'.format(a)
+        # average net
+        self.feed(*all_inputs[:cfg.feature_len]).concat(1, name='avg_inputs')
+        ref_out = None
+        for b in range(len(self.ws[1])):
+            ref_out = 'avg_input_{}'.format(b)
+            self.fc_w2(ws=self.ws[1][b], name=ref_out)
 
-            self.feed(input_name, ref_out_name).concat(1, name=ic_name)
+        # final net 0
+        self.feed(ref_out)
+        a = 0
+        for b in range(len(self.ws[3])):
+            if b < len(self.ws[3])-1:
+                n = 'output_{}_{}'.format(a, b)
+                self.fc_w2(ws=self.ws[3][b], name=n)
+            else:
+                n = 'output_{}'.format(a)
+                self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
 
-            for b in range(len(self.dim)-1):
-                ifc_name = 'ifc{}_{}_in'.format(b, a)
-                # ifc1_name = 'ifc1{}_in'.format(a)
-                # ifc2_name = 'ifc2{}_in'.format(a)
-                self.fc_w(name=ifc_name,
-                       weights=self.weights[b],
-                       biases=self.biases[b])
+        # stack 1-n
+        for a in range(cfg.feature_len + cfg.add_len):
+            self.feed(ref_out, all_inputs[a]) \
+                .concat(1, name='stack_inputs_{}'.format(a))
+            for b in range(len(self.ws[2])):
+                ref_out = 'stack_input_{}_{}'.format(a, b)
+                self.fc_w2(ws=self.ws[2][b], name=ref_out)
 
-            b = len(self.dim)-1
-            output_name = 'output{}'.format(a + 1)
-            self.fc_w(name=output_name, relu=False,
-                        weights=self.weights[b],
-                        biases=self.biases[b])
+            # final net a
+            self.feed(ref_out)
+            for b in range(len(self.ws[3])):
+                if b < len(self.ws[3])-1:
+                    n = 'output_{}_{}'.format(a, b)
+                    self.fc_w2(ws=self.ws[3][b], name=n)
+                else:
+                    n = 'output_{}'.format(a+1)
+                    self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
 
-            ref_out_name = ifc_name
+def run_test(cfg, test, input_dic, sess, xy):
+    if test=='te':
+        te = DataSet([cfg.te_data[0]], cfg)
+    else:
+        te = DataSet([cfg.tr_data[0]], cfg)
 
+    att = te.sz[1]
+    tr_pre_data = te.prepare(multi=1)
+    tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'test', att)
 
-        print 'stack', self.dim_inter
-        print 'base', nodes, self.dim_ref
+    for a in range(len(tr_loss)):
+        print a, tr_loss[a], tr_median[a]
 
-        if verbose:
-            print("number of layers = {}".format(len(self.layers)))
-            for l in sorted(self.layers.keys()):
-                print l, self.layers[l].get_shape()
+    exit(0)
 
 
 if __name__ == '__main__':
@@ -172,38 +185,43 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         config_file = sys.argv[1]
 
+    test = None
+    if len(sys.argv)>2:
+        test = sys.argv[2]
+
     cfg = Config(config_file)
 
-    tr = DataSet(cfg.tr_data, cfg)
-    te = DataSet(cfg.te_data, cfg)
-    tr0 = DataSet([cfg.tr_data[0]], cfg)
+    if test is not None:
+        tr = DataSet(cfg.tr_data, cfg)
+        te = DataSet(cfg.te_data, cfg)
+        tr0 = DataSet([cfg.tr_data[0]], cfg)
 
-    cfg.att = te.sz[1]
+        cfg.att = te.sz[1]
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     inputs = {}
 
-    inputs[0] = tf.placeholder(tf.float32, [None, cfg.feature_len*cfg.att])
+    #inputs[0] = tf.placeholder(tf.float32, [None, cfg.feature_len*cfg.att])
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
     for a in range(cfg.feature_len + cfg.add_len):
-        inputs[a+1] = tf.placeholder(tf.float32, [None, cfg.att])
+        inputs[a] = tf.placeholder(tf.float32, [None, cfg.att])
 
     input_dic = {}
-    for a in range(cfg.feature_len+cfg.add_len+1):
-        input_dic['input{}'.format(a)] = inputs[a]
+    for a in range(cfg.feature_len+cfg.add_len):
+        input_dic['input_{}'.format(a)] = inputs[a]
 
     net = StackNet5(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = {}
-    for a in range(cfg.feature_len+1):
-        xy[a] = net.layers['output{}'.format(a)]
+    for a in range(cfg.feature_len+cfg.add_len+ 1):
+        xy[a] = net.layers['output_{}'.format(a)]
 
-    ls = [tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
+    ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
     loss = None
-    for x in range(1, cfg.feature_len+1):
+    for x in range(1, cfg.feature_len++cfg.add_len+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
@@ -215,10 +233,6 @@ if __name__ == '__main__':
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
-    opt0 = tf.train.AdamOptimizer(learning_rate=cfg.lr*3, beta1=0.9,
-                    beta2=0.999, epsilon=0.00000001,
-                    use_locking=False, name='Adam').\
-        minimize(ls[0])
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -226,6 +240,11 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
+
+        if test is not None:
+            saver.restore(sess, cfg.netTest)
+            run_test(cfg, test, input_dic, sess, xy)
+
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
 
@@ -233,24 +252,22 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', att)
+            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', cfg.att)
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', att)
+            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', cfg.att)
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            s = 0
+            s = 1
             while True:
                 # for s in range(0, feature_len+1, 5  ):
-                if s>cfg.feature_len:
-                    s = cfg.feature_len
+                if s>=len(tr_loss):
+                    s = len(tr_loss)-1
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-                if s==cfg.feature_len:
+                if s==cfg.feature_len + cfg.add_len:
                     break
-                s += int(cfg.feature_len/2)
-                if s>cfg.feature_len:
-                    s = cfg.feature_len
+                s += cfg.feature_len
 
             print str, str1
 
@@ -265,15 +282,13 @@ if __name__ == '__main__':
                     for b in tr_pre_data:
                         total_length = len(b[0])
                         for c in range(0, total_length, cfg.batch_size):
-                            length = b[0].shape[1] - att * cfg.feature_len
-                            feed = {input_dic['input0']: b[0][c:c + cfg.batch_size, :]}
-                            for d in range(cfg.feature_len):
-                                feed[input_dic['input{}'.format(d + 1)]] = \
-                                    b[0][c:c + cfg.batch_size,  att * d: att * (d + 1)]
+                            feed = {}
+                            for a in range(cfg.feature_len+cfg.add_len):
+                                feed[input_dic['input_{}'.format(a)]] = \
+                                    b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
                             feed[output] = b[1][c:c + cfg.batch_size]
-                            idx = int(cfg.feature_len/2)
-                            # _ = sess.run([opt0], feed_dict=feed)
-                            ll3,ll4,ll5, _, _ = sess.run([ls[0], ls[idx], ls[-1], opt0, opt],
+                            idx = cfg.feature_len-1
+                            ll3,ll4,ll5,_= sess.run([ls[0], ls[idx], ls[-1], opt],
                                                       feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4
