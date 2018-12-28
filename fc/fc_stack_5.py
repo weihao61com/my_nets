@@ -169,7 +169,7 @@ def run_test(cfg, test, input_dic, sess, xy):
         te = DataSet([cfg.tr_data[0]], cfg)
 
     att = te.sz[1]
-    tr_pre_data = te.prepare(multi=1)
+    tr_pre_data = te.prepare(multi=-1)
     tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'test', att)
 
     for a in range(len(tr_loss)):
