@@ -248,8 +248,8 @@ if __name__ == '__main__':
             saver.restore(sess, cfg.netTest)
             run_test(input_dic, sess, xy, te)
 
-        if cfg.renetFile:
-            saver.restore(sess, cfg.renetFile)
+        if cfg.retrain:
+            saver.restore(sess, cfg.retrain)
 
         str1 = ''
         for a in range(iterations):

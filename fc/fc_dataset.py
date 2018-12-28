@@ -38,8 +38,8 @@ class Config:
 
         self.netFile = fc_const.HOME + 'NNs/' + self.netFile + '/fc'
         self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
-        if self.renetFile is not None:
-            self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
+        if self.retrain is not None:
+            self.retrain = HOME + 'NNs/' + self.retrain + '/fc'
 
     def get_data(self, str, dv=None):
         return self.js[str] if str in self.js else dv
