@@ -162,11 +162,7 @@ class StackNet5(Network):
                     n = 'output_{}'.format(a+1)
                     self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
 
-def run_test(cfg, test, input_dic, sess, xy):
-    if test=='te':
-        te = DataSet([cfg.te_data[0]], cfg)
-    else:
-        te = DataSet([cfg.tr_data[0]], cfg)
+def run_test(input_dic, sess, xy, te):
 
     att = te.sz[1]
     tr_pre_data = te.prepare(multi=-1)
@@ -191,12 +187,19 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    if test is not None:
+    if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         te = DataSet(cfg.te_data, cfg)
         tr0 = DataSet([cfg.tr_data[0]], cfg)
 
         cfg.att = te.sz[1]
+    else:
+        if test == 'te':
+            te = DataSet([cfg.te_data[0]], cfg)
+        else:
+            te = DataSet([cfg.tr_data[0]], cfg)
+        cfg.att = te.sz[1]
+
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, 'feature', cfg.feature_len
@@ -243,7 +246,7 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netTest)
-            run_test(cfg, test, input_dic, sess, xy)
+            run_test(input_dic, sess, xy, te)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
