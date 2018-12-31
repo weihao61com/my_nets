@@ -17,21 +17,24 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
     rst_dic = {}
     truth_dic = {}
     length = 0
-    for b in data:
-        length = b[0].shape[1]/att
-        feed = {inputs['input0']: b[0]}
-        for a in range(length):
-            feed[inputs['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
-        result = []
-        for a in range(length+1):
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
+    idx = range(len(data))
+    random.shuffle(idx)
+    b = data[idx[0]]
+    #for b in data:
+    length = b[0].shape[1]/att
+    feed = {inputs['input0']: b[0]}
+    for a in range(length):
+        feed[inputs['input{}'.format(a + 1)]] = b[0][:, att * a:att * (a + 1)]
+    result = []
+    for a in range(length+1):
+        r = sess.run(xy[a], feed_dict=feed)
+        result.append(r)
+    result = np.array(result)
+    for a in range(len(b[2])):
+        if not b[2][a] in rst_dic:
+            rst_dic[b[2][a]] = []
+        rst_dic[b[2][a]].append(result[:, a, :])
+        truth_dic[b[2][a]] = b[1][a]
 
     results = []
     truth = []
@@ -70,8 +73,8 @@ if __name__ == '__main__':
     cfg = Config(config_file)
 
     tr = DataSet(cfg.tr_data, cfg)
-    te = DataSet(cfg.te_data, cfg)
-    tr0 = DataSet([cfg.tr_data[0]], cfg)
+    te = DataSet(cfg.te_data, cfg, sub_sample=0.2)
+    tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.2)
 
     att = te.sz[1]
     iterations = 10000
@@ -97,7 +100,7 @@ if __name__ == '__main__':
         xy[a] = net.layers['output{}'.format(a)]
 
     ls = [tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
-    loss = None
+    loss = ls[0]
     for x in range(1, cfg.feature_len+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
         if loss is None:
@@ -110,10 +113,10 @@ if __name__ == '__main__':
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
-    opt0 = tf.train.AdamOptimizer(learning_rate=cfg.lr*3, beta1=0.9,
-                    beta2=0.999, epsilon=0.00000001,
-                    use_locking=False, name='Adam').\
-        minimize(ls[0])
+    #opt0 = tf.train.AdamOptimizer(learning_rate=cfg.lr*3, beta1=0.9,
+    #                beta2=0.999, epsilon=0.00000001,
+    #                use_locking=False, name='Adam').\
+    #    minimize(ls[0])
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -168,7 +171,7 @@ if __name__ == '__main__':
                             feed[output] = b[1][c:c + cfg.batch_size]
                             idx = int(cfg.feature_len/2)
                             # _ = sess.run([opt0], feed_dict=feed)
-                            ll3,ll4,ll5, _, _ = sess.run([ls[0], ls[idx], ls[-1], opt0, opt],
+                            ll3,ll4,ll5, _ = sess.run([ls[0], ls[idx], ls[-1], opt],
                                                       feed_dict=feed)
                             tl3 += ll3
                             tl4 += ll4

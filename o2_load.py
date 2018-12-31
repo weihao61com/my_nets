@@ -50,7 +50,7 @@ class o2_event:
 #             yield o2_event(self.data[indices[idx]], stack)
 
 
-def load_data(filename, verbose = True, max_len=2e6):
+def load_data(filename, verbose = True, sub_sample=-1):
     import datetime
     t0 = datetime.datetime.now()
     if type(filename) is unicode:
@@ -65,8 +65,12 @@ def load_data(filename, verbose = True, max_len=2e6):
                 nt += 1
             length = len(data)
             avg_param /= length
-            if length>max_len:
-                data = data[:max_len]
+            if sub_sample > 0:
+                n_data = []
+                for d in data:
+                    if random.random() < sub_sample:
+                        n_data.append(d)
+                data = n_data
         if verbose:
             print "loading", filename, datetime.datetime.now()-t0, \
                 length, len(data), avg_param, nr/nt

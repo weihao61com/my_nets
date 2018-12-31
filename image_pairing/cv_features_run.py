@@ -9,15 +9,15 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/heads_Test_cv_m3.p'
+filename = '/home/weihao/Projects/p_files/kitty_02_Test_cv_s3_2.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
-focal = 525.0
-cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
+#focal = 525.0
+#cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
 
-#focal = 719  # 719
-#cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
+focal = 719  # 719
+cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
 
 w2 = cam.cx
 h2 = cam.cy
@@ -44,13 +44,16 @@ for d in data:
     d0[:, 2] = d0[:, 2] * w2 + w2
     d0[:, 3] = d0[:, 3] * h2 + h2
     px_new = d0[:, :2]
-    px_last = d0[:, 2:]
+    px_last = d0[:, 2:4]
+    if d0.shape[1]>4:
+        d1 = d0[:,6]
+        d2 = d0[:,7]
     E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=cam.mx,
                                    method=cv2.RANSAC)
     mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
     b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
-    a = d[1]
+    a = d[1][:3]
     dr = a - b
     r0 = np.linalg.norm(dr)
     fp.write('{},{},{},{},{},{},{}\n'.

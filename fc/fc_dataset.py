@@ -38,8 +38,8 @@ class Config:
 
         self.netFile = fc_const.HOME + 'NNs/' + self.netFile + '/fc'
         self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
-        if self.retrain is not None:
-            self.retrain = HOME + 'NNs/' + self.retrain + '/fc'
+        if self.renetFile is not None:
+            self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
 
     def get_data(self, str, dv=None):
         return self.js[str] if str in self.js else dv
@@ -392,7 +392,7 @@ def _reshuffle_b(bucket):
 
 
 class DataSet:
-    def __init__(self, dataset, cfg, cache=True):
+    def __init__(self, dataset, cfg, cache=True, sub_sample=-1):
         self.bucket = 0
         self.dataset = dataset
         self.index = -1
@@ -407,11 +407,12 @@ class DataSet:
         self.t_scale = cfg.t_scale
         self.net_type = cfg.net_type
         self.num_output = self.num_output
+        self.att = cfg.att
 
-        self.load_next_data()
+        self.load_next_data(sub_sample)
         self.sz = self.data[0][0][0].shape
         self.id = None
-        self.att = self.sz[1]
+        #self.att = self.sz[1]
 
     def get_next(self, rd=True):
         self.load_next_data()
@@ -420,7 +421,7 @@ class DataSet:
             return None
         return self.prepare(rd)
 
-    def load_next_data(self):
+    def load_next_data(self, sub_sample=-1):
         self.bucket = 0
 
         if len(self.dataset) == 1 and self.index == 0:
@@ -433,7 +434,11 @@ class DataSet:
         if self.index in self.memories:
             data = self.memories[self.index]
         else:
-            data = load_data(self.dataset[self.index], self.verbose)
+            data = load_data(self.dataset[self.index], self.verbose, sub_sample)
+            att = data[0][0].shape[1]
+            if self.att<att:
+                for a in range(len(data)):
+                    data[a][0] = data[a][0][:,:self.att]
 
         if self.cache:
             self.memories[self.index] = data
