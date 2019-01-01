@@ -25,45 +25,40 @@ if __name__ == '__main__':
         loop = int(sys.argv[1])
 
     multi = -1
-    js = Utils.load_json_file(config_file, False)
+    cfg = Config(config_file)
 
-    te_data = []
-    for key in js:
-        if key.startswith(data_type):
-            te_data.append(HOME + js[key])
+    data = cfg.te_data
+    if data_type == 'tr':
+        data = cfg.tr_data
 
-    netFile = HOME + 'NNs/' + js['netTest'] + '/fc'
-    batch_size = int(js['batch_size'])
-    feature_len = int(js['feature'])
-    num_output = int(js["num_output"])
-    nodes = map(int, js["nodes"].split(','))
-    nodes.append(num_output)
+    te_set = DataSet(data, cfg)
 
-    t_scale= js["t_scale"]
-    net_type = "fc"
-    if 'net_type' in js:
-        net_type = js['net_type']
+    #netFile = HOME + 'NNs/' + js['netTest'] + '/fc'
+    #batch_size = int(js['batch_size'])
+    #feature_len = int(js['feature'])
+    #num_output = int(js["num_output"])
+    #nodes = map(int, js["nodes"].split(','))
+    #nodes = cfg.nodes
+    #nodes.append(cfg.num_output)
 
-    te_set = DataSet(te_data, batch_size, feature_len)
-    te_set.set_net_type(net_type)
-    te_set.set_num_output(num_output)
-    te_set.set_t_scale(t_scale)
+    t_scale= cfg.t_scale
+    net_type = cfg.net_type
 
     if net_type == 'cnn':
-        input = tf.placeholder(tf.float32, [None, feature_len, 4, 1])
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len, 4, 1])
         net = cNet({'data': input})
-        net.real_setup(nodes)
+        net.real_setup(cfg.nodes[0], cfg.num_output)
     else:
-        input = tf.placeholder(tf.float32, [None, feature_len * 4])
+        input = tf.placeholder(tf.float32, [None, cfg.feature_len * 4])
         net = sNet3({'data': input})
-        net.real_setup(nodes)
+        net.real_setup(cfg.nodes[0], cfg.num_output)
 
     xy = net.layers['output']
 
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
-        saver.restore(sess, netFile)
+        saver.restore(sess, cfg.netFile)
 
         rst = {}
         truth = {}
@@ -99,7 +94,7 @@ if __name__ == '__main__':
             #fp.write('{},{},{},{},{},{},{}\n'.
             #         format(t[0], t[1], t[2], mm[0], mm[1], mm[2], r))
             if random.random()<0.2:
-                if num_output==3:
+                if cfg.num_output==3:
                     fp.write('{},{},{},{},{},{},{}\n'.
                          format(t[0], mm[0],t[1], mm[1],t[2], mm[2], r))
                 else:

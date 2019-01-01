@@ -30,7 +30,6 @@ if __name__ == '__main__':
     te = DataSet(data, cfg)
 
     att = te.sz[1]
-    iterations = 10000
     print "input attribute", att, "LR", cfg.lr, 'feature', cfg.feature_len
 
     inputs = {}
