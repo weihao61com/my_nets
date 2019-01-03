@@ -74,4 +74,4 @@ for a in range(zone):
     print '{0:.9f} {1:.9f} {2:.9f} {3:6.2f}'.format(pre1[-1], dv, m, dv/pre1[-1]*100)
 #print slope1, intercept1
 #print pre1[-1], pre2[-1]
-plt.show()
+#plt.show()

@@ -12,7 +12,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help='config', default="config_stack_3.json")
     parser.add_argument('-t', '--test', help='test', default='te')
     parser.add_argument('-l', '--loop', help='loop', default='1')
-    parser.add_argument('-m', '--multi', help='loop', default='-1')
+    parser.add_argument('-m', '--multi', help='mulyi', default='-1')
+    parser.add_argument('-f', '--fraction', help='fraction', default='1')
     args = parser.parse_args()
 
     data_type = args.test
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     if data_type == 'tr':
         data = cfg.tr_data
 
-    te = DataSet(data, cfg)
+    te = DataSet(data, cfg, sub_sample=args.fraction)
 
     att = te.sz[1]
     print "input attribute", att, "LR", cfg.lr, 'feature', cfg.feature_len

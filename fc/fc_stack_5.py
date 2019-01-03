@@ -189,8 +189,8 @@ if __name__ == '__main__':
 
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
-        te = DataSet(cfg.te_data, cfg)
-        tr0 = DataSet([cfg.tr_data[0]], cfg)
+        te = DataSet(cfg.te_data, cfg, sub_sample=0.2)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.2)
 
         cfg.att = te.sz[1]
     else:
@@ -248,8 +248,8 @@ if __name__ == '__main__':
             saver.restore(sess, cfg.netTest)
             run_test(input_dic, sess, xy, te)
 
-        if cfg.retrain:
-            saver.restore(sess, cfg.retrain)
+        if cfg.renetFile:
+            saver.restore(sess, cfg.renetFile)
 
         str1 = ''
         for a in range(iterations):
