@@ -16,14 +16,14 @@ from fc_dataset import DataSet
 def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
     rst_dic = {}
     truth_dic = {}
-    length = 0
     for b in data:
         length = b[0].shape[1]/att
         feed = {}
         for a in range(length):
             feed[inputs['input_{}'.format(a)]] = b[0][:, att * a:att * (a + 1)]
         result = []
-        for a in range(length+1):
+        for a in range(0, length+1, length/2):
+            # a = length
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
         result = np.array(result)
@@ -48,7 +48,7 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
         t = truth_dic[id]
         if random.random() < 0.2:
             r = np.linalg.norm(t - result)
-            mm = result[length - 1]
+            mm = result[-1]
             if len(mm)==3:
                 fp.write('{},{},{},{},{},{},{}\n'.
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
@@ -189,8 +189,8 @@ if __name__ == '__main__':
 
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
-        te = DataSet(cfg.te_data, cfg, sub_sample=0.2)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.2)
+        te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
 
         cfg.att = te.sz[1]
     else:
@@ -262,15 +262,12 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
-            s = 1
+            s = 0
             while True:
-                # for s in range(0, feature_len+1, 5  ):
-                if s>=len(tr_loss):
-                    s = len(tr_loss)-1
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-                if s==cfg.feature_len + cfg.add_len:
+                s += 1
+                if s==len(tr_loss):
                     break
-                s += cfg.feature_len
 
             print str, str1
 
