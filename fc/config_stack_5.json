@@ -18,7 +18,7 @@
     "lr": 1e-4,
     "memory_size": 5000,
     "loop": 10,
-    "t_scale": 5,
+    "t_scale": 10,
     "nodes_1_feature": "64",
     "nodes_2_base": "4096, 512",
     "nodes_3_stack": "4096, 512",
