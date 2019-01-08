@@ -1,7 +1,7 @@
 {
     "batch_size": 40,
-    "te": "p_files/kitty_02_Test_cv.p",
-    "tr": "p_files/kitty_00_Train_cv.p",
+    "te": "p_files/kitty_02_Test_cv_s3_2.p",
+    "tr": "p_files/kitty_00_Train_cv_s3_2.p",
     "_te":  "p_files/heads_Test_cv.p",
     "_tr":  "p_files/heads_Train_cv.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",

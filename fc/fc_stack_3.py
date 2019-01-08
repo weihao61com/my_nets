@@ -73,8 +73,8 @@ if __name__ == '__main__':
     cfg = Config(config_file)
 
     tr = DataSet(cfg.tr_data, cfg)
-    te = DataSet(cfg.te_data, cfg, sub_sample=0.2)
-    tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.2)
+    te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
+    tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
 
     att = te.sz[1]
     iterations = 10000
@@ -157,7 +157,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=1)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

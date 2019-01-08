@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
     ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
     loss = None
-    for x in range(1, cfg.feature_len++cfg.add_len+1):
+    for x in range(0, cfg.feature_len+cfg.add_len+1):
         ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
         if loss is None:
             loss = ll
@@ -276,7 +276,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=1)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
