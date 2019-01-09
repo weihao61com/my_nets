@@ -13,19 +13,23 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils
 from fc_dataset import DataSet
 
-def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
+def run_data(data, inputs, sess, xy, fname, cfg):
+    att = cfg.att
     rst_dic = {}
     truth_dic = {}
     for b in data:
         length = b[0].shape[1]/att
         feed = {}
+        b_sz = b[0].shape[0]
+
+        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
         for a in range(length):
-            feed[inputs['input_{}'.format(a)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
         result = []
-        for a in range(0, length+1, length/2):
-            # a = length
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
+        a = 0
+        r = sess.run(xy[a], feed_dict=feed)
+        result.append(r)
+
         result = np.array(result)
         for a in range(len(b[2])):
             if not b[2][a] in rst_dic:
@@ -59,7 +63,7 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
-class StackNet5(Network):
+class rNet(Network):
 
     def create_ws(self, n, ins, outs):
         print n, ins, outs
@@ -71,43 +75,22 @@ class StackNet5(Network):
 
         self.ws = []
 
-        assert(cfg.nodes[1][-1] == cfg.nodes[2][-1])
-
         # feature
         ws = []
-        ins = cfg.att
+        ins = cfg.ref_node + cfg.att
         nodes_in = cfg.nodes[0]
         for a in range(len(nodes_in)):
             ws.append(self.create_ws('feature_{}'.format(a), ins, nodes_in[a]))
             ins = nodes_in[a]
         self.ws.append(ws)
 
-        # average
+        # out
         ws = []
-        ins = nodes_in[-1] * cfg.feature_len
         nodes = cfg.nodes[1]
         for a in range(len(nodes)):
-            ws.append(self.create_ws('average_{}'.format(a), ins, nodes[a]))
+            ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
-        self.ws.append(ws)
-
-        # stack
-        ws = []
-        ins = nodes[-1] + nodes_in[-1]
-        nodes = cfg.nodes[2]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('stacker_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-        self.ws.append(ws)
-
-        # output
-        ws = []
-        ins = nodes[-1]
-        nodes = cfg.nodes[3]
-        nodes.append(cfg.num_output)
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('outputs_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
+        ws.append(self.create_ws('out', ins, cfg.num_output))
         self.ws.append(ws)
 
     def setup(self):
@@ -116,57 +99,41 @@ class StackNet5(Network):
     def real_setup(self, cfg, verbose=True):
         self.parameters(cfg)
 
-        # inputs nets
-        all_inputs = []
-        for a in range(cfg.feature_len + cfg.add_len):
-            self.feed('input_{}'.format(a))
-            n = None
+        n = None
+        a =0
+        self.feed('input_0', 'input_1').\
+            concat(1, name='inputs_{}'.format(a))
+        for b in range(len(self.ws[0])):
+            n = 'input_{}_{}'.format(a, b)
+            self.fc_w2(ws=self.ws[0][b], name=n)
+
+        ref_out = n
+        for a in range(1, cfg.feature_len):
+            inputs = 'input_{}'.format(a+1)
+            n = 'input_{}_0'.format(a)
+            self.feed(ref_out, inputs) \
+                .concat(1, name=n)
             for b in range(len(self.ws[0])):
                 n = 'input_{}_{}'.format(a, b)
                 self.fc_w2(ws=self.ws[0][b], name=n)
-            all_inputs.append(n)
-
-        # average net
-        self.feed(*all_inputs[:cfg.feature_len]).concat(1, name='avg_inputs')
-        ref_out = None
-        for b in range(len(self.ws[1])):
-            ref_out = 'avg_input_{}'.format(b)
-            self.fc_w2(ws=self.ws[1][b], name=ref_out)
+                ref_out = n
 
         # final net 0
-        self.feed(ref_out)
         a = 0
-        for b in range(len(self.ws[3])):
-            if b < len(self.ws[3])-1:
+        self.feed(ref_out)
+        for b in range(len(self.ws[1])):
+            if b < len(self.ws[1])-1:
                 n = 'output_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[3][b], name=n)
+                self.fc_w2(ws=self.ws[1][b], name=n)
             else:
                 n = 'output_{}'.format(a)
-                self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
-
-        # stack 1-n
-        for a in range(cfg.feature_len + cfg.add_len):
-            self.feed(ref_out, all_inputs[a]) \
-                .concat(1, name='stack_inputs_{}'.format(a))
-            for b in range(len(self.ws[2])):
-                ref_out = 'stack_input_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[2][b], name=ref_out)
-
-            # final net a
-            self.feed(ref_out)
-            for b in range(len(self.ws[3])):
-                if b < len(self.ws[3])-1:
-                    n = 'output_{}_{}'.format(a, b)
-                    self.fc_w2(ws=self.ws[3][b], name=n)
-                else:
-                    n = 'output_{}'.format(a+1)
-                    self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
+                self.fc_w2(ws=self.ws[1][b], name=n, relu=False)
 
 def run_test(input_dic, sess, xy, te):
 
     att = te.sz[1]
     tr_pre_data = te.prepare(multi=-1)
-    tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'test', att)
+    tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', att)
 
     for a in range(len(tr_loss)):
         print a, tr_loss[a], tr_median[a]
@@ -176,7 +143,7 @@ def run_test(input_dic, sess, xy, te):
 
 if __name__ == '__main__':
 
-    config_file = "config_stack_5.json"
+    config_file = "rnn_config.json"
 
     if len(sys.argv)>1:
         config_file = sys.argv[1]
@@ -191,7 +158,6 @@ if __name__ == '__main__':
         tr = DataSet(cfg.tr_data, cfg)
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
         tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
-
         cfg.att = te.sz[1]
     else:
         if test == 'te':
@@ -202,35 +168,40 @@ if __name__ == '__main__':
 
     iterations = 10000
     loop = cfg.loop
-    print "input attribute", cfg.att, "LR", cfg.lr, 'feature', cfg.feature_len
+    print "input attribute", cfg.att, "LR", cfg.lr, \
+        'feature', cfg.feature_len, 'add', cfg.add_len
 
     inputs = {}
 
-    #inputs[0] = tf.placeholder(tf.float32, [None, cfg.feature_len*cfg.att])
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    for a in range(cfg.feature_len + cfg.add_len):
-        inputs[a] = tf.placeholder(tf.float32, [None, cfg.att])
+    cfg.ref_node = cfg.nodes[0][-1]
+    cfg.refs = (np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
+    cfg.refs=cfg.refs.reshape((1, cfg.ref_node))
+    inputs[0] = tf.placeholder(tf.float32, [None, cfg.ref_node])
+
+    for a in range(cfg.feature_len):
+        inputs[a+1] = tf.placeholder(tf.float32, [None, cfg.att])
 
     input_dic = {}
-    for a in range(cfg.feature_len+cfg.add_len):
+    for a in range(cfg.feature_len+1):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = StackNet5(input_dic)
+    net = rNet(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = {}
-    for a in range(cfg.feature_len+cfg.add_len+ 1):
-        xy[a] = net.layers['output_{}'.format(a)]
+    a = 0
+    xy[a] = net.layers['output_{}'.format(a)]
 
-    ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
-    loss = None
-    for x in range(0, cfg.feature_len+cfg.add_len+1):
-        ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
-        if loss is None:
-            loss = ll
-        else:
-            loss = loss + ll
-        ls.append(ll)
+    #ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
+    loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
+    #for x in range(1):
+    #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
+    #    if loss is None:
+    #        loss = ll
+    #    else:
+    #        loss = loss + ll
+    #    ls.append(ll)
 
     opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
@@ -255,10 +226,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', cfg.att)
+            tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', cfg.att)
+            te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
@@ -275,27 +246,29 @@ if __name__ == '__main__':
             tl4 = 0
             tl5 = 0
             nt = 0
+            att = cfg.att
             for _ in range(loop):
                 tr_pre_data = tr.prepare(multi=1)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
                         total_length = len(b[0])
+                        length = b[0].shape[1]/cfg.att
                         for c in range(0, total_length, cfg.batch_size):
                             feed = {}
-                            for a in range(cfg.feature_len+cfg.add_len):
-                                feed[input_dic['input_{}'.format(a)]] = \
-                                    b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
+                            n0 = 0
+                            for a in range(length):
+                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
+                                feed[inputs[a + 1]] = x
+                                n0 = x.shape[0]
+                            feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
                             feed[output] = b[1][c:c + cfg.batch_size]
-                            idx = cfg.feature_len-1
-                            ll3,ll4,ll5,_= sess.run([ls[0], ls[idx], ls[-1], opt],
-                                                      feed_dict=feed)
+
+                            ll3,_= sess.run([loss, opt],feed_dict=feed)
                             tl3 += ll3
-                            tl4 += ll4
-                            tl5 += ll5
-                            nt += len(b[0][c:c + cfg.batch_size])
+                            nt += n0
                     tr_pre_data = tr.get_next()
-            str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
+            str1 = "{0:.3f} ".format(tl3/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)
 
 

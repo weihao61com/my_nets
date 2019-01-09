@@ -20,5 +20,7 @@
     "net_type": "cnn",
     "loop": 20,
     "t_scale": 10,
-    "add_len": 0
+    "add_len": 0,
+    "nAdd": 0,
+    "att": 4
 }
