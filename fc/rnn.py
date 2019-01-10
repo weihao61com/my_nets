@@ -26,9 +26,9 @@ def run_data(data, inputs, sess, xy, fname, cfg):
         for a in range(length):
             feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
         result = []
-        a = 0
-        r = sess.run(xy[a], feed_dict=feed)
-        result.append(r)
+        for a in xy:
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
 
         result = np.array(result)
         for a in range(len(b[2])):
@@ -84,6 +84,7 @@ class rNet(Network):
             ins = nodes_in[a]
         self.ws.append(ws)
 
+
         # out
         ws = []
         nodes = cfg.nodes[1]
@@ -118,22 +119,24 @@ class rNet(Network):
                 self.fc_w2(ws=self.ws[0][b], name=n)
                 ref_out = n
 
-        # final net 0
-        a = 0
-        self.feed(ref_out)
-        for b in range(len(self.ws[1])):
-            if b < len(self.ws[1])-1:
-                n = 'output_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[1][b], name=n)
-            else:
-                n = 'output_{}'.format(a)
-                self.fc_w2(ws=self.ws[1][b], name=n, relu=False)
+            # final net a
+            # a = 0
+            if a < cfg.feature_len - 2:
+                continue
 
-def run_test(input_dic, sess, xy, te):
+            self.feed(ref_out)
+            for b in range(len(self.ws[1])):
+                if b < len(self.ws[1])-1:
+                    n = 'output_{}_{}'.format(a, b)
+                    self.fc_w2(ws=self.ws[1][b], name=n)
+                else:
+                    n = 'output_{}'.format(a)
+                    self.fc_w2(ws=self.ws[1][b], name=n, relu=False)
 
-    att = te.sz[1]
+def run_test(input_dic, sess, xy, te, cfg):
+
     tr_pre_data = te.prepare(multi=-1)
-    tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', att)
+    tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', cfg)
 
     for a in range(len(tr_loss)):
         print a, tr_loss[a], tr_median[a]
@@ -145,12 +148,12 @@ if __name__ == '__main__':
 
     config_file = "rnn_config.json"
 
-    if len(sys.argv)>1:
-        config_file = sys.argv[1]
+    #if len(sys.argv)>1:
+    #    config_file = sys.argv[1]
 
     test = None
-    if len(sys.argv)>2:
-        test = sys.argv[2]
+    if len(sys.argv)>1:
+        test = sys.argv[1]
 
     cfg = Config(config_file)
 
@@ -190,11 +193,19 @@ if __name__ == '__main__':
     net.real_setup(cfg, verbose=False)
 
     xy = {}
-    a = 0
-    xy[a] = net.layers['output_{}'.format(a)]
+    for a in range(cfg.feature_len):
+        n = 'output_{}'.format(a)
+        if n in net.layers:
+            xy[a] = net.layers['output_{}'.format(a)]
 
     #ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
-    loss = tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))
+    loss = None
+
+    for a in xy:
+        if loss is None:
+            loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        else:
+            loss = loss + tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
     #for x in range(1):
     #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
     #    if loss is None:
@@ -217,7 +228,7 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netTest)
-            run_test(input_dic, sess, xy, te)
+            run_test(input_dic, sess, xy, te, cfg)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
@@ -248,7 +259,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=1)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
