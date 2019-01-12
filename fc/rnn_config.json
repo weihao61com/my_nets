@@ -1,16 +1,16 @@
 {
     "batch_size": 100,
-    "te": "p_files/kitty_02_Test_cv_s3_2.p",
-    "tr": "p_files/kitty_00_Train_cv_s3_2.p",
-    "_te": "p_files/heads_Test_cv.p",
-    "_tr": "p_files/heads_Train_cv.p",
+    "_te": "p_files/kitty_02_Test_cv_s3_2.p",
+    "_tr": "p_files/kitty_00_Train_cv_s3_2.p",
+    "te": "p_files/heads_Test_cv.p",
+    "tr": "p_files/heads_Train_cv.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",
     "_tr2": "p_files/fire_Train_cv_s3.p",
     "_tr3": "p_files/office_Train_cv_s3.p",
     "_tr4": "p_files/pumpkin_Train_cv_s3.p",
     "_tr5": "p_files/redkitchen_Train_cv_s3.p",
     "netFile": "r",
-    "renetFile": "r",
+    "_renetFile": "r",
     "netTest": "r",
     "add_len": 0,
     "feature_len": 20,
@@ -19,8 +19,8 @@
     "memory_size": 5000,
     "loop": 5,
     "t_scale": 10,
-    "nodes_base": "1024, 256",
-    "nodes_out": "128",
+    "nodes_base": "128, 64",
+    "nodes_out": "32",
     "att": 4
 
 }

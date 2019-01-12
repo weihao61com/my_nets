@@ -214,10 +214,11 @@ if __name__ == '__main__':
     #        loss = loss + ll
     #    ls.append(ll)
 
-    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
-                    beta2=0.999, epsilon=0.00000001,
-                    use_locking=False, name='Adam').\
-        minimize(loss)
+    # opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
+    #                 beta2=0.999, epsilon=0.00000001,
+    #                 use_locking=False, name='Adam').\
+    #     minimize(loss)
+    opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -259,7 +260,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
+                tr_pre_data = tr.prepare(multi=1)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
