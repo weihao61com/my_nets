@@ -1,7 +1,7 @@
 {
-    "batch_size": 200,
-    "_te": "p_files/kitty_02_Test_cv_s3_2.p",
-    "_tr": "p_files/kitty_00_Train_cv_s3_2.p",
+    "batch_size": 100,
+    "te": "p_files/kitty_02_Test_cv_s3_2.p",
+    "tr": "p_files/kitty_00_Train_cv_s3_2.p",
     "te": "p_files/heads_Test_cv.p",
     "tr": "p_files/heads_Train_cv.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",
@@ -19,10 +19,10 @@
     "memory_size": 5000,
     "loop": 10,
     "t_scale": 10,
-    "nodes_1_feature": "32",
-    "nodes_2_base": "128",
-    "nodes_3_stack": "128",
-    "nodes_4_ref": "32",
+    "nodes_1_feature": "128",
+    "nodes_2_base": "2048, 512",
+    "nodes_3_stack": "2048, 512",
+    "nodes_4_ref": "128",
     "att": 4
 
 }
