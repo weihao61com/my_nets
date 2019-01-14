@@ -2,8 +2,8 @@
     "batch_size": 100,
     "_te": "p_files/kitty_02_Test_cv_s3_2.p",
     "_tr": "p_files/kitty_00_Train_cv_s3_2.p",
-    "te": "p_files/heads_Test_cv.p",
-    "tr": "p_files/heads_Train_cv.p",
+    "te": "p_files/heads_Test_cv_s3.p",
+    "tr": "p_files/heads_Train_cv_s3.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",
     "_tr2": "p_files/fire_Train_cv_s3.p",
     "_tr3": "p_files/office_Train_cv_s3.p",
@@ -15,12 +15,12 @@
     "add_len": 0,
     "feature_len": 20,
     "num_output": 3,
-    "lr": 1e-3,
+    "lr": 1e-4,
     "memory_size": 5000,
     "loop": 5,
     "t_scale": 10,
-    "nodes_base": "128, 64",
-    "nodes_out": "32",
+    "nodes_base": "4096, 1024",
+    "nodes_out": "256, 64",
     "att": 4
 
 }
