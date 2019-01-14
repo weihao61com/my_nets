@@ -162,6 +162,7 @@ class StackNet5(Network):
                     n = 'output_{}'.format(a+1)
                     self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
 
+
 def run_test(input_dic, sess, xy, te):
 
     att = te.sz[1]
@@ -189,8 +190,8 @@ if __name__ == '__main__':
 
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
-        te = DataSet(cfg.te_data, cfg, sub_sample=1)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=1)
+        te = DataSet(cfg.te_data, cfg, sub_sample=.15)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=.15)
 
         cfg.att = te.sz[1]
     else:
@@ -236,7 +237,7 @@ if __name__ == '__main__':
                    use_locking=False, name='Adam').\
        minimize(loss)
 
-    #opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
+    # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
