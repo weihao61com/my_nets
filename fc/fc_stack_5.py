@@ -162,6 +162,7 @@ class StackNet5(Network):
                     n = 'output_{}'.format(a+1)
                     self.fc_w2(ws=self.ws[3][b], name=n, relu=False)
 
+
 def run_test(input_dic, sess, xy, te):
 
     att = te.sz[1]
