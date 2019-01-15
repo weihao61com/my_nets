@@ -38,11 +38,11 @@ if __name__ == '__main__':
     xy = net.layers['output']
     loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
 
-    #opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
-    #                    beta2=0.999, epsilon=0.00000001,
-    #                    use_locking=False, name='Adam').\
-    #    minimize(loss)
-    opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
+    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
+                        beta2=0.999, epsilon=0.00000001,
+                        use_locking=False, name='Adam').\
+        minimize(loss)
+    # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
