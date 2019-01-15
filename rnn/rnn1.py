@@ -4,45 +4,83 @@ import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
 
+
 class RNN(nn.Module):
-    def __init__(self, n_att, n_length, n_hidden, n_output,  learning_rate=.02):
+    def __init__(self, n_att, nodes, n_output,  learning_rate=.02):
         super(RNN, self).__init__()
 
-        self.hidden_size = n_hidden
-        self.length = n_length
+        self.activeLayer = F.relu
+        # self.nodes = nodes
         self.att = n_att
 
-        h0 = 256
+        self.feature = []
+        self.recurrent = []
+        self.output = []
 
-        self.i2h0 = nn.Linear(n_att + n_hidden, h0)
-        self.i2h1 = nn.Linear(h0, n_hidden)
+        ref = nodes[1][-1]
 
-        self.i2o0 = nn.Linear(n_att + n_hidden, h0)
-        self.i2o1 = nn.Linear(h0, n_output)
+        ins = n_att
+        nt = 0
+        for n in nodes[0]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L0_{}'.format(nt), layer)
+            self.feature.append(layer)
+            ins = n
+            nt += 1
+
+        ins += ref
+        nt = 0
+        for n in nodes[1]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L1_{}'.format(nt), layer)
+            self.recurrent.append(layer)
+            ins = n
+            nt += 1
+
+        for n in nodes[2]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L2_{}'.format(nt), layer)
+            self.output.append(layer)
+            ins = n
+            nt += 1
+
+        layer = nn.Linear(ins, n_output)
+        self.__setattr__('O', layer)
+        self.output.append(layer)
+
+        #print n_att, nodes[0]
+        #print nodes[1]
+        #print nodes[2], n_output
+        #
+        # self.i2h0 = nn.Linear(n_att + n_hidden, h0)
+        # self.i2h1 = nn.Linear(h0, n_hidden)
+        #
+        # self.i2o0 = nn.Linear(n_att + n_hidden, h0)
+        # self.i2o1 = nn.Linear(h0, n_output)
         # self.relu = F.relu
         self.criterion = nn.MSELoss()
+
         for p in self.parameters():
             print p.data.size()
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
     def forward(self, input, hidden):
 
-        # combined = torch.cat((input, hidden), 1)
+        for l in self.feature:
+            input = l(input)
+
         combined = torch.cat((input, hidden))
+        for l in self.recurrent:
+            combined = l(combined)
 
-        hidden0 = self.i2h0(combined)
-        hidden1 = self.i2h1(hidden0)
+        output = combined
+        for l in self.output:
+            output = l(output)
 
-        output0 = self.i2o0(combined)
-        output1 = self.i2o1(output0)
-
-        return output1, hidden1
+        return output, combined
 
     def train(self, outs, ins, hidden0):
-
-
         error = 0.0
-        self.zero_grad()
 
         for a in range(ins.size()[0]):
 
