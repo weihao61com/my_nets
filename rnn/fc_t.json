@@ -19,7 +19,7 @@
     "memory_size": 5000,
     "loop": 100,
     "t_scale": 10,
-    "nodes_1_feature": "1024, 128",
+    "nodes_1_feature": "2048, 256",
     "nodes_2_recurrent": "2048, 256",
     "nodes_3_output": "256",
     "_nodes_4_ref": "32",

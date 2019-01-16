@@ -48,22 +48,23 @@ class FC(nn.Module):
         for l in self.layers:
             data = self.activeLayer(l(data))
 
-
         return self.output(data)
 
     def train(self, outs, ins):
         error = 0.0
 
+        self.optimizer.zero_grad()
         for a in range(ins.size()[0]):
 
-            self.zero_grad()
             output = self(ins[a])
             loss = self.criterion(output, outs[a])
             error += loss.detach().numpy()*output.size()[0]
 
             loss.backward()
 
-            self.optimizer.step()
+            if a%10==0:
+                self.optimizer.step()
+                self.optimizer.zero_grad()
 
         return error/ins.size()[0]
 

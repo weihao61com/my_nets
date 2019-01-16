@@ -71,15 +71,15 @@ if __name__ == '__main__':
             t_loss = 0
             t_count = 0
             for lp in range(cfg.loop):
-                tr_pre_data = tr.prepare(rdd=True, multi=1)
+                tr_pre_data = tr.prepare(multi=1)
                 while tr_pre_data:
                     for b in tr_pre_data:
                         length = len(b[0])
-                        for c in range(0, length, cfg.memory_size):
-                            feed = {input: b[0][c:c+cfg.memory_size], output: b[1][c:c+cfg.memory_size]}
+                        for c in range(0, length, cfg.batch_size):
+                            feed = {input: b[0][c:c+cfg.batch_size], output: b[1][c:c+cfg.batch_size]}
                             _, A = sess.run([opt, loss], feed_dict=feed)
                             t_loss += A
-                            t_count += len(b[0][c:c+cfg.memory_size])
+                            t_count += len(b[0][c:c+cfg.batch_size])
                     tr_pre_data = tr.get_next()
                 st1 = '{}'.format(t_loss/t_count)
 
