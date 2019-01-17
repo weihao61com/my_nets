@@ -3,10 +3,9 @@ import sys
 import numpy as np
 import os
 import datetime
-
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn.functional as F
+import torch.nn as nn
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
@@ -15,21 +14,48 @@ from dataset import DataSet, Config
 from utils import Utils
 
 
-
-class FC(nn.Module):
-    def __init__(self, n_input, nodes, n_output,  learning_rate=.02):
-        super(FC, self).__init__()
+class STACK(nn.Module):
+    def __init__(self, n_att, n_feature, nodes, n_output,  learning_rate=.02):
+        super(STACK, self).__init__()
 
         self.activeLayer = F.relu
-        self.n_input = n_input
-        self.layers = []
+        self.att = n_att
 
-        ins = n_input
+        self.feature = []
+        self.average = []
+        self.recurrent = []
+        self.outputs = []
+
+        ins = n_att
         nt = 0
-        for n in nodes:
+        for n in nodes[0]:
             layer = nn.Linear(ins, n)
-            self.__setattr__('L_{}'.format(nt), layer)
-            self.layers.append(layer)
+            self.__setattr__('L0_{}'.format(nt), layer)
+            self.feature.append(layer)
+            ins = n
+            nt += 1
+
+        ins0 = ins
+        ins *= n_feature
+        for n in nodes[1]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L1_{}'.format(nt), layer)
+            self.average.append(layer)
+            ins = n
+            nt += 1
+
+        ins += ins0
+        for n in nodes[2]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L2_{}'.format(nt), layer)
+            self.recurrent.append(layer)
+            ins = n
+            nt += 1
+
+        for n in nodes[3]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L3_{}'.format(nt), layer)
+            self.outputs.append(layer)
             ins = n
             nt += 1
 
@@ -39,44 +65,57 @@ class FC(nn.Module):
 
         self.criterion = nn.MSELoss()
 
-        for p in self.parameters():
-            print p.data.size()
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
-    def forward(self, data):
+    def forward(self, input, hidden):
 
-        for l in self.layers:
-            data = self.activeLayer(l(data))
+        for l in self.feature:
+            input = self.activeLayer(l(input))
 
-        return self.output(data)
+        combined = torch.cat((input, hidden))
+        for l in self.recurrent:
+            combined = self.activeLayer(l(combined))
 
-    def train(self, outs, ins):
+        output = combined
+        for l in self.outputs:
+            output = self.activeLayer(l(output))
+
+        output = self.output(output)
+
+        return output, combined
+
+    def train(self, outs, ins, hidden0):
         error = 0.0
 
-        self.optimizer.zero_grad()
         for a in range(ins.size()[0]):
 
-            output = self(ins[a])
+            self.zero_grad()
+            hidden = hidden0
+            b = ins[a]
+            touts = []
+            for i in range(b.size()[0]):
+                output, hidden = self(b[i], hidden)
+                touts.append(output)
+
             loss = self.criterion(output, outs[a])
             error += loss.detach().numpy()*output.size()[0]
-
             loss.backward()
-
-            if a%10==0:
-                self.optimizer.step()
-                self.optimizer.zero_grad()
+            self.optimizer.step()
 
         return error/ins.size()[0]
 
-    def run(self, ins):
+    def run(self, ins, hidden0):
 
         outputs = []
         for a in range(ins.size()[0]):
+            hidden = hidden0
             b = ins[a]
             o0 = []
             for i in range(b.size()[0]):
-                output = self(b[i])
-            outputs.append(output)
+                output, hidden = self(b[i], hidden)
+                o0.append(output.detach().numpy())
+            # last 2
+            outputs.append(o0[-2:])
 
         return np.array(outputs)
 
@@ -104,12 +143,25 @@ def run_test(mrnn, tr, cfg, hidden):
         results = []
         truth = []
 
+        #filename = '/home/weihao/tmp/{}.csv'.format(fname)
+        #if sys.platform == 'darwin':
+        #    filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+        #fp = open(filename, 'w')
         for id in rst_dic:
             dst = np.array(rst_dic[id])
             result = np.median(dst, axis=0)
             results.append(result)
             truth.append(truth_dic[id])
-
+            # if random.random() < 0.2:
+            #     r = np.linalg.norm(t - result)
+            #     mm = result[-1]
+            #     if len(mm) == 3:
+            #         fp.write('{},{},{},{},{},{},{}\n'.
+            #                  format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            #     else:
+            #         fp.write('{},{},{}\n'.
+            #                  format(t[0], mm[0], r))
+        #fp.close()
         tr_pre_data = tr.get_next()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
@@ -146,7 +198,7 @@ def main(args):
     n_output = cfg.num_output
     hidden0 = ToTensor(np.ones(n_hidden).astype(np.float32))
 
-    mrnn = FC(n_att*cfg.feature_len, cfg.nodes[0], n_output, cfg.lr)
+    mrnn = RNN(n_att, cfg.nodes, n_output, cfg.lr)
 
     if test:
         mrnn.load_state_dict(torch.load(cfg.netTest[:-3]))
@@ -169,9 +221,10 @@ def main(args):
         tr_pre_data = tr.prepare(multi=1)
         while tr_pre_data:
             for b in tr_pre_data:
-                x = ToTensor(b[0].astype(np.float32))
+                length = len(b[0])
+                x = ToTensor(b[0].reshape(length, cfg.feature_len, cfg.att).astype(np.float32))
                 y = ToTensor(b[1].astype(np.float32))
-                err = mrnn.train(y, x)
+                err = mrnn.train(y, x, hidden0)
                 if a%loop==0 and a>0:
                     t1 = datetime.datetime.now()
                     print a, (t1 - t00).total_seconds()/3600.0, T_err/T
@@ -188,7 +241,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', help='config', default='fc_t.json')
+    parser.add_argument('-c', '--config', help='config', default='rnn_t.json')
     parser.add_argument('-t', '--test', help='test', default=None)
     args = parser.parse_args()
 

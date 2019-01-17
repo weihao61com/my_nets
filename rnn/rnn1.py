@@ -60,8 +60,8 @@ class RNN(nn.Module):
         # self.relu = F.relu
         self.criterion = nn.MSELoss()
 
-        for p in self.parameters():
-            print p.data.size()
+        #for p in self.parameters():
+        #    print p.data.size()
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
     def forward(self, input, hidden):

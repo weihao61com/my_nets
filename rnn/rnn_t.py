@@ -3,10 +3,9 @@ import sys
 import numpy as np
 import os
 import datetime
-
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn.functional as F
+import torch.nn as nn
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
@@ -15,21 +14,41 @@ from dataset import DataSet, Config
 from utils import Utils
 
 
-
-class FC(nn.Module):
-    def __init__(self, n_input, nodes, n_output,  learning_rate=.02):
-        super(FC, self).__init__()
+class RNN(nn.Module):
+    def __init__(self, n_att, nodes, n_output,  learning_rate=.02):
+        super(RNN, self).__init__()
 
         self.activeLayer = F.relu
-        self.n_input = n_input
-        self.layers = []
+        self.att = n_att
 
-        ins = n_input
+        self.feature = []
+        self.recurrent = []
+        self.outputs = []
+
+        ref = nodes[1][-1]
+
+        ins = n_att
         nt = 0
-        for n in nodes:
+        for n in nodes[0]:
             layer = nn.Linear(ins, n)
-            self.__setattr__('L_{}'.format(nt), layer)
-            self.layers.append(layer)
+            self.__setattr__('L0_{}'.format(nt), layer)
+            self.feature.append(layer)
+            ins = n
+            nt += 1
+
+        ins += ref
+        nt = 0
+        for n in nodes[1]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L1_{}'.format(nt), layer)
+            self.recurrent.append(layer)
+            ins = n
+            nt += 1
+
+        for n in nodes[2]:
+            layer = nn.Linear(ins, n)
+            self.__setattr__('L2_{}'.format(nt), layer)
+            self.outputs.append(layer)
             ins = n
             nt += 1
 
@@ -39,44 +58,57 @@ class FC(nn.Module):
 
         self.criterion = nn.MSELoss()
 
-        for p in self.parameters():
-            print p.data.size()
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
-    def forward(self, data):
+    def forward(self, input, hidden):
 
-        for l in self.layers:
-            data = self.activeLayer(l(data))
+        for l in self.feature:
+            input = self.activeLayer(l(input))
 
-        return self.output(data)
+        combined = torch.cat((input, hidden))
+        for l in self.recurrent:
+            combined = self.activeLayer(l(combined))
 
-    def train(self, outs, ins):
+        output = combined
+        for l in self.outputs:
+            output = self.activeLayer(l(output))
+
+        output = self.output(output)
+
+        return output, combined
+
+    def train(self, outs, ins, hidden0):
         error = 0.0
 
-        self.optimizer.zero_grad()
         for a in range(ins.size()[0]):
 
-            output = self(ins[a])
+            self.zero_grad()
+            hidden = hidden0
+            b = ins[a]
+            touts = []
+            for i in range(b.size()[0]):
+                output, hidden = self(b[i], hidden)
+                touts.append(output)
+
             loss = self.criterion(output, outs[a])
             error += loss.detach().numpy()*output.size()[0]
-
             loss.backward()
-
-            if a%10==0:
-                self.optimizer.step()
-                self.optimizer.zero_grad()
+            self.optimizer.step()
 
         return error/ins.size()[0]
 
-    def run(self, ins):
+    def run(self, ins, hidden0):
 
         outputs = []
         for a in range(ins.size()[0]):
+            hidden = hidden0
             b = ins[a]
             o0 = []
             for i in range(b.size()[0]):
-                output = self(b[i])
-            outputs.append(output)
+                output, hidden = self(b[i], hidden)
+                o0.append(output.detach().numpy())
+            # last 2
+            outputs.append(o0[-4:])
 
         return np.array(outputs)
 
@@ -85,11 +117,11 @@ def ToTensor(array):
     return torch.tensor(array)
 
 
-def run_test(mrnn, tr, cfg, hidden):
+def run_test(mrnn, tr, cfg, hidden, multi=-1):
     rst_dic = {}
     truth_dic = {}
 
-    tr_pre_data = tr.prepare(multi=-1)
+    tr_pre_data = tr.prepare(multi=multi)
     while tr_pre_data:
         for b in tr_pre_data:
             length = len(b[0])
@@ -113,7 +145,6 @@ def run_test(mrnn, tr, cfg, hidden):
         tr_pre_data = tr.get_next()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
-
 
 
 def main(args):
@@ -146,11 +177,10 @@ def main(args):
     n_output = cfg.num_output
     hidden0 = ToTensor(np.ones(n_hidden).astype(np.float32))
 
-    mrnn = FC(n_att*cfg.feature_len, cfg.nodes[0], n_output, cfg.lr)
+    mrnn = RNN(n_att, cfg.nodes, n_output, cfg.lr)
 
     if test:
         mrnn.load_state_dict(torch.load(cfg.netTest[:-3]))
-        run_test(mrnn, te, cfg, hidden0)
         tr_loss, tr_median = run_test(mrnn, te, cfg, hidden0)
         for a in range(len(tr_loss)):
             print a, tr_loss[a], tr_median[a]
@@ -166,18 +196,24 @@ def main(args):
     T_err=0
     for a in range(iterations):
 
-        tr_pre_data = tr.prepare(multi=1)
+        tr_pre_data = tr.prepare(multi=10)
         while tr_pre_data:
             for b in tr_pre_data:
-                x = ToTensor(b[0].astype(np.float32))
+                length = len(b[0])
+                x = ToTensor(b[0].reshape(length, cfg.feature_len, cfg.att).astype(np.float32))
                 y = ToTensor(b[1].astype(np.float32))
-                err = mrnn.train(y, x)
+                err = mrnn.train(y, x, hidden0)
                 if a%loop==0 and a>0:
                     t1 = datetime.datetime.now()
-                    print a, (t1 - t00).total_seconds()/3600.0, T_err/T
+                    print a, (t1 - t00).total_seconds()/3600.0, T_err/T,
+                    tr_loss, tr_median = run_test(mrnn, tr0, cfg, hidden0, multi=1)
+                    te_loss, te_median = run_test(mrnn, te, cfg, hidden0, multi=1)
+                    print tr_loss[-1], tr_median[-1], te_loss[-1], te_median[-1]
                     T_err=0
                     T = 0
                     torch.save(mrnn.state_dict(), cfg.netFile[:-3])
+
+
                 T_err += err
                 T += 1
 
@@ -188,7 +224,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', help='config', default='fc_t.json')
+    parser.add_argument('-c', '--config', help='config', default='rnn_t.json')
     parser.add_argument('-t', '--test', help='test', default=None)
     args = parser.parse_args()
 
