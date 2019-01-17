@@ -86,18 +86,24 @@ class RNN(nn.Module):
             hidden = hidden0
             b = ins[a]
             touts = []
+            loss = None
             for i in range(b.size()[0]):
                 output, hidden = self(b[i], hidden)
                 touts.append(output)
+                if i>10:
+                    if loss is None:
+                        loss = self.criterion(output, outs[a])
+                    else:
+                        loss += self.criterion(output, outs[a])
 
-            loss = self.criterion(output, outs[a])
+            # loss = self.criterion(output, outs[a])
             error += loss.detach().numpy()*output.size()[0]
             loss.backward()
             self.optimizer.step()
 
         return error/ins.size()[0]
 
-    def run(self, ins, hidden0):
+    def run(self, ins, hidden0, st=-1):
 
         outputs = []
         for a in range(ins.size()[0]):
@@ -108,7 +114,7 @@ class RNN(nn.Module):
                 output, hidden = self(b[i], hidden)
                 o0.append(output.detach().numpy())
             # last 2
-            outputs.append(o0[-4:])
+            outputs.append(o0[st:])
 
         return np.array(outputs)
 
@@ -126,7 +132,7 @@ def run_test(mrnn, tr, cfg, hidden, multi=-1):
         for b in tr_pre_data:
             length = len(b[0])
             x = ToTensor(b[0].reshape(length, cfg.feature_len, cfg.att).astype(np.float32))
-            outputs = mrnn.run(x, hidden)
+            outputs = mrnn.run(x, hidden, 10)
             for a in range(len(b[2])):
                 if not b[2][a] in rst_dic:
                     rst_dic[b[2][a]] = []
@@ -196,7 +202,7 @@ def main(args):
     T_err=0
     for a in range(iterations):
 
-        tr_pre_data = tr.prepare(multi=10)
+        tr_pre_data = tr.prepare(multi=1)
         while tr_pre_data:
             for b in tr_pre_data:
                 length = len(b[0])
