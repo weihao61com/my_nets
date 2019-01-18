@@ -177,8 +177,8 @@ if __name__ == '__main__':
 
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
     cfg.ref_node = cfg.nodes[0][-1]
-    cfg.refs = (np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
-    cfg.refs=cfg.refs.reshape((1, cfg.ref_node))
+    cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
+    cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
     inputs[0] = tf.placeholder(tf.float32, [None, cfg.ref_node])
 
     for a in range(cfg.feature_len):
@@ -201,10 +201,11 @@ if __name__ == '__main__':
     loss = None
 
     for a in xy:
-        if loss is None:
-            loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
-        else:
-            loss = loss + tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        if a>10:
+            if loss is None:
+                loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+            else:
+                loss = loss + tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
     #for x in range(1):
     #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
     #    if loss is None:

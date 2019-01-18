@@ -19,8 +19,8 @@
     "memory_size": 5000,
     "loop": 5,
     "t_scale": 10,
-    "nodes_base": "4096, 1024",
-    "nodes_out": "256, 64",
+    "nodes_base": "256, 64",
+    "nodes_out": "32",
     "att": 4
 
 }
