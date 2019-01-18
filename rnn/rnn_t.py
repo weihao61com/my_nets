@@ -229,6 +229,9 @@ def main(args):
 if __name__ == '__main__':
     import argparse
 
+    torch.set_num_threads(2)
+    print torch.get_num_threads()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help='config', default='rnn_t.json')
     parser.add_argument('-t', '--test', help='test', default=None)
