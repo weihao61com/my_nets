@@ -13,7 +13,7 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils
 from fc_dataset import DataSet
 
-def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
+def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
     rst_dic = {}
     truth_dic = {}
     for b in data:
@@ -22,7 +22,7 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att):
         for a in range(length):
             feed[inputs['input_{}'.format(a)]] = b[0][:, att * a:att * (a + 1)]
         result = []
-        for a in range(0, length+1, length/2):
+        for a in range(0, length+1, step):
             # a = length
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
@@ -257,10 +257,10 @@ if __name__ == '__main__':
         for a in range(iterations):
 
             tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', cfg.att)
+            tr_loss, tr_median = run_data_stack_avg3(tr_pre_data, input_dic, sess, xy, 'tr', cfg.att, step=cfg.feature_len/2)
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', cfg.att)
+            te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', cfg.att, step=cfg.feature_len/2)
 
             t1 = datetime.datetime.now()
             str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)

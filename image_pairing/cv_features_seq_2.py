@@ -8,14 +8,17 @@ from pose_ana import *
 import datetime
 import pickle
 
-HOME = '/home/weihao/Projects'
+this_file_path = os.path.dirname(os.path.realpath(__file__))
+HOME = '{}/../../'.format(this_file_path)
+
+#HOME = '/home/weihao/Projects'
 
 range2 = 3
 range1 = -range2
-#key = 'heads'
-#mode = 'Train'
-key = '02'
-mode = 'Test'
+key = 'office'
+mode = 'Train'
+#key = '02'
+#mode = 'Test'
 
 if len(sys.argv)>1:
     key = sys.argv[1]
@@ -29,13 +32,13 @@ print key, mode
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 #
-location = '{}/datasets/kitty'.format(HOME)
-poses_dic, cam = load_kitty_poses(location, key)
-key = 'kitty_{}'.format(key)
+#location = '{}/datasets/kitty'.format(HOME)
+#poses_dic, cam = load_kitty_poses(location, key)
+#key = 'kitty_{}'.format(key)
 
 
-#location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
-#poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
+poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
 filename = '{}/p_files/{}_{}_cv_s{}_2.p'.format(HOME, key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)
