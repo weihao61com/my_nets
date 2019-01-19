@@ -12,17 +12,17 @@
     "netFile": "s5",
     "_renetFile": "s5",
     "netTest": "s5",
-    "add_len": 0,
+    "add_len": 20,
     "feature_len": 20,
     "num_output": 3,
     "lr": 1e-4,
     "memory_size": 5000,
     "loop": 10,
     "t_scale": 10,
-    "nodes_1_feature": "128",
-    "nodes_2_base": "1024, 128",
-    "nodes_3_stack": "1024, 128",
-    "nodes_4_ref": "128",
+    "nodes_1_feature": "32",
+    "nodes_2_base": "256, 32",
+    "nodes_3_stack": "256, 32",
+    "nodes_4_ref": "32",
     "att": 4
 
 }

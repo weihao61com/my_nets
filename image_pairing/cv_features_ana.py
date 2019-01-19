@@ -10,7 +10,7 @@ import pickle
 import cv2
 import matplotlib.pyplot as plt
 
-filename = '/home/weihao/Projects/p_files/heads_Test_cv.p'
+filename = '/home/weihao/Projects/p_files/office_Train_cv_s1.p'
 filename = '/home/weihao/Projects/p_files/kitty_02_Test_cv.p'
 
 if len(sys.argv)>1:

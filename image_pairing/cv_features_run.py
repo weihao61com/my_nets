@@ -9,15 +9,15 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/kitty_02_Test_cv_s3_2.p'
+filename = '/home/weihao/Projects/p_files/office_Train_cv_s1.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
-#focal = 525.0
-#cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
+focal = 525.0
+cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
 
-focal = 719  # 719
-cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
+#focal = 719  # 719
+#cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
 
 w2 = cam.cx
 h2 = cam.cy
@@ -64,7 +64,8 @@ for d in data:
     rs2.append(abs(dr[2]))
     angs.append(np.linalg.norm(a))
 
-print '\nmedian {0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
+print 'name, median, Anger-error, mx, my, mz'
+print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     os.path.basename(filename), np.median(rs), np.median(angs),
     np.median(rs0),np.median(rs1),np.median(rs2))
 fp.close()
