@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/office_Train_cv_s1.p'
+filename = '/home/weihao/Projects/p_files/office_Test_cv_s5.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 

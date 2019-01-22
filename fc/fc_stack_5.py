@@ -23,7 +23,6 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
             feed[inputs['input_{}'.format(a)]] = b[0][:, att * a:att * (a + 1)]
         result = []
         for a in range(0, length+1, step):
-            # a = length
             r = sess.run(xy[a], feed_dict=feed)
             result.append(r)
         result = np.array(result)
@@ -34,6 +33,7 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
             truth_dic[b[2][a]] = b[1][a]
 
     results = []
+    stds = []
     truth = []
 
     filename = '/home/weihao/tmp/{}.csv'.format(fname)
@@ -43,7 +43,9 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
+        std = np.std(dst, axis=0)
         results.append(result)
+        stds.append(std)
         truth.append(truth_dic[id])
         t = truth_dic[id]
         if random.random() < 0.2:
@@ -56,6 +58,8 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
                 fp.write('{},{},{}\n'.
                          format(t[0], mm[0], r))
     fp.close()
+    s = np.array(stds)
+    std = np.mean(np.linalg.norm(s, axis=2), axis=0)
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
