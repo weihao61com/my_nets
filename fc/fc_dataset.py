@@ -37,7 +37,7 @@ class Config:
                 self.nodes.append(map(int, self.js[key].split(',')))
 
         self.netFile = fc_const.HOME + 'NNs/' + self.netFile + '/fc'
-        self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
+        # self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
         if self.renetFile is not None:
             self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
 

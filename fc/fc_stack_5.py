@@ -63,6 +63,109 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
+class StackNet5_SIG(Network):
+
+    def create_ws(self, n, ins, outs):
+        print n, ins, outs
+        w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
+        b = self.make_var('biases_{}'.format(n), shape=[outs])
+        return [w,b]
+
+    def parameters(self, cfg):
+
+        self.ws = []
+
+        assert(cfg.nodes[1][-1] == cfg.nodes[2][-1])
+
+        # feature
+        ws = []
+        ins = cfg.att
+        nodes_in = cfg.nodes[0]
+        for a in range(len(nodes_in)):
+            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes_in[a]))
+            ins = nodes_in[a]
+        self.ws.append(ws)
+
+        # average
+        ws = []
+        ins = nodes_in[-1] * cfg.feature_len
+        nodes = cfg.nodes[1]
+        for a in range(len(nodes)):
+            ws.append(self.create_ws('average_{}'.format(a), ins, nodes[a]))
+            ins = nodes[a]
+        self.ws.append(ws)
+
+        # stack
+        ws = []
+        ins = nodes[-1] + nodes_in[-1]
+        nodes = cfg.nodes[2]
+        for a in range(len(nodes)):
+            ws.append(self.create_ws('stacker_{}'.format(a), ins, nodes[a]))
+            ins = nodes[a]
+        self.ws.append(ws)
+
+        # output
+        ws = []
+        ins = nodes[-1]
+        nodes = cfg.nodes[3]
+        nodes.append(cfg.num_output)
+        for a in range(len(nodes)):
+            ws.append(self.create_ws('outputs_{}'.format(a), ins, nodes[a]))
+            ins = nodes[a]
+        self.ws.append(ws)
+
+    def setup(self):
+        pass
+
+    def real_setup(self, cfg, verbose=True):
+        self.parameters(cfg)
+
+        # inputs nets
+        all_inputs = []
+        for a in range(cfg.feature_len + cfg.add_len):
+            self.feed('input_{}'.format(a))
+            n = None
+            for b in range(len(self.ws[0])):
+                n = 'input_{}_{}'.format(a, b)
+                self.fc_ws(ws=self.ws[0][b], name=n)
+            all_inputs.append(n)
+
+        # average net
+        self.feed(*all_inputs[:cfg.feature_len]).concat(1, name='avg_inputs')
+        ref_out = None
+        for b in range(len(self.ws[1])):
+            ref_out = 'avg_input_{}'.format(b)
+            self.fc_ws(ws=self.ws[1][b], name=ref_out)
+
+        # final net 0
+        self.feed(ref_out)
+        a = 0
+        for b in range(len(self.ws[3])):
+            if b < len(self.ws[3])-1:
+                n = 'output_{}_{}'.format(a, b)
+                self.fc_ws(ws=self.ws[3][b], name=n)
+            else:
+                n = 'output_{}'.format(a)
+                self.fc_ws(ws=self.ws[3][b], name=n, sig=False)
+
+        # stack 1-n
+        for a in range(cfg.feature_len + cfg.add_len):
+            self.feed(ref_out, all_inputs[a]) \
+                .concat(1, name='stack_inputs_{}'.format(a))
+            for b in range(len(self.ws[2])):
+                ref_out = 'stack_input_{}_{}'.format(a, b)
+                self.fc_ws(ws=self.ws[2][b], name=ref_out)
+
+            # final net a
+            self.feed(ref_out)
+            for b in range(len(self.ws[3])):
+                if b < len(self.ws[3])-1:
+                    n = 'output_{}_{}'.format(a, b)
+                    self.fc_ws(ws=self.ws[3][b], name=n)
+                else:
+                    n = 'output_{}'.format(a+1)
+                    self.fc_ws(ws=self.ws[3][b], name=n, sig=False)
+
 class StackNet5(Network):
 
     def create_ws(self, n, ins, outs):
@@ -219,7 +322,7 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+cfg.add_len):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = StackNet5(input_dic)
+    net = StackNet5_SIG(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = {}

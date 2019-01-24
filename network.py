@@ -186,24 +186,24 @@ class Network(object):
     def add(self, inputs, name):
         return tf.add_n(inputs, name=name)
 
+    @layer
+    def fc_ws(self, input, ws, name, sig=True):
+        with tf.variable_scope(name) as scope:
+            op = tf.nn.xw_plus_b
+            fc = op(input, ws[0], ws[1], name=scope.name)
+            if sig:
+                return tf.nn.sigmoid(fc, scope.name + '_sig')
+            return fc
 
     @layer
-    def fc_s(self, input, num_out, name, sig=True):
+    def fc_s(self, input, ws, name, sig=True):
         with tf.variable_scope(name) as scope:
-            input_shape = input.get_shape()
-            if input_shape.ndims == 4:
-                # The input is spatial. Vectorize it first.
-                dim = 1
-                for d in input_shape[1:].as_list():
-                    dim *= d
-                feed_in = tf.reshape(input, [-1, dim])
-            else:
-                feed_in, dim = (input, input_shape[-1].value)
-            weights = self.make_var('weights', shape=[dim, num_out])
-            biases = self.make_var('biases', [num_out])
+
             op = tf.nn.xw_plus_b
-            fc = op(feed_in, weights, biases, name=scope.name)
-            return tf.nn.sigmoid(fc, scope.name+'_sig')
+            fc = op(input, ws[0], ws[1], name=scope.name)
+            if sig:
+                return tf.nn.sigmoid(fc, scope.name+'_sig')
+            return fc
 
     @layer
     def fc(self, input, num_out, name, relu=True):
