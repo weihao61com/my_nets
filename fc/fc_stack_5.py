@@ -49,8 +49,8 @@ def run_data_stack_avg3(data, inputs, sess, xy, fname, att, step=1):
         truth.append(truth_dic[id])
         t = truth_dic[id]
         if random.random() < 0.2:
-            r = np.linalg.norm(t - result)
             mm = result[-1]
+            r = np.linalg.norm(t - mm)
             if len(mm)==3:
                 fp.write('{},{},{},{},{},{},{}\n'.
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
@@ -298,7 +298,7 @@ if __name__ == '__main__':
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         te = DataSet(cfg.te_data, cfg, sub_sample=.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=.15)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=.1)
 
         cfg.att = te.sz[1]
     else:
@@ -354,7 +354,7 @@ if __name__ == '__main__':
         sess.run(init)
 
         if test is not None:
-            saver.restore(sess, cfg.netTest)
+            saver.restore(sess, cfg.netFile)
             run_test(input_dic, sess, xy, te)
 
         if cfg.renetFile:
