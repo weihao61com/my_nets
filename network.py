@@ -223,7 +223,6 @@ class Network(object):
             fc = op(feed_in, weights, biases, name=scope.name)
             return fc
 
-
     @layer
     def fc_w(self, input, name, weights, biases, relu=True):
         with tf.variable_scope(name) as scope:
@@ -247,6 +246,16 @@ class Network(object):
         with tf.variable_scope(name) as scope:
             op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
             fc = op(input, ws[0], ws[1], name=scope.name)
+            return fc
+
+    @layer
+    def fc_ws(self, input, ws, name, sig=True):
+        #print 'fc_w2', name, input.get_shape(), ws[0].get_shape()
+        with tf.variable_scope(name) as scope:
+            op = tf.nn.xw_plus_b
+            fc = op(input, ws[0], ws[1], name=scope.name)
+            if sig:
+                return tf.nn.sigmoid(fc, scope.name + '_sig')
             return fc
 
     @layer

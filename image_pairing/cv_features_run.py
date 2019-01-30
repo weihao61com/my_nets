@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/office_Test_cv_s5.p'
+filename = '/Users/weihao/Projects/p_files/heads_Test_cv_s3.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -22,7 +22,7 @@ cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
 w2 = cam.cx
 h2 = cam.cy
 
-output_file = '/home/weihao/tmp/feature.csv'
+output_file = '/Users/weihao/tmp/feature.csv'
 fp = open(output_file, 'w')
 
 with open(filename, 'r') as f:
