@@ -444,8 +444,10 @@ class DataSet:
             self.memories[self.index] = data
 
         self.data = []
-        for a in range(0, len(data), self.batch_size):
-            b = a + self.batch_size
+        step = np.ceil(float(len(data))/self.batch_size)
+        step = int(len(data)/step)
+        for a in range(0, len(data), step):
+            b = a + step
             if b > len(data):
                 b = len(data)
             self.data.append(data[a:b])

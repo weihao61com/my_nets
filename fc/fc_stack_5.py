@@ -297,8 +297,8 @@ if __name__ == '__main__':
 
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
-        te = DataSet(cfg.te_data, cfg, sub_sample=.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=.1)
+        te = DataSet(cfg.te_data, cfg, sub_sample=.5)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=.5)
 
         cfg.att = te.sz[1]
     else:
@@ -385,7 +385,7 @@ if __name__ == '__main__':
             tl5 = 0
             nt = 0
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=20)
+                tr_pre_data = tr.prepare(multi=cfg.multi)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

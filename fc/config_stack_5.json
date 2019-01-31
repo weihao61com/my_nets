@@ -11,19 +11,20 @@
     "_tr3": "p_files/office_Train_cv_s3.p",
     "_tr4": "p_files/pumpkin_Train_cv_s3.p",
     "_tr5": "p_files/redkitchen_Train_cv_s3.p",
-    "netFile": "s5",
+    "netFile": "s5_1",
     "renetFile": "s5",
     "add_len": 0,
     "feature_len": 20,
     "num_output": 3,
     "lr": 1e-3,
-    "memory_size": 5000,
-    "loop": 100,
+    "memory_size": 10000,
+    "loop": 10,
     "t_scale": 10,
     "nodes_1_feature": "32",
     "nodes_2_base": "512, 64",
     "nodes_3_stack": "512, 64",
     "nodes_4_ref": "32",
-    "att": 4
+    "att": 4,
+    "multi": 10
 
 }
