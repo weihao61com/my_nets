@@ -78,10 +78,19 @@ class rNet_SIG(Network):
 
         # feature
         ws = []
-        ins = cfg.ref_node + cfg.att
+        ins = cfg.att
+        nodes = cfg.nodes[2]
+        for a in range(len(nodes)):
+            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
+            ins = nodes[a]
+        self.ws.append(ws)
+
+        # base
+        ws = []
+        ins += cfg.ref_node
         nodes_in = cfg.nodes[0]
         for a in range(len(nodes_in)):
-            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes_in[a]))
+            ws.append(self.create_ws('base_{}'.format(a), ins, nodes_in[a]))
             ins = nodes_in[a]
         self.ws.append(ws)
 
@@ -94,44 +103,40 @@ class rNet_SIG(Network):
         ws.append(self.create_ws('out', ins, cfg.num_output))
         self.ws.append(ws)
 
+
     def setup(self):
         pass
 
     def real_setup(self, cfg, verbose=True):
         self.parameters(cfg)
 
-        n = None
-        a =0
-        self.feed('input_0', 'input_1').\
-            concat(1, name='inputs_{}'.format(a))
-        for b in range(len(self.ws[0])):
-            n = 'input_{}_{}'.format(a, b)
-            self.fc_ws(ws=self.ws[0][b], name=n)
-
-        ref_out = n
+        ref_out = 'input_0'
         for a in range(1, cfg.feature_len):
             inputs = 'input_{}'.format(a+1)
-            n = 'input_{}_0'.format(a)
-            self.feed(ref_out, inputs) \
-                .concat(1, name=n)
+            self.feed(inputs)
             for b in range(len(self.ws[0])):
                 n = 'input_{}_{}'.format(a, b)
                 self.fc_ws(ws=self.ws[0][b], name=n)
+                f_out = n
+
+            self.feed(f_out, ref_out).concat(1, name='f_inputs_{}'.format(a))
+            for b in range(len(self.ws[1])):
+                n = 'base_{}_{}'.format(a, b)
+                self.fc_ws(ws=self.ws[1][b], name=n)
                 ref_out = n
 
-            # final net a
-            # a = 0
             if a < cfg.feature_len/2:
                 continue
 
             self.feed(ref_out)
-            for b in range(len(self.ws[1])):
-                if b < len(self.ws[1])-1:
+            for b in range(len(self.ws[2])):
+                if b < len(self.ws[2])-1:
                     n = 'output_{}_{}'.format(a, b)
-                    self.fc_ws(ws=self.ws[1][b], name=n)
+                    self.fc_ws(ws=self.ws[2][b], name=n)
                 else:
                     n = 'output_{}'.format(a)
-                    self.fc_ws(ws=self.ws[1][b], name=n, sig=False)
+                    self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
+
 
 class rNet(Network):
 
@@ -257,7 +262,7 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+1):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = rNet(input_dic)
+    net = rNet_SIG(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = SortedDict()
@@ -268,15 +273,12 @@ if __name__ == '__main__':
 
     #ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
     loss = None
-    last_loss = None
-    for a in xy:
-        l = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
-        if loss is None:
-            loss = l
-        else:
-            loss = loss + l
-        last_loss = l
 
+    for a in xy:
+        if loss is None:
+            loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        else:
+            loss = loss + tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
     #for x in range(1):
     #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
     #    if loss is None:
@@ -299,7 +301,7 @@ if __name__ == '__main__':
         sess.run(init)
 
         if test is not None:
-            saver.restore(sess, cfg.netFile)
+            saver.restore(sess, cfg.netTest)
             run_test(input_dic, sess, xy, te, cfg)
 
         if cfg.renetFile:
@@ -331,7 +333,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=1)
+                tr_pre_data = tr.prepare(multi=10)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -347,7 +349,7 @@ if __name__ == '__main__':
                             feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
                             feed[output] = b[1][c:c + cfg.batch_size]
 
-                            ll3,_= sess.run([last_loss, opt],feed_dict=feed)
+                            ll3,_= sess.run([loss, opt],feed_dict=feed)
                             tl3 += ll3
                             nt += n0
                     tr_pre_data = tr.get_next()
