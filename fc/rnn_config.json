@@ -10,16 +10,17 @@
     "_tr4": "p_files/pumpkin_Train_cv_s3.p",
     "_tr5": "p_files/redkitchen_Train_cv_s3.p",
     "netFile": "r",
-    "_renetFile": "r",
+    "renetFile": "r",
     "add_len": 0,
     "feature_len": 20,
     "num_output": 3,
-    "lr": 1e-3,
+    "lr": 1e-4,
     "memory_size": 5000,
     "loop": 100,
     "t_scale": 10,
-    "nodes_base": "256, 64",
-    "nodes_out": "32",
+    "nodes_0_base": "512, 64",
+    "nodes_1_out": "32",
+    "nodes_2_feature": "32",
     "att": 4
 
 }

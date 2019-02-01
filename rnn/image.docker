@@ -1,0 +1,9 @@
+#docker_test
+#latest
+#.
+
+FROM opus-gpu-base:master-prod-2018_9_20_17_34_44
+
+# Install TensorFlow CPU version from central repo
+RUN pip install \
+    https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.0.1-cp27-none-linux_x86_64.whl
