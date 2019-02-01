@@ -12,8 +12,8 @@ project_dir = '/home/weihao/Projects'
 
 range2 = 5
 range1 = -range2
-key = 'office'
-mode = 'Test'
+key = 'heads'
+mode = 'Train'
 #key = '02'
 #mode = 'Test'
 

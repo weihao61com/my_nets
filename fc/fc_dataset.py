@@ -446,6 +446,7 @@ class DataSet:
         self.data = []
         step = np.ceil(float(len(data))/self.batch_size)
         step = int(len(data)/step)
+        print 'Step', step, len(data)
         for a in range(0, len(data), step):
             b = a + step
             if b > len(data):

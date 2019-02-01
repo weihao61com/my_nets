@@ -322,7 +322,7 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+cfg.add_len):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = StackNet5_SIG(input_dic)
+    net = StackNet5(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = {}
