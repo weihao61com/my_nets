@@ -12,10 +12,10 @@ project_dir = '/home/weihao/Projects'
 
 range2 = 5
 range1 = -range2
-key = 'heads'
+#key = 'heads'
+#mode = 'Train'
+key = '00'
 mode = 'Train'
-#key = '02'
-#mode = 'Test'
 
 if len(sys.argv)>1:
     key = sys.argv[1]
@@ -29,13 +29,13 @@ print key, mode
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 #
-#location = '{}/datasets/kitty'.format(project_dir)
-#poses_dic, cam = load_kitty_poses(location, key)
-#key = 'kitty_{}'.format(key)
+location = '{}/datasets/kitty'.format(project_dir)
+poses_dic, cam = load_kitty_poses(location, key)
+key = 'kitty_{}'.format(key)
 
 
-location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
-poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+#location = "/home/weihao/Projects/datasets/indoors/{}".format(key) #office" #heads
+#poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
 filename = '/home/weihao/Projects/p_files/{}_{}_cv_s{}.p'.format(key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(project_dir, key, mode)

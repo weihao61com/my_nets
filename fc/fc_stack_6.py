@@ -312,7 +312,9 @@ if __name__ == '__main__':
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, 'feature', cfg.feature_len
 
+    lr = cfg.lr
     inputs = {}
+    learning_rate = tf.placeholder(tf.float32, shape=[])
 
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
     for a in range(cfg.feature_len + cfg.add_len):
@@ -339,7 +341,7 @@ if __name__ == '__main__':
             loss = loss + ll
         ls.append(ll)
 
-    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                    beta2=0.999, epsilon=0.00000001,
                    use_locking=False, name='Adam').\
        minimize(loss)
@@ -349,6 +351,7 @@ if __name__ == '__main__':
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     t00 = datetime.datetime.now()
+    N_total = 0
 
     with tf.Session() as sess:
         sess.run(init)
@@ -370,7 +373,9 @@ if __name__ == '__main__':
             te_loss, te_median = run_data_stack_avg3(te_pre_data, input_dic, sess, xy, 'te', cfg.att, step=cfg.feature_len/2)
 
             t1 = datetime.datetime.now()
-            str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            # lr = cfg.lr/(a+1)/loop*1000
+            str = "it: {0:.3f} {1:.3f} {2}".\
+                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
             s = 0
             while True:
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
@@ -391,7 +396,7 @@ if __name__ == '__main__':
                     for b in tr_pre_data:
                         total_length = len(b[0])
                         for c in range(0, total_length, cfg.batch_size):
-                            feed = {}
+                            feed = {learning_rate: lr}
                             for a in range(cfg.feature_len+cfg.add_len):
                                 feed[input_dic['input_{}'.format(a)]] = \
                                     b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
@@ -404,6 +409,10 @@ if __name__ == '__main__':
                             tl5 += ll5
                             nt += len(b[0][c:c + cfg.batch_size])
                     tr_pre_data = tr.get_next()
+
+                N_total += 1
+                if N_total%100:
+                    lr *= 0.99
             str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)
 
