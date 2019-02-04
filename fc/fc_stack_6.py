@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
             t1 = datetime.datetime.now()
             # lr = cfg.lr/(a+1)/loop*1000
-            str = "it: {0:.3f} {1:.3f} {2}".\
+            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
                 format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
             s = 0
             while True:
