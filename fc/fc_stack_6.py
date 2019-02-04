@@ -284,7 +284,7 @@ def run_test(input_dic, sess, xy, te):
 
 if __name__ == '__main__':
 
-    config_file = "config_stack_5.json"
+    config_file = "config_stack_6.json"
 
     if len(sys.argv)>1:
         config_file = sys.argv[1]
@@ -411,7 +411,7 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next()
 
                 N_total += 1
-                if N_total%100:
+                if N_total%10:
                     lr *= 0.99
             str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)

@@ -301,7 +301,7 @@ if __name__ == '__main__':
         sess.run(init)
 
         if test is not None:
-            saver.restore(sess, cfg.netTest)
+            saver.restore(sess, cfg.netFile)
             run_test(input_dic, sess, xy, te, cfg)
 
         if cfg.renetFile:
