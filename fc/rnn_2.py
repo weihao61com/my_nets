@@ -64,6 +64,7 @@ def run_data(data, inputs, sess, xy, fname, cfg):
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
+
 class rNet_SIG(Network):
 
     def create_ws(self, n, ins, outs):
@@ -102,7 +103,6 @@ class rNet_SIG(Network):
             ins = nodes[a]
         ws.append(self.create_ws('out', ins, cfg.num_output))
         self.ws.append(ws)
-
 
     def setup(self):
         pass
@@ -248,6 +248,8 @@ if __name__ == '__main__':
         'feature', cfg.feature_len, 'add', cfg.add_len
 
     inputs = {}
+    lr = cfg.lr
+    learning_rate = tf.placeholder(tf.float32, shape=[])
 
     output = tf.placeholder(tf.float32, [None, cfg.num_output])
     cfg.ref_node = cfg.nodes[0][-1]
@@ -273,12 +275,13 @@ if __name__ == '__main__':
 
     #ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
     loss = None
-
+    last_loss = None
     for a in xy:
+        last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         if loss is None:
-            loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+            loss = last_loss
         else:
-            loss = loss + tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+            loss = loss + last_loss
     #for x in range(1):
     #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
     #    if loss is None:
@@ -287,7 +290,7 @@ if __name__ == '__main__':
     #        loss = loss + ll
     #    ls.append(ll)
 
-    opt = tf.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
+    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
@@ -296,7 +299,7 @@ if __name__ == '__main__':
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     t00 = datetime.datetime.now()
-
+    N_total = 0
     with tf.Session() as sess:
         sess.run(init)
 
@@ -317,7 +320,8 @@ if __name__ == '__main__':
             te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
             t1 = datetime.datetime.now()
-            str = "it: {0:.3f} {1:.3f}".format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0)
+            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
+                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
             s = -1
             while True:
                 s += len(tr_loss)/2
@@ -340,7 +344,7 @@ if __name__ == '__main__':
                         total_length = len(b[0])
                         length = b[0].shape[1]/cfg.att
                         for c in range(0, total_length, cfg.batch_size):
-                            feed = {}
+                            feed = {learning_rate: lr}
                             n0 = 0
                             for a in range(length):
                                 x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
@@ -349,10 +353,16 @@ if __name__ == '__main__':
                             feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
                             feed[output] = b[1][c:c + cfg.batch_size]
 
-                            ll3,_= sess.run([loss, opt],feed_dict=feed)
+                            ll3,_= sess.run([last_loss, opt],feed_dict=feed)
                             tl3 += ll3
                             nt += n0
                     tr_pre_data = tr.get_next()
+                N_total += 1
+                if N_total % 2 == 0:
+                    lr *= 0.99
+                    if lr<1e-5:
+                        break
+
             str1 = "{0:.3f} ".format(tl3/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)
 
