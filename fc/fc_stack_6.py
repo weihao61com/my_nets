@@ -411,8 +411,10 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next()
 
                 N_total += 1
-                if N_total%20==0:
+                if N_total%100==0:
                     lr *= 0.99
+                    if lr<1e-6:
+                        break
             str1 = "{0:.3f} {1:.3f} {2:.3f}".format(tl3/nt, tl4/nt, tl5/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)
 
