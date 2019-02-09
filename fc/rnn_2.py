@@ -358,10 +358,10 @@ if __name__ == '__main__':
                             nt += n0
                     tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % 2 == 0:
+                if N_total % 20 == 0:
                     lr *= 0.99
                     if lr<1e-5:
-                        break
+                        exit()
 
             str1 = "{0:.3f} ".format(tl3/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)

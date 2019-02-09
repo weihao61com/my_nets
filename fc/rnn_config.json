@@ -17,7 +17,7 @@
     "lr": 1e-3,
     "memory_size": 10000,
     "loop": 10,
-    "t_scale": 10,
+    "t_scale": 1,
     "nodes_0_base": "512, 64",
     "nodes_1_out": "32",
     "nodes_2_feature": "32",
