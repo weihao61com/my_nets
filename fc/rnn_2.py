@@ -337,7 +337,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=10)
+                tr_pre_data = tr.prepare(multi=cfg.multi)
 
                 while tr_pre_data:
                     for b in tr_pre_data:
@@ -360,7 +360,7 @@ if __name__ == '__main__':
                 N_total += 1
                 if N_total % 20 == 0:
                     lr *= 0.99
-            if lr<1e-5:
+            if lr<1e-6:
                 break
 
             str1 = "{0:.3f} ".format(tl3/nt)
