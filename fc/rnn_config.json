@@ -18,9 +18,9 @@
     "memory_size": 10000,
     "loop": 20,
     "t_scale": 10,
-    "nodes_0_base": "1024, 128",
-    "nodes_1_out": "64",
-    "nodes_2_feature": "64",
+    "nodes_0_base": "256, 32",
+    "nodes_1_out": "16",
+    "nodes_2_feature": "16",
     "att": 4,
-    "multi": 10
+    "multi": 100
 }
