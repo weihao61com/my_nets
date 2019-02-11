@@ -65,7 +65,7 @@ def run_data(data, inputs, sess, xy, fname, cfg):
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
 
 
-class rNet_SIG(Network):
+class rNet(Network):
 
     def create_ws(self, n, ins, outs):
         print n, ins, outs
@@ -138,74 +138,6 @@ class rNet_SIG(Network):
                     self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
 
 
-class rNet(Network):
-
-    def create_ws(self, n, ins, outs):
-        print n, ins, outs
-        w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
-        b = self.make_var('biases_{}'.format(n), shape=[outs])
-        return [w,b]
-
-    def parameters(self, cfg):
-
-        self.ws = []
-
-        # feature
-        ws = []
-        ins = cfg.ref_node + cfg.att
-        nodes_in = cfg.nodes[0]
-        for a in range(len(nodes_in)):
-            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes_in[a]))
-            ins = nodes_in[a]
-        self.ws.append(ws)
-
-        # out
-        ws = []
-        nodes = cfg.nodes[1]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-        ws.append(self.create_ws('out', ins, cfg.num_output))
-        self.ws.append(ws)
-
-    def setup(self):
-        pass
-
-    def real_setup(self, cfg, verbose=True):
-        self.parameters(cfg)
-
-        #n = None
-        #a =0
-        #self.feed('input_0', 'input_1').\
-        #    concat(1, name='inputs_{}'.format(a))
-        #for b in range(len(self.ws[0])):
-        #    n = 'input_{}_{}'.format(a, b)
-        #    self.fc_w2(ws=self.ws[0][b], name=n)
-
-        ref_out = 'input_0'
-        for a in range(cfg.feature_len):
-            inputs = 'input_{}'.format(a+1)
-            n = 'input_{}_0'.format(a)
-            self.feed(ref_out, inputs) \
-                .concat(1, name=n)
-            for b in range(len(self.ws[0])):
-                n = 'input_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[0][b], name=n)
-                ref_out = n
-
-            if a < cfg.feature_len/2:
-                continue
-
-            self.feed(ref_out)
-            for b in range(len(self.ws[1])):
-                if b < len(self.ws[1])-1:
-                    n = 'output_{}_{}'.format(a, b)
-                    self.fc_w2(ws=self.ws[1][b], name=n)
-                else:
-                    n = 'output_{}'.format(a)
-                    self.fc_w2(ws=self.ws[1][b], name=n, relu=False)
-
-
 def run_test(input_dic, sess, xy, te, cfg):
 
     tr_pre_data = te.prepare(multi=-1)
@@ -264,7 +196,7 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+1):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = rNet_SIG(input_dic)
+    net = rNet(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = SortedDict()

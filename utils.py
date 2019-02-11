@@ -397,3 +397,8 @@ class Utils:
         if os.path.exists(net_dir):
             shutil.rmtree(net_dir)
         shutil.move(tmp_dir, net_dir)
+
+    @staticmethod
+    def run_cmd(cmd):
+        print(cmd)
+        os.system(cmd)
