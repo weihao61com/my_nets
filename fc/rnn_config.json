@@ -1,9 +1,9 @@
 {
     "batch_size": 100,
-    "_te": "p_files/kitty_02_Test_cv_s3_2.p",
-    "_tr": "p_files/kitty_00_Train_cv_s3_2.p",
-    "te": "p_files/heads_Test_cv_s3.p",
-    "tr": "p_files/heads_Train_cv_s3.p",
+    "te": "p_files/kitty_02_Test_cv_s3_2.p",
+    "tr": "p_files/kitty_00_Train_cv_s3_2.p",
+    "_te": "p_files/heads_Test_cv_s3.p",
+    "_tr": "p_files/heads_Train_cv_s3.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",
     "_tr2": "p_files/fire_Train_cv_s3.p",
     "_tr3": "p_files/office_Train_cv_s3.p",
@@ -22,5 +22,5 @@
     "nodes_1_out": "16",
     "nodes_2_feature": "16",
     "att": 4,
-    "multi": 100
+    "multi": 10
 }
