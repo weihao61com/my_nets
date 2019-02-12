@@ -268,7 +268,7 @@ if __name__ == '__main__':
     for a in range(cfg.feature_len+1):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    net = rNet_SIG(input_dic)
+    net = rNet(input_dic)
     net.real_setup(cfg, verbose=False)
 
     xy = SortedDict()
@@ -364,7 +364,7 @@ if __name__ == '__main__':
                 N_total += 1
                 if N_total % 10 == 0:
                     lr *= 0.99
-            if lr<1e-5:
+            if lr<1e-6:
                 break
 
             str1 = "{0:.3f} ".format(tl3/nt)

@@ -4,10 +4,10 @@ from utils import Utils
 model = 'r2'
 config = 'rnn_config.json'
 machine = 'weihao@debian-sensors'
-machine = 'weihao@sensors-debian2'
+#machine = 'weihao@sensors-debian2'
 
 if len(sys.argv)>1:
-    machine = sys.argv[1]
+    machine = 'weihao@sensors-debian2'
 
 cmd = 'rm -r /Users/weihao/Projects/NNs/{}'.format(model)
 Utils.run_cmd(cmd)
