@@ -107,107 +107,47 @@ class rNet(Network):
     def setup(self):
         pass
 
-    def real_setup(self, cfg, verbose=True):
+    def real_setup(self, cfg, SIG=False):
         self.parameters(cfg)
 
         ref_out = 'input_0'
-        for a in range(1, cfg.feature_len):
+        for a in range(0, cfg.feature_len):
             inputs = 'input_{}'.format(a+1)
             self.feed(inputs)
             for b in range(len(self.ws[0])):
                 n = 'input_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[0][b], name=n)
+                if SIG:
+                    self.fc_ws(ws=self.ws[0][b], name=n)
+                else:
+                    self.fc_w2(ws=self.ws[0][b], name=n)
                 f_out = n
 
             self.feed(f_out, ref_out).concat(1, name='f_inputs_{}'.format(a))
             for b in range(len(self.ws[1])):
                 n = 'base_{}_{}'.format(a, b)
-                self.fc_w2(ws=self.ws[1][b], name=n)
+                if SIG:
+                    self.fc_ws(ws=self.ws[1][b], name=n)
+                else:
+                    self.fc_w2(ws=self.ws[1][b], name=n)
                 ref_out = n
 
-            if a < cfg.feature_len/2:
-                continue
+            #if a < cfg.feature_len/2:
+            #    continue
 
             self.feed(ref_out)
             for b in range(len(self.ws[2])):
                 if b < len(self.ws[2])-1:
                     n = 'output_{}_{}'.format(a, b)
-                    self.fc_w2(ws=self.ws[2][b], name=n)
+                    if SIG:
+                        self.fc_ws(ws=self.ws[2][b], name=n)
+                    else:
+                        self.fc_w2(ws=self.ws[2][b], name=n)
                 else:
                     n = 'output_{}'.format(a)
-                    self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
-
-class rNet_SIG(Network):
-
-    def create_ws(self, n, ins, outs):
-        print n, ins, outs
-        w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
-        b = self.make_var('biases_{}'.format(n), shape=[outs])
-        return [w,b]
-
-    def parameters(self, cfg):
-
-        self.ws = []
-
-        # feature
-        ws = []
-        ins = cfg.att
-        nodes = cfg.nodes[2]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-        self.ws.append(ws)
-
-        # base
-        ws = []
-        ins += cfg.ref_node
-        nodes_in = cfg.nodes[0]
-        for a in range(len(nodes_in)):
-            ws.append(self.create_ws('base_{}'.format(a), ins, nodes_in[a]))
-            ins = nodes_in[a]
-        self.ws.append(ws)
-
-        # out
-        ws = []
-        nodes = cfg.nodes[1]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-        ws.append(self.create_ws('out', ins, cfg.num_output))
-        self.ws.append(ws)
-
-    def setup(self):
-        pass
-
-    def real_setup(self, cfg, verbose=True):
-        self.parameters(cfg)
-
-        ref_out = 'input_0'
-        for a in range(1, cfg.feature_len):
-            inputs = 'input_{}'.format(a+1)
-            self.feed(inputs)
-            for b in range(len(self.ws[0])):
-                n = 'input_{}_{}'.format(a, b)
-                self.fc_ws(ws=self.ws[0][b], name=n)
-                f_out = n
-
-            self.feed(f_out, ref_out).concat(1, name='f_inputs_{}'.format(a))
-            for b in range(len(self.ws[1])):
-                n = 'base_{}_{}'.format(a, b)
-                self.fc_ws(ws=self.ws[1][b], name=n)
-                ref_out = n
-
-            if a < cfg.feature_len/2:
-                continue
-
-            self.feed(ref_out)
-            for b in range(len(self.ws[2])):
-                if b < len(self.ws[2])-1:
-                    n = 'output_{}_{}'.format(a, b)
-                    self.fc_ws(ws=self.ws[2][b], name=n)
-                else:
-                    n = 'output_{}'.format(a)
-                    self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
+                    if SIG:
+                        self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
+                    else:
+                        self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
 def run_test(input_dic, sess, xy, te, cfg):
@@ -269,7 +209,7 @@ if __name__ == '__main__':
         input_dic['input_{}'.format(a)] = inputs[a]
 
     net = rNet(input_dic)
-    net.real_setup(cfg, verbose=False)
+    net.real_setup(cfg, SIG=False)
 
     xy = SortedDict()
     for a in range(cfg.feature_len):
@@ -277,22 +217,16 @@ if __name__ == '__main__':
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
 
-    #ls = [] #[tf.reduce_sum(tf.square(tf.subtract(xy[0], output)))]
     loss = None
     last_loss = None
     for a in xy:
+        if a<10:
+            continue
         last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         if loss is None:
             loss = last_loss
         else:
             loss = loss + last_loss
-    #for x in range(1):
-    #    ll = tf.reduce_sum(tf.square(tf.subtract(xy[x], output)))
-    #    if loss is None:
-    #        loss = ll
-    #    else:
-    #        loss = loss + ll
-    #    ls.append(ll)
 
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
