@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 from sortedcontainers import SortedDict
+from sklearn import linear_model
 
 
 class Truth:
@@ -48,20 +49,28 @@ class TruthData:
                     self.data.append(Truth(row))
         print 'Total Truth', len(self.data)
 
+def l_fit(data):
+
+    d = np.array(data)
+    X = d[:, 0]
+    Y = d[:, 1]
+    z = np.polyfit(X, Y, 1)
+    return z
 
 class Measurements:
 
     def __init__(self, rows, a, sensors, verbose=True):
         self.data = SortedDict()
+        self.sensors = sensors
 
         for row in rows:
             d = Data(row)
-            self.data[d.timeAtServer] = d
+            self.data[d.id] = d
 
         print 'total data', a, len(self.data)
 
         if verbose:
-            filename = '/home/weihao/tmp/m_{}.csv'.format(a)
+            filename = '/Users/weihao/tmp/m_{}.csv'.format(a)
             with open(filename, 'w') as fp:
                 for t in self.data:
                     dd = self.data[t]
@@ -72,6 +81,21 @@ class Measurements:
                         fp.write('{},{},{},{},{},{},{},{},{},{},{},{}\n'.
                                  format(t, dd.id, dd.lat, dd.lon, dd.bAlt, dd.gAlt,
                                         m, mm[0], mm[1], lla[0], lla[1], lla[2]))
+
+    def sync(self):
+        sensor_list = SortedDict()
+        for t in self.data:
+            dd = self.data[t]
+            for m in dd.measurements:
+                if not m in sensor_list:
+                    sensor_list[m] = []
+                mm = dd.measurements[m]
+                sensor_list[m].append((t, mm[0]*1e-9 ))
+
+        for m in sensor_list:
+            if len(sensor_list[m])>10:
+                z = l_fit(sensor_list[m])
+                print m, len(sensor_list[m]), z[0], z[1]
 
 
 class Sensor:
@@ -124,11 +148,13 @@ def read_aircraft(filename):
 
 
 if __name__ == '__main__':
-    data_location = '/home/weihao/PY/al'
+    data_location = "/Users/weihao/Downloads" #'/home/weihao/PY/al'
     data_set = 'training_1_category_4'
     filename = '{0}/{1}/{1}.csv'.format(data_location, data_set)
     truthfile = '{0}/{1}_result/{1}_result.csv'.format(data_location, data_set)
     sensorfile = '{0}/{1}/sensors.csv'.format(data_location, data_set)
+    filename = '/Users/weihao/tmp/A1787.csv'
+
 
     sensors = Sensors(sensorfile)
     truth = TruthData(truthfile)
@@ -136,9 +162,10 @@ if __name__ == '__main__':
 
     measure = {}
     for a in aircrafts:
-        measure[a] = Measurements(aircrafts[a], a, sensors)
-        if len(measure)>4:
-            break
+        measure[a] = Measurements(aircrafts[a], a, sensors, verbose=False)
+        # measure[a].sync()
+        # if len(measure)>20:
+        #    break
 
     #data.setup_sensor(sensors.data)
 
