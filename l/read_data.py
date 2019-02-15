@@ -148,12 +148,18 @@ def read_aircraft(filename):
 
 
 if __name__ == '__main__':
-    data_location = "/Users/weihao/Downloads" #'/home/weihao/PY/al'
+    import os
+    import sys
+
+    this_file_path = os.path.dirname(os.path.realpath(__file__))
+    data_location =  '{}/../../datasets/al'.format(this_file_path)
+
+    #data_location = "/Users/weihao/Downloads" #'/home/weihao/PY/al'
     data_set = 'training_1_category_4'
     filename = '{0}/{1}/{1}.csv'.format(data_location, data_set)
     truthfile = '{0}/{1}_result/{1}_result.csv'.format(data_location, data_set)
     sensorfile = '{0}/{1}/sensors.csv'.format(data_location, data_set)
-    filename = '/Users/weihao/tmp/A1787.csv'
+    filename = '{}/A1787.csv'.format(data_location)
 
 
     sensors = Sensors(sensorfile)
@@ -163,7 +169,7 @@ if __name__ == '__main__':
     measure = {}
     for a in aircrafts:
         measure[a] = Measurements(aircrafts[a], a, sensors, verbose=False)
-        # measure[a].sync()
+        measure[a].sync()
         # if len(measure)>20:
         #    break
 
