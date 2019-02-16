@@ -42,8 +42,6 @@ class Data:
         self.measurements = {}
         for a in range(self.numMeasurements):
             self.measurements[int(mtx[a, 0])] = list(mtx[a, 1:])
-            if int(mtx[a, 0])==521:
-                print row
 
     def add_sensor(self, s):
         if s.id in self.measurements:
@@ -71,6 +69,25 @@ def l_fit(data):
     Y = d[:, 1]
     z = np.polyfit(X, Y, 1)
     return z
+
+
+class TrainData:
+    def __init__(self, id, K):
+        self.K = K
+        self.id = id
+        self.collection = []
+
+    def add_data(self, measurements):
+        for m in measurements:
+            mm = measurements[m]
+            if len(self.collection)==self.K:
+                break
+            mm.append(m)
+            self.collection.append(mm)
+
+    def enough(self):
+        return len(self.collection)==self.K
+
 
 class Measurements:
 
