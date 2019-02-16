@@ -209,7 +209,7 @@ if __name__ == '__main__':
         input_dic['input_{}'.format(a)] = inputs[a]
 
     net = rNet(input_dic)
-    net.real_setup(cfg, SIG=False)
+    net.real_setup(cfg, SIG=(cfg.SIG==1))
 
     xy = SortedDict()
     for a in range(cfg.feature_len):
