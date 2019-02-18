@@ -15,7 +15,7 @@
     "add_len": 0,
     "feature_len": 20,
     "num_output": 3,
-    "lr": 1e-3,
+    "lr": 1e-4,
     "memory_size": 10000,
     "loop": 10,
     "t_scale": 10,
@@ -23,6 +23,6 @@
     "nodes_1_out": "64",
     "nodes_2_feature": "64",
     "att": 4,
-    "multi": 10,
+    "multi": 5,
     "SIG": 0
 }
