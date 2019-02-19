@@ -6,8 +6,10 @@ import json
 from sortedcontainers import SortedDict
 import sys
 import pickle
-import shutil
+import pyproj
 import csv
+from bluenotelib.common.coordinate_transforms import CoordinateTransforms as ct
+
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -72,7 +74,7 @@ class Sensors:
 
 class Measurements:
 
-    def __init__(self, rows, a, sensors, verbose=True):
+    def __init__(self, rows, a, sensors, fp=None):
         self.data = SortedDict()
         self.sensors = sensors
         self.a = a
@@ -83,30 +85,59 @@ class Measurements:
 
         print 'total aircraft data', a, len(self.data)
 
-        # if verbose:
-        #     filename = '{}/m_{}.csv'.format(this_file_path, a)
-        #     with open(filename, 'w') as fp:
-        #         for t in self.data:
-        #             dd = self.data[t]
-        #             for m in dd.measurements:
-        #                 mm = dd.measurements[m]
-        #                 ss = sensors.data[m]
-        #                 lla = ss.lla
-        #                 xy = ss.xyz
-        #                 xyz = ecef_to_enu(dd.lat, dd.lon, dd.bAlt, lla[0],lla[1],lla[2])
-        #                 fp.write('{},{}'.format(dd.timeAtServer, dd.id))
-        #                 fp.write(',{},{},{},{},{},{},{}'.
-        #                          format(xyz[0], xyz[1], xyz[2], dd.lat, dd.lon, dd.bAlt, dd.gAlt))
-        #                 fp.write(',{},{},{},{}'.format(m, ss.type_id, mm[0], mm[1]))
-        #                 fp.write(',{},{},{},{},{}'.
-        #                          format(xy[0], xy[1], lla[0], lla[1], lla[2]))
-        #                 r1 = np.sqrt((xyz[0]-xy[0])*(xyz[0]-xy[0])+(xyz[1]-xy[1])*(xyz[1]-xy[1]))
-        #                 r2 = np.sqrt((dd.lat-lla[0])*(dd.lat-lla[0])+(dd.lon-lla[1])*(dd.lon-lla[1]))
-        #                 fp.write(',{},{}'.format(r1,r2))
-        #                 fp.write('\n')
-        #                 #if m==514:
-        #                 #    print xyz
-        #     exit()
+        if fp is not None:
+            counts = {}
+            #with open(filename, 'w') as fp:
+            D0 = None
+            for t in self.data:
+                dd = self.data[t]
+                for m in dd.measurements:
+                    if m not in counts:
+                        counts[m] = 0
+                    counts[m] += 1
+                id1 = 191
+                id2 = 199
+                #id2 = 166
+                pt = 1000
+                if id1 in dd.measurements and id2 in dd.measurements:# and id3 in dd.measurements:
+                    lla = [dd.lat, dd.lon, dd.gAlt]
+                    m1 = dd.measurements[id1]
+                    s1 = sensors.data[id1]
+                    lla1 = s1.lla
+                    m2 = dd.measurements[id2]
+                    s2 = sensors.data[id2]
+                    lla2 = s2.lla
+                    if not pt==dd.timeAtServer:
+                        dt1 = (m1[0] - m2[0]) * 1e-9
+                        dif = LUtils.gps_to_ecef_pyproj(lla)
+                        d1 = np.linalg.norm(dif - LUtils.gps_to_ecef_pyproj(lla1))
+                        d2 = np.linalg.norm(dif - LUtils.gps_to_ecef_pyproj(lla2))
+                        # d1 = LUtils.cal_dist(lla, lla1)
+                        # d2 = LUtils.cal_dist(lla, lla2)
+                        # dt2 = (m2[0]-m3[0])*1e-9
+                        # dt3 = (m3[0]-m1[0])*1e-9
+                        dif = dt1 * 299792458 - (d1 - d2)
+                        if D0 is None:
+                            D0 = dif
+                            print 'D0', a, D0
+
+                        #if abs(dif+11370549092)<6000:
+                        fp.write('{},{},{}'.format(dd.timeAtServer, dd.id, a))
+                        fp.write(',{},{},{},{}'.format( dd.lat, dd.lon, dd.bAlt, dd.gAlt))
+                        fp.write(',{},{},{}'.format(s1.type_id, m1[0], m1[1]))
+                        # fp.write(',{},{},{}'.format(lla1[0], lla1[1], lla1[2]))
+                        fp.write(',{},{},{}'.format(s2.type_id, m2[0], m2[1]))
+                        # fp.write(',{},{},{}'.format(lla2[0], lla2[1], lla2[2]))
+                        #fp.write(',{},{},{}'.format(s3.type_id, m3[0], m3[1]))
+
+                        fp.write(',{},{},{},{}'.format(dt1, d1, d2, dif))
+                        fp.write('\n')
+                        pt = dd.timeAtServer
+
+            for m in counts:
+                if counts[m]>1000:
+                    sensors.data[m]
+                    print m, counts[m], sensors.data[m].type_id
 
     def sync(self):
         sensor_list = SortedDict()
@@ -134,12 +165,34 @@ class Measurements:
                 d = [dd.timeAtServer, mm[1], s.type_id]
                 d = d + s.lla
                 seq.append(d)
-                truth.append([dd.lat, dd.lon, dd.bAlt])
-        print 'total memsurement', len(seq)
+                truth.append([dd.lat, dd.lon, dd.gAlt])
+        print 'total measurement', len(seq)
         return seq, truth
+
+    def set_GT(self, truth):
+        for id in self.data:
+            tr = truth.data[id]
+            self.data[id].lat = float(tr[0])
+            self.data[id].lon = float(tr[1])
+            self.data[id].gAlt = float(tr[2])
 
 
 class LUtils:
+
+    @staticmethod
+    def gps_to_ecef_pyproj(l):
+        ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
+        lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
+        # lonlat
+        x, y, z = pyproj.transform(lla, ecef, l[1], l[0], l[2], radians=False)
+        return np.array([x, y, z])
+
+    @staticmethod
+    def cal_dist(lla1, lla2):
+        l1 = [lla1[1], lla1[0], lla1[2]]
+        l2 = [lla2[1], lla2[0], lla2[2]]
+        enu = ct.lla_to_enu_from_lonlatalt(l1, l2)
+        return np.linalg.norm(enu)
 
     @staticmethod
     def read_csv(filename):
@@ -157,6 +210,7 @@ class LUtils:
     @staticmethod
     def read_aircraft(filename):
         aircrafts = SortedDict()
+        missing_a = SortedDict()
         missing = 0
 
         for row in LUtils.read_csv(filename):
@@ -164,14 +218,17 @@ class LUtils:
             d = Data(row)
             if d.missing:
                 missing += 1
+                if not d.aircraft in missing_a:
+                    missing_a[d.aircraft] = []
+                missing_a[d.aircraft].append(row)
             else:
                 if not d.aircraft in aircrafts:
                     aircrafts[d.aircraft] = []
                 aircrafts[d.aircraft].append(row)
 
-        print 'total aircraft', len(aircrafts), missing
+        print 'total aircraft', len(aircrafts), missing,len(missing_a)
 
-        return aircrafts
+        return aircrafts, missing_a
 
     @staticmethod
     def l_fit(data):

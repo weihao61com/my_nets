@@ -6,7 +6,7 @@ import os
 # import utm
 import pyproj
 import math
-from L_utils import LUtils, Sensors
+from L_utils import LUtils, Sensors, Measurements, HOME
 import pickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -28,7 +28,10 @@ class Truth:
 
 class TruthData:
     def __init__(self,filename):
-        self.data = LUtils.read_csv(filename)
+        d = LUtils.read_csv(filename)
+        self.data = {}
+        for a in d:
+            self.data[int(a[0])] = a[1:]
         print 'Total truth data', len(self.data)
 
 
@@ -93,22 +96,50 @@ if __name__ == '__main__':
     truthfile = '{0}/{1}_result/{1}_result.csv'.format(data_location, data_set)
     sensorfile = '{0}/{1}/sensors.csv'.format(data_location, data_set)
     #  grep ",103," ../../datasets/al/training_1_category_4/training_1_category_4.csv > A103.csv
-    # filename = 'A103.csv'.format(data_location)
+    #filename = 'A103.csv'.format(data_location)
 
 
     sensors = Sensors(sensorfile)
     truth = TruthData(truthfile)
-    aircrafts = LUtils.read_aircraft(filename)
+    aircrafts, missing = LUtils.read_aircraft(filename)
 
-    nt = 0
+    filename = '{}/../tmp/m.csv'.format(HOME)
+    fp = open(filename, 'w')
     for id in aircrafts:
         if len(aircrafts[id])>5000:
             print '\t\taircraft', id, len(aircrafts[id])
-            nt += 1
-            measure = Measurements(aircrafts[id], id, sensors, verbose=False)
+            measure = Measurements(aircrafts[id], id, sensors, fp=fp)
             # measure.sync()
-            data = measure.greate_GT()
+    fp.close()
 
-            filename = 'A_{}.p'.format(id)
-            with open(filename, 'w') as fp:
-                pickle.dump(data, fp)
+    #
+    # nt = 0
+    # for id in missing:
+    #     if len(missing[id])>500:
+    #         print '\t\taircraft', id, len(missing[id])
+    #         nt += 1
+    #         measure = Measurements(missing[id], id, sensors, verbose=False)
+    #         # measure.sync()
+    #         measure.set_GT(truth)
+    #         data = measure.greate_GT()
+    #
+    #         filename = 'T_{}.p'.format(id)
+    #         with open(filename, 'w') as fp:
+    #             pickle.dump(data, fp)
+    #     #if nt>3:
+    #     #    break
+    #
+    # nt = 0
+    # for id in aircrafts:
+    #     if len(aircrafts[id])>5000:
+    #         print '\t\taircraft', id, len(aircrafts[id])
+    #         nt += 1
+    #         measure = Measurements(aircrafts[id], id, sensors, verbose=False)
+    #         # measure.sync()
+    #         data = measure.greate_GT()
+    #
+    #         filename = 'A_{}.p'.format(id)
+    #         with open(filename, 'w') as fp:
+    #             pickle.dump(data, fp)
+    #     #if nt>3:
+    #     #    break
