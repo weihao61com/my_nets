@@ -231,7 +231,7 @@ if __name__ == '__main__':
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
-        minimize(loss)
+        minimize(last_loss)
     # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.global_variables_initializer()
@@ -296,8 +296,8 @@ if __name__ == '__main__':
                             nt += n0
                     tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % 10 == 0:
-                    lr *= 0.99
+                if N_total % 1000 == 0:
+                    lr *= 0.9
             if lr<1e-6:
                 break
 
