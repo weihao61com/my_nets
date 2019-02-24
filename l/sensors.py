@@ -6,7 +6,7 @@ import os
 # import utm
 import pyproj
 import math
-from L_utils import LUtils, Sensors, Measurements
+from L_utils import *
 import pickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -23,20 +23,21 @@ if __name__ == '__main__':
     truthfile = '{0}/{1}_result/{1}_result.csv'.format(data_location, data_set)
     sensorfile = '{0}/{1}/sensors.csv'.format(data_location, data_set)
     #  grep ",103," ../../datasets/al/training_1_category_4/training_1_category_4.csv > A103.csv
-    #filename = 'A103.csv'.format(data_location)
+    filename = 'A103.csv'.format(data_location)
 
     sensors = Sensors(sensorfile)
-    aircrafts = LUtils.read_aircraft(filename)
+    aircrafts, missing = LUtils.read_aircraft(filename)
 
+    s_id = 152
+    sensor_reading = {}
     for id in aircrafts:
-        sensor_reading = {}
-        measure = Measurements(aircrafts[id], id, sensors, verbose=False)
-        #measure.sync()
-        for t in measure.data:
-            dd = measure.data[t]
+        measure = Measurements(aircrafts[id], id, sensors, fp=None)
+        for id in measure.data:
+            dd = measure.data[id]
             for m in dd.measurements:
                 mm = dd.measurements[m]
                 ss = sensors.data[m]
-                if ss.id==322:
-                    dt = dd.timeAtServer-mm[0]*1e-9
-                    print 'sn', ss.id,ss.type_id,mm[1],dd.timeAtServer,dd.lat,dd.lon,dd.bAlt,id, mm[0]*1e-9, dt
+                dist = np.linalg.norm(ss.xyz-dd.xyz)
+                if ss.id==s_id:
+                    dt = dd.timeAtServer- mm[0]*1e-9
+                    print 'sn', id, ss.id,ss.type_id,mm[1],dd.timeAtServer, mm[0]*1e-9, dt, dist/SPEED

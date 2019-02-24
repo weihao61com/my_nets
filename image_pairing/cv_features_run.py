@@ -13,8 +13,12 @@ filename = '/Users/weihao/Projects/p_files/heads_Test_cv_s3.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
-focal = 525.0
-cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
+if 'kitty' in filename:
+    focal = 719  # 719
+    cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
+else:
+    focal = 525.0
+    cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
 
 #focal = 719  # 719
 #cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)

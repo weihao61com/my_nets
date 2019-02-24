@@ -150,9 +150,9 @@ class rNet(Network):
                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
-def run_test(input_dic, sess, xy, te, cfg):
+def run_test(input_dic, sess, xy, te, cfg, mul):
 
-    tr_pre_data = te.prepare(multi=-1)
+    tr_pre_data = te.prepare(multi=mul)
     tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', cfg)
 
     for a in range(len(tr_loss)):
@@ -243,7 +243,10 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg)
+            mul = -1
+            if len(sys.argv) > 2:
+                mul = int(sys.argv[2])
+            run_test(input_dic, sess, xy, te, cfg, mul)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
