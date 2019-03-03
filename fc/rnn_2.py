@@ -299,7 +299,7 @@ if __name__ == '__main__':
                             nt += n0
                     tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % 1000 == 0:
+                if N_total % 100 == 0:
                     lr *= 0.9
             if lr<1e-6:
                 break
