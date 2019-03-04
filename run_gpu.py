@@ -1,6 +1,11 @@
 import sys
 from utils import Utils
 
+
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
+
 model = 'r2'
 config = 'rnn_config.json'
 machine = 'weihao@debian-sensors'
@@ -9,15 +14,15 @@ machine = 'weihao@debian-sensors'
 if len(sys.argv)>1:
     machine = 'weihao@sensors-debian2'
 
-cmd = 'rm -r /Users/weihao/Projects/NNs/{}'.format(model)
+cmd = 'rm -r {}/NNs/{}'.format(HOME, model)
 Utils.run_cmd(cmd)
 
-cmd = 'scp -r {0}:/home/weihao/Projects/NNs/{1} /Users/weihao/Projects/NNs/{1}'.format(machine, model)
+cmd = 'scp -r {0}:/home/weihao/Projects/NNs/{1} {2}/NNs/{1}'.format(machine, model, HOME)
 Utils.run_cmd(cmd)
 
-cmd = 'rm /Users/weihao/Projects/my_nets/fc/{}'.format(config)
+cmd = 'rm {}/my_nets/fc/{}'.format(HOME, config)
 Utils.run_cmd(cmd)
 
-cmd = 'scp -r {0}:/home/weihao/Projects/my_nets/fc/{1} /Users/weihao/Projects/my_nets/fc/{1}'.format(machine, config)
+cmd = 'scp -r {0}:/home/weihao/Projects/my_nets/fc/{1} {2}/my_nets/fc/{1}'.format(machine, config, HOME)
 Utils.run_cmd(cmd)
 

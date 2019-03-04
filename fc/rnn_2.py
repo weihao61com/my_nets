@@ -243,10 +243,7 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netFile)
-            mul = -1
-            if len(sys.argv) > 2:
-                mul = int(sys.argv[2])
-            run_test(input_dic, sess, xy, te, cfg, mul)
+            run_test(input_dic, sess, xy, te, cfg)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
@@ -299,7 +296,7 @@ if __name__ == '__main__':
                             nt += n0
                     tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % 100 == 0:
+                if N_total % 1000 == 0:
                     lr *= 0.9
             if lr<1e-6:
                 break
