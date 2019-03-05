@@ -9,6 +9,13 @@ class l_utils:
         avg0 = np.mean(data)
         st0 = np.std(data)
 
+        ll = int(len(data)/2)
+        avg1, st1 = l_utils.get_c(data[:ll])
+        avg2, st2 = l_utils.get_c(data[ll:])
+        return map(int, np.array([avg0, st0, avg1, st1, avg2, st2]) * 1000)
+
+    @staticmethod
+    def get_c(data):
         while True:
             avg = np.mean(data)
             st = np.std(data)
@@ -19,4 +26,4 @@ class l_utils:
             # print len(data), avg
             data = np.delete(data, idx)
 
-        return map(int, np.array([avg0, st0, avg, st]) * 1000)
+        return avg, st
