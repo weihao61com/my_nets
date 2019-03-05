@@ -4,6 +4,7 @@ import datetime
 import numpy as np
 import pickle
 import os
+from LANL_Utils import l_utils
 
 filename = '/home/weihao/Downloads/train.csv'
 p_file = 'p.p'
@@ -14,13 +15,15 @@ max_num = nb*bucket
 nt = 0
 x = []
 y = []
-data = []
+datax = []
+datay = []
 header = None
 t0 = datetime.datetime.now()
 
 if os.path.exists(p_file):
     with open(p_file, 'r') as fp:
         data = pickle.load(fp)
+    print data.shape
 
 else:
 
@@ -37,34 +40,29 @@ else:
                     y.append(v[1])
                     nt += 1
                     if nt%bucket == 0:
-                        p = []
-                        p.append(np.mean(x))
-                        p.append(np.mean(y))
-                        p.append(np.std(x))
-                        p.append(np.std(y))
-                        data.append(p)
+                        c1 = l_utils.get_core(x)
+                        c2 = l_utils.get_core(y)
+                        print c1,c2
                         x = []
                         y = []
                     npt = int(nt/bucket)
-                    if nt%bucket==0 and npt%1000==0:
+                    if nt%bucket==0 and npt%4000==0:
                         print npt, datetime.datetime.now() - t0
             except:
                 break
-    data = np.array(data)
 
-    with open('p.p', 'w') as fp:
-        pickle.dump(data, fp)
-
-nd = []
-for d in data:
-    if d[2]<40:
-        nd.append(d)
-
-data = np.array(nd)
+    # with open('p.p', 'w') as fp:
+    #    pickle.dump(data, fp)
 
 
-for a in range(4):
-    plt.subplot(2, 2, a+1)
-    plt.plot(data[:nb, a])
 
-plt.show()
+# st=10000
+#
+# for a in range(3):
+#     plt.subplot(2, 2, a+1)
+#     plt.plot(data[st:nb, a])
+#
+# plt.subplot(2, 2, 4)
+# plt.plot(data[st:nb, 1], data[st:nb, 2], '.')
+#
+# plt.show()
