@@ -7,7 +7,7 @@ import os
 from LANL_Utils import l_utils
 
 filename = '/home/weihao/Downloads/train.csv'
-output_location = '/home/weihao/tmp/L_{}.p'
+output_location = '/home/weihao/tmp/L_{}.csv'
 header = None
 pre_t = None
 max_num = 1e9
@@ -15,6 +15,7 @@ nt = 0
 seg = 0
 t0 = datetime.datetime.now()
 data = []
+fx = open(output_location.format(seg), 'w')
 
 with open(filename, 'r') as fp:
     while True:
@@ -30,11 +31,11 @@ with open(filename, 'r') as fp:
                 dt = v[1] - pre_t
                 if dt>0:
                     print seg, nt, pre_t, v, datetime.datetime.now()-t0
-                    with open(output_location.format(seg), 'w') as fp:
-                        pickle.dump(data, fp)
+                    fx.close()
                     seg += 1
-                    data = []
-                data.append(v)
+                    fx = open(output_location.format(seg), 'w')
+                fx.write(line)
+
                 pre_t = v[1]
                 nt += 1
 
