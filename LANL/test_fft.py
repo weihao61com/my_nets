@@ -17,7 +17,8 @@ print 'total file', len(files)
 vy = []
 vx0 = []
 vx = []
-for f in files[:50]:
+vs = []
+for f in files[:2]:
 
     x = []
     with open(f, 'r') as fp:
@@ -29,25 +30,29 @@ for f in files[:50]:
         v= map(float, line.split(','))
         x.append(v[0])
 
-    x = np.array(x)
-    f = np.fft.fft(x)
-    f = abs(f)
+    v, avg ,std = l_utils.fft_features(x, 250)
 
-    vx0.append(f[0])
+    vx0.append(v)
+    vx.append(avg)
+    vs.append(std)
 
-    f = f[1:len(f)/2+1]
-    af = abs(f).reshape(75, 1000)
-    mf = np.mean(af, 1)
-    vx.append(mf)
+    f = abs(np.fft.fft(x))
+    plt.subplot(2, 1, 1)
+    plt.plot(f[1:75000])
+    plt.subplot(2, 1, 2)
+    plt.plot(np.log(std))
+    plt.show()
 
 vx = np.array(vx)
+vs = np.array(vs)
 
 print len(vx0), vx.shape
 print l_utils.csv_line(vy)
 print l_utils.csv_line(vx0)
 for a in range(vx.shape[1]):
     print l_utils.csv_line(vx[:, a])
-
+for a in range(vs.shape[1]):
+    print l_utils.csv_line(vs[:, a])
 
 
 #

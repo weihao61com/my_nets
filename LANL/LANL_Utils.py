@@ -38,3 +38,30 @@ class l_utils:
                 output = '{},{}'.format(output, d)
 
         return output
+
+    @staticmethod
+    def fft_features(x, win = 1000):
+        x = np.array(x)
+        length = len(x)
+        f = np.fft.fft(x)
+        f = abs(f)
+
+        v0 = f[0]
+
+        f = f[1:length / 2 + 1]
+        dim = len(f)/win
+        af = f.reshape(dim, win)
+        avg = np.mean(af, 1)
+        std = np.std(af, 1)
+        return v0, avg, std
+
+    @staticmethod
+    def csv_line(dd):
+        output = None
+        for d in dd:
+            if output is None:
+                output = '{}'.format(d)
+            else:
+                output = '{},{}'.format(output, d)
+
+        return output
