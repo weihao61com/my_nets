@@ -27,3 +27,14 @@ class l_utils:
             data = np.delete(data, idx)
 
         return avg, st
+
+    @staticmethod
+    def csv_line(dd):
+        output = None
+        for d in dd:
+            if output is None:
+                output = '{}'.format(d)
+            else:
+                output = '{},{}'.format(output, d)
+
+        return output

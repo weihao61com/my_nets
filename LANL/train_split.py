@@ -43,18 +43,4 @@ with open(filename, 'r') as fp:
             print e.message
             break
 
-# with open('p.p', 'w') as fp:
-#    pickle.dump(data, fp)
 
-
-
-# st=10000
-#
-# for a in range(3):
-#     plt.subplot(2, 2, a+1)
-#     plt.plot(data[st:nb, a])
-#
-# plt.subplot(2, 2, 4)
-# plt.plot(data[st:nb, 1], data[st:nb, 2], '.')
-#
-# plt.show()
