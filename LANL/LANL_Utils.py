@@ -56,6 +56,22 @@ class l_utils:
         return v0, avg, std
 
     @staticmethod
+    def fft_feature_final(x, win = 100, rg=200):
+        x = np.array(x)
+        length = len(x)
+        f = np.fft.fft(x)
+        f = abs(f)
+
+        v0 = f[0]
+
+        f = f[1:length / 2 + 1]
+        dim = len(f)/win
+        af = f.reshape(dim, win)
+        avg = np.mean(af, 1)
+        #std = np.std(af, 1)
+        return np.concatenate((np.array([v0]), avg[:rg]))
+
+    @staticmethod
     def csv_line(dd):
         output = None
         for d in dd:

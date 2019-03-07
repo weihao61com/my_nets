@@ -6,8 +6,22 @@ import pickle
 import os
 from LANL_Utils import l_utils
 import glob
+import random
 
 SEG = 150000
+
+
+def rdm_ids(files, cv):
+    l = len(files)
+    ids = range(l)
+    random.shuffle(ids)
+    dv = cv/float(l)
+    idx = {}
+    nx = 0
+    for id in ids:
+        idx[files[id]] = int(nx*dv)
+        nx += 1
+    return idx
 
 
 def get_features(lines):
@@ -21,42 +35,45 @@ def get_features(lines):
         x.append(v[0])
         y.append(v[1])
 
-    v0, avg, std = l_utils.fft_features(x, 250)
-    y = np.array(y)
-    mn = np.mean(y)
-    print mn, np.std(y)
-    return mn,v0, avg, std
+    return np.mean(y), l_utils.fft_feature_final(x)
 
+CV =5
+NF = 5000
 
-fid = 10
-p = 900000
-
-location = '/home/weihao/tmp' #sys.argv[1]
+out_loc = '/home/weihao/Projects/p_files'
+location = '/home/weihao/tmp/L' #sys.argv[1]
 files = glob.glob(os.path.join(location, 'L_*.csv'))
-vx = []
-vx0 = []
-vy = []
+ids = rdm_ids(files, CV)
 
-filename = files[fid]
-print filename
-with open(filename, 'r') as fp:
-    lines = fp.readlines()
+for c in range(CV):
+    tr = []
+    data = []
+    for filename in files:
+        if ids[filename] == c:
+            with open(filename, 'r') as fp:
+                lines = fp.readlines()
+            print 'records', c, filename, len(lines),  len(lines)/SEG
+            step = (len(lines) - SEG - 1)/NF
+            for a in range(NF):
+                p = a*step
+                A, B = get_features(lines[p:p+SEG])
+                tr.append(A)
+                data.append(B)
+    print "Total data", c, len(data)
+    filename = os.path.join(out_loc, 'L_{}.p'.format(c))
+    A = np.array(tr)
+    B = np.array(data)
+    with open(filename, 'w') as fp:
+        pickle.dump((A, B), fp)
 
-A = get_features(lines[p:p+SEG])
 
-vx.append(A[2])
-vx0.append(A[1])
-vy.append('S{}'.format(int(A[0]*1000)))
-
-vx = np.array(vx)
-
-print l_utils.csv_line(vy)
-print l_utils.csv_line(vx0)
-for a in range(vx.shape[1]):
-    print l_utils.csv_line(vx[:, a])
-
-
-
+#
+#
+# vx = np.array(vx)
+#
+# print l_utils.csv_line(vy)
+# for a in range(vx.shape[1]):
+#     print l_utils.csv_line(vx[:, a])
 #
 # plt.subplot(3, 1, 1)
 # plt.plot(abs(f))
