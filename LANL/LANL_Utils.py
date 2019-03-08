@@ -56,7 +56,7 @@ class l_utils:
         return v0, avg, std
 
     @staticmethod
-    def fft_feature_final(x, win = 100, rg=200):
+    def fft_feature_final(x, win = 1000, rg=20):
         x = np.array(x)
         length = len(x)
         f = np.fft.fft(x)

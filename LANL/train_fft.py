@@ -41,7 +41,7 @@ CV =5
 NF = 5000
 
 out_loc = '/home/weihao/Projects/p_files'
-location = '/home/weihao/tmp/L' #sys.argv[1]
+location = '/home/weihao/tmp' #sys.argv[1]
 files = glob.glob(os.path.join(location, 'L_*.csv'))
 ids = rdm_ids(files, CV)
 

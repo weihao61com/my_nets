@@ -66,6 +66,7 @@ class sNet3(Network):
 
     def real_setup(self, nodes, outputs):
         self.feed('data')
+        self.dropout(keep_prob=0.5, name='drop')
         for a in range(len(nodes)):
             name = 'fc_{}'.format(a)
             self.fc(nodes[a], name=name)
