@@ -7,43 +7,11 @@ import pickle
 import os
 from sklearn.ensemble import RandomForestRegressor
 from rt import RN
+from LANL_Utils import l_utils
 
 sys.path.append('..')
 from network import Network
 from utils import Utils
-
-
-def get_dataset(st='../../p_files/L_*.p', avg_file='../../p_files/Avg.p'):
-
-    files = glob.glob(st)
-    data = []
-    for f in files:
-        with open(f, 'r') as fp:
-            d = pickle.load(fp)
-            data.append(d)
-
-    if not os.path.exists(avg_file):
-        d = None
-        for dd in data:
-            if d is None:
-                d = dd[1]
-            else:
-                d = np.concatenate((d, dd[1]))
-        avg = np.mean(d, 0)
-        std = np.std(d, 0)
-        with open(avg_file, 'w') as fp:
-            pickle.dump((avg, std), fp)
-    else:
-        with open(avg_file, 'r') as fp:
-            A = pickle.load(fp)
-        avg = A[0]
-        std = A[1]
-
-    for n in range(len(data)):
-        for a in range(data[n][1].shape[0]):
-            data[n][1][a, :] = (data[n][1][a,:]-avg)/std
-
-    return data
 
 
 def create_data(data, id):
@@ -77,22 +45,9 @@ def run_data(data, inputs, sess, xy):
     return np.mean(np.abs(results-truth))
 
 
-def prepare_data(data):
-    t = None
-    d = None
-    for a in data:
-        if t is None:
-            t = a[0]
-            d = a[1]
-        else:
-            t = np.concatenate((t, a[0]))
-            d = np.concatenate((d, a[1]))
-    return t, d
-
-
 if __name__ == '__main__':
 
-    data = get_dataset()
+    data = l_utils.get_dataset('/home/weihao/Projects/p_files/L', 'L1_*.p')
     CV = len(data)
     # nodes = [124, 32]
     # lr = 1e-4
@@ -103,12 +58,19 @@ if __name__ == '__main__':
 
     for c in range(CV):
         te, tr = create_data(data, c)
-        # rf = RandomForestRegressor(1000)
-        rf = RN()
+        rf = RandomForestRegressor(1000)
+        #rf = RN()
 
-        t, d = prepare_data(tr)
-        rf.fit(d, t)
-        t, d = prepare_data(te)
+        d, t0 = l_utils.prepare_data(tr)
+        rf.fit(d, t0)
+        rst0 = rf.predict(d)
 
-        rst = rf.predict(d)
-        print 'error', np.mean(np.abs(rst-t))
+        d, t1 = l_utils.prepare_data(te)
+        rst1 = rf.predict(d)
+        print 'error0', np.mean(np.abs(np.array(rst0)-np.array(t0)))
+        print 'error1', np.mean(np.abs(np.array(rst1)-np.array(t1)))
+        #for a in range(len(t1)):
+        #    print rst1[a], t1[a]
+        #for a in range(len(t0)):
+        #    print rst0[a], t0[a]
+        #break

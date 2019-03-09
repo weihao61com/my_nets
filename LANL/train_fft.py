@@ -37,16 +37,15 @@ def get_features(lines):
 
     return np.mean(y), l_utils.fft_feature_final(x)
 
-CV =5
+CV = 5
 NF = 5000
 
 out_loc = '/home/weihao/Projects/p_files'
-location = '/home/weihao/tmp' #sys.argv[1]
+location = '/home/weihao/tmp/L' #sys.argv[1]
 files = glob.glob(os.path.join(location, 'L_*.csv'))
 ids = rdm_ids(files, CV)
 
 for c in range(CV):
-    tr = []
     data = []
     for filename in files:
         if ids[filename] == c:
@@ -56,16 +55,12 @@ for c in range(CV):
             step = (len(lines) - SEG - 1)/NF
             for a in range(NF):
                 p = a*step
-                A, B = get_features(lines[p:p+SEG])
-                tr.append(A)
-                data.append(B)
+                A= get_features(lines[p:p+SEG])
+                data.append(A)
     print "Total data", c, len(data)
     filename = os.path.join(out_loc, 'L_{}.p'.format(c))
-    A = np.array(tr)
-    B = np.array(data)
     with open(filename, 'w') as fp:
-        pickle.dump((A, B), fp)
-
+        pickle.dump(data, fp)
 
 #
 #
