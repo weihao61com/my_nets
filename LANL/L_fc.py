@@ -13,17 +13,15 @@ from network import Network
 from utils import Utils
 
 
-
 def create_data(data, id):
     tr = []
     te = None
     nt = 0
     for d in data:
         if nt == id:
-            te = [d]
+            te = [[data[d][0]]]
         else:
-            tr.append(d)
-
+            tr.append(data[d])
         nt += 1
 
     return te, tr
@@ -36,7 +34,6 @@ class sNet3(Network):
 
     def real_setup(self, nodes, outputs):
         self.feed('data')
-        self.dropout(keep_prob=0.5, name='drop')
         for a in range(len(nodes)):
             name = 'fc_{}'.format(a)
             self.dropout(keep_prob=0.5, name='drop_{}'.format(a))
@@ -47,21 +44,33 @@ class sNet3(Network):
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
-def run_data(data, inputs, sess, xy):
+def run_data(data, inputs, sess, xy, filename=None):
     truth, features = l_utils.prepare_data(data)
 
     feed = {inputs: features}
     results = sess.run(xy, feed_dict=feed)[:, 0]
+
+    if filename is not None:
+        with open(filename, 'w') as fp:
+            skip = int(len(truth)/2000)
+            if skip==0:
+                skip=1
+            for a in range(len(truth)):
+                if a%skip==0:
+                    fp.write('{},{}\n'.format(results[a], truth[a]))
 
     return np.mean(np.abs(results-truth))
 
 
 if __name__ == '__main__':
 
-    data = l_utils.get_dataset()
+    data = l_utils.get_dataset('/home/weihao/Projects/p_files',
+                               ['L_2', 'L_1', 'L_4', 'L_5'])
+    # ['L_2', 'L_1', 'L_4', 'L_5'])
     CV = len(data)
-    nodes = [4096, 512]
-    lr0 = 1e-3
+    # nodes = [1024, 128]
+    nodes = [4096, 256]
+    lr0 = 1e-4
     iterations = 1000
     loop = 10
     batch_size = 100
@@ -70,7 +79,7 @@ if __name__ == '__main__':
     for c in range(CV):
         lr = lr0
         te, tr = create_data(data, c)
-        att = len(te[0][0][1])
+        att = len(te[0][0][0][1])
         output = tf.placeholder(tf.float32, [None, 1])
         input = tf.placeholder(tf.float32, [None, att])
         learning_rate = tf.placeholder(tf.float32, shape=[])
@@ -79,8 +88,8 @@ if __name__ == '__main__':
         net.real_setup(nodes, 1)
 
         xy = net.layers['output']
-        #loss = tf.reduce_sum(tf.abs(tf.subtract(xy, output)))
-        loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
+        loss = tf.reduce_sum(tf.abs(tf.subtract(xy, output)))
+        # loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
 
         opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -100,9 +109,9 @@ if __name__ == '__main__':
             st1 = ''
             for a in range(iterations):
 
-                total_loss = run_data(tr, input, sess, xy)
+                total_loss = run_data(tr, input, sess, xy, '/home/weihao/tmp/tr.csv')
 
-                te_loss = run_data(te, input, sess, xy)
+                te_loss = run_data(te, input, sess, xy, '/home/weihao/tmp/te.csv')
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
                 str = "it: {0} {1:.3f} {2} {3} {4}".format(
@@ -112,7 +121,7 @@ if __name__ == '__main__':
                 t_loss = 0
                 t_count = 0
                 for lp in range(loop):
-                    truth, features = l_utils.prepare_data(tr)
+                    truth, features = l_utils.prepare_data(tr, rd=True)
                     length = len(truth)
                     b0 = truth.reshape((length, 1))
                     for d in range(0, length, batch_size):
@@ -127,4 +136,5 @@ if __name__ == '__main__':
 
                 saver.save(sess, netFile.format(c))
                 lr *= 0.99
-
+            if lr<1e-6:
+                break

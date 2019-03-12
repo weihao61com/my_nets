@@ -3,6 +3,8 @@ import os
 import pickle
 import glob
 import random
+from scipy import fftpack, fft
+from sortedcontainers import SortedDict
 
 class l_utils:
 
@@ -10,7 +12,8 @@ class l_utils:
     def prepare_data(input, rd=False):
         data = []
         for dd in input:
-            data = data + dd
+            for d in dd:
+                data = data + d
 
         if rd:
             random.shuffle(data)
@@ -88,7 +91,7 @@ class l_utils:
         return v0, avg, std
 
     @staticmethod
-    def fft_feature_final(x, win = 100, rg=200, dolog=False):
+    def fft_feature_final(x, win = 1000, dolog=False):
         x = np.array(x)
         length = len(x)
         f = np.fft.fft(x)
@@ -106,7 +109,30 @@ class l_utils:
             avg = np.log(avg)
 
         #std = np.std(af, 1)
-        return np.concatenate((np.array([v0]), avg[:rg]))
+        return np.concatenate((np.array([v0]), avg))
+
+    @staticmethod
+    def feature_final(x, dct, dim):
+        if dct:
+            d = fftpack.dct(x)
+            win = len(d) / dim
+            v0 = d[0]
+            d[0] = d[1]
+            dv = np.array(d).reshape(dim, win)
+            dv = np.std(dv, 1)
+            #ax.plot(dv[:400], c='{}'.format(float(a) / NF), label='{0:5.2f}'.format(np.mean(y)))
+            #print '{0:5.2f} {1:5.2f} {2:5.2f}'.format(np.mean(y), d[0] / len(x), dv[18])
+        else:
+            d = abs(fft(x))
+            v0 = d[0]
+            dv = np.array(d[1:75001])
+            win = len(dv)/dim
+            dv = dv.reshape(dim, win)
+            # dv = np.std(dv, 1)
+            dv = np.mean(dv, 1)
+            #ax.plot(dv[:400], c='{}'.format(float(a) / NF), label='{0:5.2f}'.format(np.mean(y)))
+            #print '{0:5.2f} {1:5.2f} {2:9.0f}'.format(np.mean(y), d[0].real / len(x), dv[18])
+        return np.concatenate((np.array([v0]), dv))
 
     @staticmethod
     def csv_line(dd):
@@ -120,42 +146,51 @@ class l_utils:
         return output
 
     @staticmethod
-    def get_dataset(locs='/home/weihao/Projects/p_files', st='L_*.p', avg_file='Avg.p'):
+    def get_dataset(locs, subs, st='L_*.p', avg_file='Avg.p'):
 
-        st = os.path.join(locs, st)
         avg_file = os.path.join(locs, avg_file)
+        data = SortedDict()
 
-        files = glob.glob(st)
-        data = []
-        for f in files:
-            with open(f, 'r') as fp:
-                d = pickle.load(fp)
-                data.append(d)
+        for sub in subs:
+            st0 = os.path.join(locs, sub, st)
+            d_out = {}
 
-        if not os.path.exists(avg_file):
-            v0 = []
-            v1 = []
-            for dd in data:
-                for d in dd:
-                    v0.append(d[0])
-                    v1.append(d[1])
-            v1 = np.array(v1)
-            avg = np.mean(v1, 0)
-            std = np.std(v1, 0)
-            avg0 = np.mean(np.array(v0))
-            with open(avg_file, 'w') as fp:
-                pickle.dump((avg, std, avg0), fp)
-        else:
-            with open(avg_file, 'r') as fp:
-                A = pickle.load(fp)
-            avg = A[0]
-            std = A[1]
-            avg0 = A[2]
+            files = glob.glob(st0)
+            for f in files:
+                basename = os.path.basename(f)
+                if basename not in d_out:
+                    d_out[basename] = []
+                with open(f, 'r') as fp:
+                    d = pickle.load(fp)
+                    print 'File', f, len(d), len(d[0][1])
+                    d_out[basename] = d
 
-        d_out = []
-        for dd in data:
-            dx = []
-            for d in dd:
-                dx.append((d[0] - avg0, (d[1] - avg) / std))
-            d_out.append(dx)
-        return d_out
+            if not os.path.exists(avg_file):
+                v0 = []
+                v1 = []
+                for f in d_out:
+                    for d in d_out[f]:
+                        v0.append(d[0])
+                        v1.append(d[1])
+                v1 = np.array(v1)
+                avg = np.mean(v1, 0)
+                std = np.std(v1, 0)
+                avg0 = np.mean(np.array(v0))
+                with open(avg_file, 'w') as fp:
+                    pickle.dump((avg, std, avg0), fp)
+            else:
+                with open(avg_file, 'r') as fp:
+                    A = pickle.load(fp)
+                avg = A[0]
+                std = A[1]
+                avg0 = A[2]
+
+            for f in d_out:
+                if f not in data:
+                    data[f] = []
+                dx = []
+                for d in d_out[f]:
+                    dx.append((d[0] - avg0, (d[1] - avg) / std))
+                data[f].append(dx)
+
+        return data

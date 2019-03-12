@@ -7,6 +7,7 @@ import os
 from LANL_Utils import l_utils
 import glob
 import cmath
+from scipy import fftpack
 
 seg = 150000
 
@@ -32,7 +33,7 @@ for fnm in files[:10]:
         x.append(v[0])
 
     #v = 0
-    avg = l_utils.fft_feature_final(x, 100, 10000, True)
+    avg = l_utils.feature_final(x, 100, True)
     #std = [0]
     #v, avg ,std = l_utils.fft_features(x, 100)
 
@@ -41,30 +42,31 @@ for fnm in files[:10]:
     #vs.append(std)
 
     f = np.fft.rfft(x)
+    d = fftpack.dct(x)
     # plt.subplot(2, 1, 1)
     n1 = []
     n2 = []
     for ff in f:
         n1.append(abs(ff))
         n2.append(cmath.phase(ff))
-    plt.subplot(2, 1, 1)
-    plt.plot(avg[1:])
-    plt.subplot(2, 1, 2)
-    plt.plot(n1[100:])
+    #plt.subplot(2, 1, 1)
+    #plt.plot(avg[1:])
+    #plt.subplot(2, 1, 2)
+    #plt.plot(d[1:])
     # plt.plot(avg)
     # plt.subplot(2, 2, 4)
     # plt.plot(std)
-    plt.show()
-    print ''
+   # plt.show()
+    print fnm, d[0]/len(x)
 
 vx = np.array(vx)
 vs = np.array(vs)
 
 #print len(vx0), vx.shape
-print l_utils.csv_line(vy)
+#print l_utils.csv_line(vy)
 # print l_utils.csv_line(vx0)
-for a in range(vx.shape[1]):
-    print l_utils.csv_line(vx[:, a])
+#for a in range(vx.shape[1]):
+#    print l_utils.csv_line(vx[:, a])
 #for a in range(vs.shape[1]):
 #    print l_utils.csv_line(vs[:, a])
 
