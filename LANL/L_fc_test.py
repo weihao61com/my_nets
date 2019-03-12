@@ -44,8 +44,8 @@ class sNet3(Network):
         print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
-def run_data(data, c, inputs, sess, xy, filename=None):
-    truth, features = l_utils.prepare_data(data, c)
+def run_data(data, inputs, sess, xy, filename=None):
+    truth, features = l_utils.prepare_data(data)
 
     feed = {inputs: features}
     results = sess.run(xy, feed_dict=feed)[:, 0]
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     locs = ['L_0', 'L_1', 'L_2', 'L_3']
     data = l_utils.get_dataset('/home/weihao/Projects/p_files', locs)
 
-    CV = 5
+    CV = len(data)
     nodes = [1024, 128]
     # nodes = [4096, 256]
     lr0 = 1e-4
@@ -75,12 +75,11 @@ if __name__ == '__main__':
     loop = 10
     batch_size = 100
     netFile = '../../NNs/L_{}'
-    att = 1001
 
     for c in range(CV):
         lr = lr0
-        #te, tr = create_data(data, c)
-         #len(te[0][0][0][1])
+        te, tr = create_data(data, c)
+        att = len(te[0][0][0][1])
         output = tf.placeholder(tf.float32, [None, 1])
         input = tf.placeholder(tf.float32, [None, att])
         learning_rate = tf.placeholder(tf.float32, shape=[])
@@ -110,9 +109,9 @@ if __name__ == '__main__':
             st1 = ''
             for a in range(iterations):
 
-                total_loss = run_data(data[0], c+1, input, sess, xy, '/home/weihao/tmp/tr.csv')
+                total_loss = run_data(tr, input, sess, xy, '/home/weihao/tmp/tr.csv')
 
-                te_loss = run_data(data[0], -c-1, input, sess, xy, '/home/weihao/tmp/te.csv')
+                te_loss = run_data(te, input, sess, xy, '/home/weihao/tmp/te.csv')
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
                 str = "it: {0} {1:.3f} {2} {3} {4}".format(
@@ -122,18 +121,17 @@ if __name__ == '__main__':
                 t_loss = 0
                 t_count = 0
                 for lp in range(loop):
-                    for dd in data:
-                        truth, features = l_utils.prepare_data(dd, c+1, rd=True)
-                        length = len(truth)
-                        b0 = truth.reshape((length, 1))
-                        for d in range(0, length, batch_size):
-                            feed = {input: features[d:d+batch_size, :],
-                                    output: b0[d:d+batch_size, :],
-                                    learning_rate: lr
-                            }
-                            _, A = sess.run([opt, loss], feed_dict=feed)
-                            t_loss += A
-                            t_count += len(b0[d:d+batch_size])
+                    truth, features = l_utils.prepare_data(tr, rd=True)
+                    length = len(truth)
+                    b0 = truth.reshape((length, 1))
+                    for d in range(0, length, batch_size):
+                        feed = {input: features[d:d+batch_size, :],
+                                output: b0[d:d+batch_size, :],
+                                learning_rate: lr
+                        }
+                        _, A = sess.run([opt, loss], feed_dict=feed)
+                        t_loss += A
+                        t_count += len(b0[d:d+batch_size])
                 st1 = '{}'.format(t_loss/t_count)
 
                 saver.save(sess, netFile.format(c))

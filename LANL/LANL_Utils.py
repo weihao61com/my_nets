@@ -9,11 +9,17 @@ from sortedcontainers import SortedDict
 class l_utils:
 
     @staticmethod
-    def prepare_data(input, rd=False):
+    def prepare_data(sum_file, c, rd=False):
         data = []
-        for dd in input:
-            for d in dd:
-                data = data + d
+        with open(sum_file, 'r') as fp:
+            sub_data = pickle.load(fp)
+        nt = 1
+        for dd in sub_data:
+            if c>0 and nt==c:
+                data = data + sub_data[dd]
+            if c<0 and nt!=-c:
+                data = data + sub_data[dd]
+            nt += 1
 
         if rd:
             random.shuffle(data)
@@ -91,7 +97,7 @@ class l_utils:
         return v0, avg, std
 
     @staticmethod
-    def fft_feature_final(x, win = 1000, dolog=False):
+    def fft_feature_final(x, win = 100, dolog=False):
         x = np.array(x)
         length = len(x)
         f = np.fft.fft(x)
@@ -125,7 +131,7 @@ class l_utils:
         else:
             d = abs(fft(x))
             v0 = d[0]
-            dv = np.array(d[1:75001])
+            dv = np.array(d[1:len(d)/2+1])
             win = len(dv)/dim
             dv = dv.reshape(dim, win)
             # dv = np.std(dv, 1)
@@ -149,48 +155,59 @@ class l_utils:
     def get_dataset(locs, subs, st='L_*.p', avg_file='Avg.p'):
 
         avg_file = os.path.join(locs, avg_file)
-        data = SortedDict()
+        data = []
 
         for sub in subs:
-            st0 = os.path.join(locs, sub, st)
-            d_out = {}
+            sum_file = os.path.join(locs, sub, 'sum.p')
+            if not os.path.exists(sum_file):
+                #with open(sum_file, 'r') as fp:
+                #    sub_data = pickle.load(fp)
+                # else:
+                sub_data = SortedDict()
+                st0 = os.path.join(locs, sub, st)
+                d_out = {}
 
-            files = glob.glob(st0)
-            for f in files:
-                basename = os.path.basename(f)
-                if basename not in d_out:
-                    d_out[basename] = []
-                with open(f, 'r') as fp:
-                    d = pickle.load(fp)
-                    print 'File', f, len(d), len(d[0][1])
-                    d_out[basename] = d
+                files = glob.glob(st0)
+                for f in files:
+                    basename = os.path.basename(f)
+                    if basename not in d_out:
+                        d_out[basename] = []
+                    with open(f, 'r') as fp:
+                        d = pickle.load(fp)
+                        print 'File', f, len(d), len(d[0][1])
+                        d_out[basename] = d
 
-            if not os.path.exists(avg_file):
-                v0 = []
-                v1 = []
+                if not os.path.exists(avg_file):
+                    v0 = []
+                    v1 = []
+                    for f in d_out:
+                        for d in d_out[f]:
+                            v0.append(d[0])
+                            v1.append(d[1])
+                    v1 = np.array(v1)
+                    avg = np.mean(v1, 0)
+                    std = np.std(v1, 0)
+                    avg0 = np.mean(np.array(v0))
+                    with open(avg_file, 'w') as fp:
+                        pickle.dump((avg, std, avg0), fp)
+                else:
+                    with open(avg_file, 'r') as fp:
+                        A = pickle.load(fp)
+                    avg = A[0]
+                    std = A[1]
+                    avg0 = A[2]
+
                 for f in d_out:
+                    if f not in sub_data:
+                        sub_data[f] = []
+                    dx = []
                     for d in d_out[f]:
-                        v0.append(d[0])
-                        v1.append(d[1])
-                v1 = np.array(v1)
-                avg = np.mean(v1, 0)
-                std = np.std(v1, 0)
-                avg0 = np.mean(np.array(v0))
-                with open(avg_file, 'w') as fp:
-                    pickle.dump((avg, std, avg0), fp)
-            else:
-                with open(avg_file, 'r') as fp:
-                    A = pickle.load(fp)
-                avg = A[0]
-                std = A[1]
-                avg0 = A[2]
+                        dx.append((d[0] - avg0, (d[1] - avg) / std))
+                    sub_data[f] = dx
 
-            for f in d_out:
-                if f not in data:
-                    data[f] = []
-                dx = []
-                for d in d_out[f]:
-                    dx.append((d[0] - avg0, (d[1] - avg) / std))
-                data[f].append(dx)
+                with open(sum_file, 'w') as fp:
+                    pickle.dump(sub_data,fp)
+
+            data.append(sum_file)
 
         return data

@@ -11,10 +11,10 @@ from sortedcontainers import SortedDict
 from multiprocessing.dummy import Pool as ThreadPool
 
 
-SEG = 150000
+SEG = 10000
 
 
-def rdm_ids(files, cv):
+def rdm_ids(files):
     ids = SortedDict()
     for f in files:
         strs = f.split('_')
@@ -69,7 +69,7 @@ def process(c):
 CV = 5
 dct = False
 dim = 1000
-threads = 3
+threads = 1
 
 for id in range(1000):
     out_loc = '/home/weihao/Projects/p_files/L_{}'.format(id)
@@ -78,17 +78,18 @@ for id in range(1000):
 
         location = '/home/weihao/tmp/L'
         files = glob.glob(os.path.join(location, 'L_*.csv'))
-        ids = rdm_ids(files, CV)
+        ids = rdm_ids(files)
 
-        cs = range(CV)
-        #c = int(sys.argv[1])
         numbers = [0,1,2,3,4]
 
-        pool = ThreadPool(threads)
-        results = pool.map(process, numbers)
-        pool.close()
-        pool.join()
-
+        if threads>1:
+            pool = ThreadPool(threads)
+            results = pool.map(process, numbers)
+            pool.close()
+            pool.join()
+        else:
+            for c in numbers:
+                process(c)
 # process(c, dct, dim)
 
 
