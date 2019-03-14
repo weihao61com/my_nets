@@ -216,19 +216,6 @@ class LUtils:
         return np.linalg.norm(enu)
 
     @staticmethod
-    def read_csv(filename):
-        data = []
-        with open(filename, 'r') as fp:
-            csv_reader = csv.reader(fp, delimiter=',')
-            for row in csv_reader:
-                if 'latitude' in row:
-                    print '\t\t\t', row
-                else:
-                    data.append(row)
-        # print 'Total csv data', len(data)
-        return data
-
-    @staticmethod
     def read_aircraft(filename):
         aircrafts = SortedDict()
         missing_a = SortedDict()

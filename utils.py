@@ -7,6 +7,7 @@ from sortedcontainers import SortedDict
 import sys
 import pickle
 import shutil
+import csv
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -47,6 +48,19 @@ class PinholeCamera:
 
 
 class Utils:
+
+    @staticmethod
+    def read_csv(filename):
+        data = []
+        with open(filename, 'r') as fp:
+            csv_reader = csv.reader(fp, delimiter=',')
+            for row in csv_reader:
+                if 'latitude' in row:
+                    print '\t\t\t', row
+                else:
+                    data.append(row)
+        # print 'Total csv data', len(data)
+        return data
 
     @staticmethod
     def get_numbers(str):

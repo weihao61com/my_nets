@@ -15,7 +15,6 @@ if sys.platform=='darwin':
     HOME = '/Users/weihao/Projects/'
 
 sys.path.append('{}/my_nets'.format(HOME))
-sys.path.append('{}/my_nets/fc'.format(HOME))
 
 from utils import Utils
 

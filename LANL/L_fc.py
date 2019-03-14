@@ -60,7 +60,7 @@ if __name__ == '__main__':
     cntn = False
 
     for c in range(1, CV):
-        print
+        print 'CV', c
         lr = lr0
         #te, tr = create_data(data, c)
         #len(te[0][0][0][1])
