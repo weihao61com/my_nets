@@ -10,23 +10,23 @@ import random
 from sortedcontainers import SortedDict
 from multiprocessing.dummy import Pool as ThreadPool
 
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
+
+sys.path.append('{}/my_nets'.format(HOME))
+sys.path.append('{}/my_nets/fc'.format(HOME))
+
+from utils import Utils
 
 SEG = 10000
+CV = 5
+dct = False
+dim = 200
+threads = 2
+location = '/home/weihao/tmp/L'
+out_location = '/home/weihao/Projects/p_files/L/L_{}'
 
-
-def rdm_ids(files):
-    ids = SortedDict()
-    for f in files:
-        strs = f.split('_')
-        n = int(strs[-1][:-4])
-        ids[n] = f
-
-    ix = [0,0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,4]
-    idx = {}
-    for id in ids:
-        idx[ids[id]] = ix[id]
-
-    return idx
 
 def process(c):
     data = []
@@ -34,7 +34,7 @@ def process(c):
         if ids[filename] == c:
             with open(filename, 'r') as fp:
                 lines = fp.readlines()
-            NF = int (len(lines) / 5000)
+            NF = int (len(lines) / 10000)
             print 'records', c, filename, len(lines), len(lines) / SEG, NF
             rps = np.random.randint(0, len(lines) - SEG - 1, NF)
             rps.sort()
@@ -51,19 +51,17 @@ def process(c):
         pickle.dump(data, fp)
 
 
-CV = 5
-dct = False
-dim = 1000
-threads = 2
+if __name__ == '__main__':
+
+    cfg = Utils.load_json_file('config.json')
 
 for id in range(1000):
-    out_loc = '/home/weihao/Projects/p_files/L10000/L_{}'.format(id)
+    out_loc = out_location.format(id)
     if not os.path.exists(out_loc):
         os.mkdir(out_loc)
 
-        location = '/home/weihao/tmp/L'
         files = glob.glob(os.path.join(location, 'L_*.csv'))
-        ids = rdm_ids(files)
+        ids = l_utils.rdm_ids(files)
 
         numbers = [0,1,2,3,4]
 
@@ -75,6 +73,9 @@ for id in range(1000):
         else:
             for c in numbers:
                 process(c)
+
+    if os.path.exists('STOP'):
+        break
 # process(c, dct, dim)
 
 

@@ -7,6 +7,11 @@ import pickle
 import os
 import random
 from LANL_Utils import l_utils, sNet3
+from sortedcontainers import SortedList
+
+out_location = '/home/weihao/Projects/p_files/L/L_{}'
+netFile = '/home/weihao/Projects/NNs/L/C_{}/L'
+nodes = [1024, 128]
 
 
 def create_data(data, id):
@@ -42,25 +47,23 @@ def run_data(data, c, inputs, sess, xy, filename=None):
 
 if __name__ == '__main__':
 
-    locs = ['L_0', 'L_1', 'L_2', 'L_3', 'L_4', 'L_5', 'L_6', 'L_7', 'L_8', 'L_9']
-    data = l_utils.get_dataset('/home/weihao/Projects/p_files/L10000', locs)
+    locs = sorted(glob.glob(out_location.format('*')))
+    data, att = l_utils.get_dataset(locs)
 
     CV = 5
-    nodes = [1024, 128]
     #nodes = [ 256, 16]
     # nodes = [256, 16]
-    lr0 = 1e-5
-    iterations = 1000
+    lr0 = 1e-4
+    iterations = 20
     loop = 1
     batch_size = 100
-    netFile = '../../NNs/L/L_{}'
-    att = 250
     cntn = False
 
-    for c in range(CV):
+    for c in range(1, CV):
+        print
         lr = lr0
         #te, tr = create_data(data, c)
-         #len(te[0][0][0][1])
+        #len(te[0][0][0][1])
         output = tf.placeholder(tf.float32, [None, 1])
         input = tf.placeholder(tf.float32, [None, att])
         learning_rate = tf.placeholder(tf.float32, shape=[])
@@ -92,7 +95,6 @@ if __name__ == '__main__':
             for a in range(iterations):
 
                 te_loss = run_data(data[0], c+1, input, sess, xy, '/home/weihao/tmp/te.csv')
-
                 tr_loss = run_data(data[0], -c-1, input, sess, xy, '/home/weihao/tmp/tr.csv')
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
@@ -118,7 +120,5 @@ if __name__ == '__main__':
                 st1 = '{}'.format(t_loss/t_count)
 
                 saver.save(sess, netFile.format(c))
-                #lr *= 0.99
-            if lr<1e-6:
-                break
-        break
+
+        tf.reset_default_graph()

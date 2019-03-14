@@ -1,0 +1,9 @@
+{
+  "SEG": 10000,
+  "CV": 5,
+  "dct": 0,
+  "dim": 200,
+  "threads": 2,
+  "location": "/home/weihao/tmp/L",
+  "out_location": "/home/weihao/Projects/p_files/L/L_{}"
+}

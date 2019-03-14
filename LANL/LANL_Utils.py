@@ -18,7 +18,7 @@ class sNet3(Network):
     def real_setup(self, nodes, outputs):
         self.feed('data')
         for a in range(len(nodes)):
-            self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
+            #self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
             self.fc(nodes[a], name= 'fc_{}'.format(a))
             #self.fc_s(nodes[a], name= 'fc_{}'.format(a))
 
@@ -29,6 +29,27 @@ class sNet3(Network):
 
 
 class l_utils:
+
+    @staticmethod
+    def rdm_ids(files):
+        # 0,1,6,11
+        # 2,7,12
+        # 3,8,13
+        # 4,9,14
+        # 5,10,15,16
+        ix = [0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 4]
+
+        ids = SortedDict()
+        for f in files:
+            strs = f.split('_')
+            n = int(strs[-1][:-4])
+            ids[n] = f
+
+        idx = {}
+        for id in ids:
+            idx[ids[id]] = ix[id]
+
+        return idx
 
     @staticmethod
     def get_features(lines, dct, dim):
@@ -67,9 +88,9 @@ class l_utils:
         for dd in data:
             t.append(dd[0])
             d.append(dd[1])
-        d = np.array(d)
-        d = d[:,1:]
-        x = d[:,range(0,1000,4)]+d[:,range(1,1000,4)]+d[:,range(2,1000,4)]+d[:,range(3,1000,4)]
+        x = np.array(d)
+        #x = x[:,1:]
+        #x = x[:,range(0,1000,4)]+x[:,range(1,1000,4)]+x[:,range(2,1000,4)]+x[:,range(3,1000,4)]
 
         return np.array(t), x
 
@@ -192,9 +213,11 @@ class l_utils:
         return output
 
     @staticmethod
-    def get_dataset(locs, subs, st='L_*.p', avg_file='Avg.p'):
+    def get_dataset(subs, st='L_*.p', avg_file='Avg.p'):
 
+        locs = os.path.dirname(subs[0])
         avg_file = os.path.join(locs, avg_file)
+
         data = []
 
         for sub in subs:
@@ -204,7 +227,7 @@ class l_utils:
                 #    sub_data = pickle.load(fp)
                 # else:
                 sub_data = SortedDict()
-                st0 = os.path.join(locs, sub, st)
+                st0 = os.path.join(sub, st)
                 d_out = {}
 
                 files = glob.glob(st0)
@@ -250,4 +273,9 @@ class l_utils:
 
             data.append(sum_file)
 
-        return data
+
+        with open(avg_file, 'r') as fp:
+            A = pickle.load(fp)
+        avg = A[0]
+        att = len(avg)
+        return data, att
