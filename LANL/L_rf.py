@@ -13,6 +13,13 @@ sys.path.append('..')
 from network import Network
 from utils import Utils
 
+# model = RandomForestRegressor()
+# model.fit(train_X,train_y)
+#
+# # Get the mean absolute error on the validation data
+# predicted_prices = model.predict(val_X)
+# MAE = mean_absolute_error(val_y , predicted_prices)
+# print('Random forest validation MAE = ', MAE)
 
 def create_data(data, id):
     tr = []
@@ -47,30 +54,24 @@ def run_data(data, inputs, sess, xy):
 
 if __name__ == '__main__':
 
-    data = l_utils.get_dataset('/home/weihao/Projects/p_files/L', 'L1_*.p')
-    CV = len(data)
-    # nodes = [124, 32]
-    # lr = 1e-4
-    # iterations = 1000
-    # loop = 10
-    # batch_size = 100
-    # netFile = '../../NNs/L_{}'
+    locs = ['L_0', 'L_1', 'L_2', 'L_3', 'L_4', 'L_5', 'L_6', 'L_7', 'L_8', 'L_9']
+    dd = l_utils.get_dataset('/home/weihao/Projects/p_files/L10000', locs)
+
+    CV = 5
+
 
     for c in range(CV):
-        te, tr = create_data(data, c)
-        rf = RandomForestRegressor(1000)
+        truth, features = l_utils.prepare_data(dd[0], -c-1)
+        print len(truth)
+        rf = RandomForestRegressor()
         #rf = RN()
 
-        d, t0 = l_utils.prepare_data(tr)
-        rf.fit(d, t0)
-        rst0 = rf.predict(d)
+        rf.fit(features, truth)
+        truth, features = l_utils.prepare_data(dd[0], c+1)
+        print len(truth)
+        rst1 = rf.predict(features)
+        print 'error1', np.mean(np.abs(np.array(rst1)-np.array(truth)))
+        for a in range(0, len(truth), 10):
+            print rst1[a], truth[a]
 
-        d, t1 = l_utils.prepare_data(te)
-        rst1 = rf.predict(d)
-        print 'error0', np.mean(np.abs(np.array(rst0)-np.array(t0)))
-        print 'error1', np.mean(np.abs(np.array(rst1)-np.array(t1)))
-        #for a in range(len(t1)):
-        #    print rst1[a], t1[a]
-        #for a in range(len(t0)):
-        #    print rst0[a], t0[a]
-        #break
+        break

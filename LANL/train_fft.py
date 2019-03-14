@@ -28,28 +28,13 @@ def rdm_ids(files):
 
     return idx
 
-
-def get_features(lines, dct, dim):
-    if not len(lines)==SEG:
-        raise Exception("Wrong data length {}".format(len(lines)))
-
-    x = []
-    y = []
-    for line in lines:
-        v= map(float, line.split(','))
-        x.append(v[0])
-        y.append(v[1])
-
-    # return np.mean(y), l_utils.fft_feature_final(x, win, dolog)
-    return np.mean(y), l_utils.feature_final(x, dct, dim)
-
 def process(c):
     data = []
     for filename in files:
         if ids[filename] == c:
             with open(filename, 'r') as fp:
                 lines = fp.readlines()
-            NF = int (len(lines) / 10000)
+            NF = int (len(lines) / 5000)
             print 'records', c, filename, len(lines), len(lines) / SEG, NF
             rps = np.random.randint(0, len(lines) - SEG - 1, NF)
             rps.sort()
@@ -57,7 +42,7 @@ def process(c):
             for a in range(NF):
                 #rm = rps[a] - pr
                 #lines = lines[rm:]
-                A = get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
+                A = l_utils.get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
                 data.append(A)
                 #pr = rps[a]
     print "Total data", c, len(data)
@@ -69,10 +54,10 @@ def process(c):
 CV = 5
 dct = False
 dim = 1000
-threads = 1
+threads = 2
 
 for id in range(1000):
-    out_loc = '/home/weihao/Projects/p_files/L_{}'.format(id)
+    out_loc = '/home/weihao/Projects/p_files/L10000/L_{}'.format(id)
     if not os.path.exists(out_loc):
         os.mkdir(out_loc)
 

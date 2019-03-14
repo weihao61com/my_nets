@@ -196,11 +196,15 @@ class Network(object):
             return fc
 
     @layer
-    def fc_s(self, input, ws, name, sig=True):
+    def fc_s(self, input, num_out, name, sig=True):
         with tf.variable_scope(name) as scope:
+            input_shape = input.get_shape()
+            feed_in, dim = (input, input_shape[-1].value)
 
             op = tf.nn.xw_plus_b
-            fc = op(input, ws[0], ws[1], name=scope.name)
+            weights = self.make_var('weights', shape=[dim, num_out])
+            biases = self.make_var('biases', [num_out])
+            fc = op(input, weights, biases, name=scope.name)
             if sig:
                 return tf.nn.sigmoid(fc, scope.name+'_sig')
             return fc

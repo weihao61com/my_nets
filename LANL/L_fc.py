@@ -6,11 +6,7 @@ import glob
 import pickle
 import os
 import random
-from LANL_Utils import l_utils
-
-sys.path.append('..')
-from network import Network
-from utils import Utils
+from LANL_Utils import l_utils, sNet3
 
 
 def create_data(data, id):
@@ -25,24 +21,6 @@ def create_data(data, id):
         nt += 1
 
     return te, tr
-
-
-class sNet3(Network):
-
-    def setup(self):
-        pass
-
-    def real_setup(self, nodes, outputs):
-        self.feed('data')
-        for a in range(len(nodes)):
-            name = 'fc_{}'.format(a)
-            self.dropout(keep_prob=0.5, name='drop_{}'.format(a))
-            self.fc(nodes[a], name=name)
-
-        self.fc(outputs, relu=False, name='output')
-
-        print("number of layers = {} {}".format(len(self.layers), nodes))
-
 
 def run_data(data, c, inputs, sess, xy, filename=None):
     truth, features = l_utils.prepare_data(data, c)
@@ -64,18 +42,20 @@ def run_data(data, c, inputs, sess, xy, filename=None):
 
 if __name__ == '__main__':
 
-    locs = ['L_0', 'L_1', 'L_2', 'L_3']
-    data = l_utils.get_dataset('/home/weihao/Projects/p_files', locs)
+    locs = ['L_0', 'L_1', 'L_2', 'L_3', 'L_4', 'L_5', 'L_6', 'L_7', 'L_8', 'L_9']
+    data = l_utils.get_dataset('/home/weihao/Projects/p_files/L10000', locs)
 
     CV = 5
     nodes = [1024, 128]
-    # nodes = [4096, 256]
-    lr0 = 1e-4
+    #nodes = [ 256, 16]
+    # nodes = [256, 16]
+    lr0 = 1e-5
     iterations = 1000
-    loop = 10
+    loop = 1
     batch_size = 100
-    netFile = '../../NNs/L_{}'
-    att = 1001
+    netFile = '../../NNs/L/L_{}'
+    att = 250
+    cntn = False
 
     for c in range(CV):
         lr = lr0
@@ -103,29 +83,30 @@ if __name__ == '__main__':
 
         with tf.Session() as sess:
             sess.run(init)
-            #if cfg.renetFile:
-            #    saver.restore(sess, cfg.renetFile)
+
+            if cntn:
+                saver.restore(sess, netFile.format(c))
 
             t00 = datetime.datetime.now()
             st1 = ''
             for a in range(iterations):
 
-                total_loss = run_data(data[0], c+1, input, sess, xy, '/home/weihao/tmp/tr.csv')
+                te_loss = run_data(data[0], c+1, input, sess, xy, '/home/weihao/tmp/te.csv')
 
-                te_loss = run_data(data[0], -c-1, input, sess, xy, '/home/weihao/tmp/te.csv')
+                tr_loss = run_data(data[0], -c-1, input, sess, xy, '/home/weihao/tmp/tr.csv')
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
                 str = "it: {0} {1:.3f} {2} {3} {4}".format(
-                    a*loop/1000.0, t1, lr, total_loss, te_loss)
+                    a*loop/1000.0, t1, lr, tr_loss, te_loss)
                 print str, st1
 
                 t_loss = 0
                 t_count = 0
-                for lp in range(loop):
-                    for dd in data:
-                        truth, features = l_utils.prepare_data(dd, c+1, rd=True)
-                        length = len(truth)
-                        b0 = truth.reshape((length, 1))
+                for dd in data:
+                    truth, features = l_utils.prepare_data(dd, -c-1, rd=True)
+                    length = len(truth)
+                    b0 = truth.reshape((length, 1))
+                    for lp in range(loop):
                         for d in range(0, length, batch_size):
                             feed = {input: features[d:d+batch_size, :],
                                     output: b0[d:d+batch_size, :],
@@ -137,6 +118,7 @@ if __name__ == '__main__':
                 st1 = '{}'.format(t_loss/t_count)
 
                 saver.save(sess, netFile.format(c))
-                lr *= 0.99
+                #lr *= 0.99
             if lr<1e-6:
                 break
+        break

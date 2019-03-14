@@ -5,8 +5,45 @@ import glob
 import random
 from scipy import fftpack, fft
 from sortedcontainers import SortedDict
+import sys
+
+sys.path.append('..')
+from network import Network
+
+class sNet3(Network):
+
+    def setup(self):
+        pass
+
+    def real_setup(self, nodes, outputs):
+        self.feed('data')
+        for a in range(len(nodes)):
+            self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
+            self.fc(nodes[a], name= 'fc_{}'.format(a))
+            #self.fc_s(nodes[a], name= 'fc_{}'.format(a))
+
+        self.fc(outputs, relu=False, name='output')
+        #self.fc_s(outputs, sig=False, name='output')
+
+        print("number of layers = {} {}".format(len(self.layers), nodes))
+
 
 class l_utils:
+
+    @staticmethod
+    def get_features(lines, dct, dim):
+        #if not len(lines) == SEG:
+        #    raise Exception("Wrong data length {}".format(len(lines)))
+
+        x = []
+        y = []
+        for line in lines:
+            v = map(float, line.split(','))
+            x.append(v[0])
+            y.append(v[1])
+
+        # return np.mean(y), l_utils.fft_feature_final(x, win, dolog)
+        return np.mean(y), l_utils.feature_final(x, dct, dim)
 
     @staticmethod
     def prepare_data(sum_file, c, rd=False):
@@ -30,8 +67,11 @@ class l_utils:
         for dd in data:
             t.append(dd[0])
             d.append(dd[1])
+        d = np.array(d)
+        d = d[:,1:]
+        x = d[:,range(0,1000,4)]+d[:,range(1,1000,4)]+d[:,range(2,1000,4)]+d[:,range(3,1000,4)]
 
-        return np.array(t), np.array(d)
+        return np.array(t), x
 
     @staticmethod
     def prepare_rf_data(input):

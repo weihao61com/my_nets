@@ -8,46 +8,31 @@ from LANL_Utils import l_utils
 
 seg = 150000
 
-filename = sys.argv[1]
-id = int(sys.argv[2])
-max_seg = 130
+filename = '/home/weihao/tmp/L/L_11.csv' #sys.argv[1]
+#id = 10000000 # int(sys.argv[2])
 
 with open(filename, 'r') as fp:
-    lines = fp.readlines()
+    line0 = fp.readlines()
 
-nseg = len(lines)/seg
-print 'total data', len(lines)
+print 'total data', len(line0)
+#id = 40735392
+#line0 = line0[id:id+150000]
 
-if len(lines)>max_seg*seg:
-    rm = -seg*max_seg
-else:
-    rm = len(lines)%seg
-lines = lines[rm:]
-nseg = len(lines)/seg
-print 'total data', len(lines), nseg
+step = int(len(line0)-seg)/100
 
-lines = lines[id*seg:(id+1)*seg]
+for id in range(0, len(line0)-seg, step):
+    lines = line0[id:id+seg]
 
-x = []
-y = []
-for line in lines:
-    v= map(float, line.split(','))
-    x.append(v[0])
-    y.append(v[1])
+    x = []
+    y = []
+    for line in lines:
+        v= map(float, line.split(','))
+        x.append(v[0])
+        y.append(v[1])
 
-sub = 5000
-fm = []
-fs = []
-a = 0
-while a < len(x):
-    v = l_utils.get_core(x[a:a+sub])
-    fs.append(v[1])
-    fm.append(v[0])
-    a += sub
+    v = l_utils.feature_final(x, False, 50)
+    y = np.mean(np.array(y))
+    print id, y, np.mean(v[1:20]), np.std(v[1:20]),np.mean(v[20:]), np.std(v[20:])
 
-y = np.mean(np.array(y))
-print y
-for a in range(len(fs)):
-    print fs[a], ',', fm[a]
-plt.plot(x)
+plt.plot(v[1:])
 plt.show()
