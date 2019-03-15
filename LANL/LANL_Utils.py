@@ -112,23 +112,28 @@ class l_utils:
         st0 = np.std(data)
 
         ll = int(len(data)/2)
-        avg1, st1 = l_utils.get_c(data[:ll])
-        avg2, st2 = l_utils.get_c(data[ll:])
-        return map(int, np.array([avg0, st0, avg1, st1, avg2, st2]) * 1000)
+        avg1, st1, l1 = l_utils.get_c(data[:ll])
+        avg2, st2, l2 = l_utils.get_c(data[ll:])
+        return map(int, np.array([avg0, st0, avg1, st1, avg2, st2]) * 1000) + [l1, l2]
 
     @staticmethod
     def get_c(data):
         while True:
             avg = np.mean(data)
-            st = np.std(data)
+            st = np.std(data)*3
+            #print len(data), avg, st
             diff = abs(data - avg)
-            idx = np.argmax(diff)
-            if diff[idx] < st * 3:
+            idx = []
+            nt = 0
+            for d in diff:
+                if d>st:
+                    idx.append(nt)
+                nt += 1
+            if len(idx)==0:
                 break
-            # print len(data), avg
             data = np.delete(data, idx)
 
-        return avg, st
+        return avg, st, len(data)
 
     @staticmethod
     def csv_line(dd):

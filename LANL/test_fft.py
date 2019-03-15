@@ -20,7 +20,7 @@ vy = []
 vx0 = []
 vx = []
 vs = []
-for fnm in files[:10]:
+for fnm in files:
 
     x = []
     with open(fnm, 'r') as fp:
@@ -31,36 +31,9 @@ for fnm in files[:10]:
     for line in lines:
         v= map(float, line.split(','))
         x.append(v[0])
+    v = l_utils.get_core(x)
+    print v
 
-    #v = 0
-    avg = l_utils.feature_final(x, 100, True)
-    #std = [0]
-    #v, avg ,std = l_utils.fft_features(x, 100)
-
-    # vx0.append(v)
-    vx.append(avg)
-    #vs.append(std)
-
-    f = np.fft.rfft(x)
-    d = fftpack.dct(x)
-    # plt.subplot(2, 1, 1)
-    n1 = []
-    n2 = []
-    for ff in f:
-        n1.append(abs(ff))
-        n2.append(cmath.phase(ff))
-    #plt.subplot(2, 1, 1)
-    #plt.plot(avg[1:])
-    #plt.subplot(2, 1, 2)
-    #plt.plot(d[1:])
-    # plt.plot(avg)
-    # plt.subplot(2, 2, 4)
-    # plt.plot(std)
-   # plt.show()
-    print fnm, d[0]/len(x)
-
-vx = np.array(vx)
-vs = np.array(vs)
 
 #print len(vx0), vx.shape
 #print l_utils.csv_line(vy)
