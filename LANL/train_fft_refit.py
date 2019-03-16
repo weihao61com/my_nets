@@ -5,7 +5,7 @@ import numpy as np
 
 
 def process(x, y):
-    z = np.polyfit(x, y, 1)
+    z = np.polyfit(x, y, 2)
     p = np.poly1d(z)
     error = []
     for a in range(len(x)):

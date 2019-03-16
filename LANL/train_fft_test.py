@@ -94,12 +94,13 @@ if __name__ == '__main__':
                     print len(line0)
                     start = 0
                     seg_step = 1000000
+                    t_scale = float(line0[0].split(',')[1])
 
                     for start in range(0, len(line0), seg_step):
 
                         lines = line0[start:start+SEGMENT]
                         avg, x = get_values(lines)
-
+                        avg /= t_scale
                         a = 0
                         r = []
                         while a<=len(x)-SEG:
@@ -111,8 +112,8 @@ if __name__ == '__main__':
                             results = sess.run(xy, feed_dict=feed)[:, 0]
                             a += step
                             r.append(results[0])
-
-                        fp0.write('{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0))
+                        if len(r)>0:
+                            fp0.write('{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0))
                         # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
         tf.reset_default_graph()
 

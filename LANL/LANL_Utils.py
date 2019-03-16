@@ -274,7 +274,7 @@ class l_utils:
                         sub_data[f] = []
                     dx = []
                     for d in d_out[f]:
-                        dx.append((d[0] - avg0, (d[1] - avg) / std))
+                        dx.append((d[0], (d[1] - avg) / std))
                     sub_data[f] = dx
 
                 with open(sum_file, 'w') as fp:
