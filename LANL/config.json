@@ -3,7 +3,7 @@
   "CV": 5,
   "dct": 0,
   "dim": 1000,
-  "threads": 5,
+  "threads": 1,
   "location": "{}/../tmp/L",
   "out_location": "{}/p_files/L/L_{}",
   "nodes": "1024, 128",

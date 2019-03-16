@@ -41,7 +41,7 @@ class l_utils:
         # 3,8,13
         # 4,9,14
         # 5,10,15,16
-        ix = [0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 4]
+        ix = [-1, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, -1]
 
         ids = SortedDict()
         for f in files:
@@ -68,7 +68,7 @@ class l_utils:
             y.append(v[1])
 
         # return np.mean(y), l_utils.fft_feature_final(x, win, dolog)
-        return np.mean(y), l_utils.feature_final(x, dct, dim)
+        return [np.mean(y), l_utils.feature_final(x, dct, dim)]
 
     @staticmethod
     def prepare_data(sum_file, c, rd=False):

@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import pickle
 import os
-from LANL_Utils import l_utils
+from LANL_Utils import l_utils, HOME
 import glob
 import random
 from sortedcontainers import SortedDict
@@ -26,12 +26,13 @@ from utils import Utils
 
 def process(c):
     data = []
-    for filename in files:
+    for filename in sorted(files):
         if ids[filename] == c:
             with open(filename, 'r') as fp:
                 lines = fp.readlines()
             NF = int (len(lines) / 10000)
-            print 'records', c, filename, len(lines), len(lines) / SEG, NF
+            t_scale = float(lines[0].split(',')[1])
+            print 'records', c, filename, len(lines), len(lines) / SEG, NF, t_scale
             rps = np.random.randint(0, len(lines) - SEG - 1, NF)
             rps.sort()
             pr = 0
@@ -39,6 +40,7 @@ def process(c):
                 #rm = rps[a] - pr
                 #lines = lines[rm:]
                 A = l_utils.get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
+                A[0] = A[0]/t_scale
                 data.append(A)
                 #pr = rps[a]
     print "Total data", c, len(data)
