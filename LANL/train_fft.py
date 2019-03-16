@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import sys
 import datetime
 import numpy as np
@@ -10,21 +10,18 @@ import random
 from sortedcontainers import SortedDict
 from multiprocessing.dummy import Pool as ThreadPool
 
-HOME = '/home/weihao/Projects/'
-if sys.platform=='darwin':
-    HOME = '/Users/weihao/Projects/'
 
 sys.path.append('{}/my_nets'.format(HOME))
 
 from utils import Utils
-
-SEG = 10000
-CV = 5
-dct = False
-dim = 200
-threads = 2
-location = '/home/weihao/tmp/L'
-out_location = '/home/weihao/Projects/p_files/L/L_{}'
+#
+# SEG = 10000
+# CV = 5
+# dct = False
+# dim = 200
+# threads = 2
+# location = '/home/weihao/tmp/L'
+# out_location = '/home/weihao/Projects/p_files/L/L_{}'
 
 
 def process(c):
@@ -53,43 +50,46 @@ def process(c):
 if __name__ == '__main__':
 
     cfg = Utils.load_json_file('config.json')
+    SEG = cfg['SEG']
+    dct = cfg['dct'] > 0
+    dim = cfg['dim']
 
-for id in range(1000):
-    out_loc = out_location.format(id)
-    if not os.path.exists(out_loc):
-        os.mkdir(out_loc)
+    for id in range(1000):
+        out_loc = cfg['out_location'].format(HOME, id)
+        if not os.path.exists(out_loc):
+            os.mkdir(out_loc)
 
-        files = glob.glob(os.path.join(location, 'L_*.csv'))
-        ids = l_utils.rdm_ids(files)
+            files = glob.glob(os.path.join(cfg['location'].format(HOME), 'L_*.csv'))
+            ids = l_utils.rdm_ids(files)
 
-        numbers = [0,1,2,3,4]
+            numbers = range(cfg['CV'])
 
-        if threads>1:
-            pool = ThreadPool(threads)
-            results = pool.map(process, numbers)
-            pool.close()
-            pool.join()
-        else:
-            for c in numbers:
-                process(c)
+            if cfg['threads']>1:
+                pool = ThreadPool(cfg['threads'])
+                results = pool.map(process, numbers)
+                pool.close()
+                pool.join()
+            else:
+                for c in numbers:
+                    process(c)
 
-    if os.path.exists('STOP'):
-        break
-# process(c, dct, dim)
+        if os.path.exists('STOP'):
+            break
+    # process(c, dct, dim)
 
 
-#
-#
-# vx = np.array(vx)
-#
-# print l_utils.csv_line(vy)
-# for a in range(vx.shape[1]):
-#     print l_utils.csv_line(vx[:, a])
-#
-# plt.subplot(3, 1, 1)
-# plt.plot(abs(f))
-# plt.subplot(3, 1, 2)
-# plt.plot(np.log(abs(f.real)))
-# plt.subplot(3, 1, 3)
-# plt.plot(np.log(abs(f.imag)))
-# plt.show()
+    #
+    #
+    # vx = np.array(vx)
+    #
+    # print l_utils.csv_line(vy)
+    # for a in range(vx.shape[1]):
+    #     print l_utils.csv_line(vx[:, a])
+    #
+    # plt.subplot(3, 1, 1)
+    # plt.plot(abs(f))
+    # plt.subplot(3, 1, 2)
+    # plt.plot(np.log(abs(f.real)))
+    # plt.subplot(3, 1, 3)
+    # plt.plot(np.log(abs(f.imag)))
+    # plt.show()

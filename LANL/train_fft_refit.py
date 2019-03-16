@@ -1,32 +1,33 @@
 from LANL_Utils import l_utils
 import sys
 import numpy as np
+#import matplotlib.pyplot as plt
 
 
 def process(x, y):
-    z = np.polyfit(x, y, 2)
+    z = np.polyfit(x, y, 1)
     p = np.poly1d(z)
     error = []
     for a in range(len(x)):
         error.append(y[a] - p(x[a]))
 
-    print np.average(np.abs(error))
+    return np.average(np.abs(error))
 
 
-HOME = '/home/weihao/Projects/'
+HOME = '/home/weihao/Projects'
 if sys.platform=='darwin':
-    HOME = '/Users/weihao/Projects/'
+    HOME = '/Users/weihao/Projects'
 
 sys.path.append('{}/my_nets'.format(HOME))
 
 from utils import Utils
 
-eval_file = '/home/weihao/tmp/fit.csv'
+eval_file = '{}/tmp/fit.csv'.format(HOME)
 
 dd = np.array(Utils.read_csv(eval_file)).astype(float)
 
-process(dd[:, 3], dd[:, 1])
-process(dd[:, 4], dd[:, 1])
+print process(dd[:, 3], dd[:, 1])
+print process(dd[:, 4], dd[:, 1])
 
 data = {}
 for d in dd:
@@ -34,9 +35,15 @@ for d in dd:
         data[d[0]] = []
     data[d[0]].append(d)
 
+e1 = []
+e2 = []
 for c in data:
     dd = np.array(data[c])
-    print dd.shape
-    process(dd[:, 3], dd[:, 1])
-    process(dd[:, 4], dd[:, 1])
+    a1 = process(dd[:, 3], dd[:, 1])
+    a2 = process(dd[:, 4], dd[:, 1])
+    print dd.shape, a1, a2
+    e1.append(a1)
+    e2.append(a2)
+print np.average(np.array(e1)), np.average(np.array(e2))
+
 

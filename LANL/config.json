@@ -2,8 +2,12 @@
   "SEG": 10000,
   "CV": 5,
   "dct": 0,
-  "dim": 200,
-  "threads": 2,
-  "location": "/home/weihao/tmp/L",
-  "out_location": "/home/weihao/Projects/p_files/L/L_{}"
+  "dim": 1000,
+  "threads": 5,
+  "location": "{}/../tmp/L",
+  "out_location": "{}/p_files/L/L_{}",
+  "nodes": "1024, 128",
+  "netFile": "{}/NNs/L/C_{}/L",
+  "eval_file": "{}/tmp/fit.csv",
+  "testing_step": 1000
 }

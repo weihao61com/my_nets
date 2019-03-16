@@ -7,6 +7,10 @@ from scipy import fftpack, fft
 from sortedcontainers import SortedDict
 import sys
 
+HOME = '/home/weihao/Projects'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects'
+
 sys.path.append('..')
 from network import Network
 
@@ -18,7 +22,7 @@ class sNet3(Network):
     def real_setup(self, nodes, outputs):
         self.feed('data')
         for a in range(len(nodes)):
-            #self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
+            self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
             self.fc(nodes[a], name= 'fc_{}'.format(a))
             #self.fc_s(nodes[a], name= 'fc_{}'.format(a))
 

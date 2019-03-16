@@ -6,12 +6,16 @@ import glob
 import pickle
 import os
 import random
-from LANL_Utils import l_utils, sNet3
+from LANL_Utils import l_utils, sNet3, HOME
 from sortedcontainers import SortedList
 
-out_location = '/home/weihao/Projects/p_files/L/L_{}'
-netFile = '/home/weihao/Projects/NNs/L/C_{}/L'
-nodes = [1024, 128]
+
+sys.path.append('{}/my_nets'.format(HOME))
+from utils import Utils
+
+#out_location = '/home/weihao/Projects/p_files/L/L_{}'
+#netFile = '/home/weihao/Projects/NNs/L/C_{}/L'
+#nodes = [1024, 128]
 
 
 def create_data(data, id):
@@ -47,10 +51,15 @@ def run_data(data, c, inputs, sess, xy, filename=None):
 
 if __name__ == '__main__':
 
-    locs = sorted(glob.glob(out_location.format('*')))
+    cfg = Utils.load_json_file('config.json')
+
+    locs = sorted(glob.glob(cfg['out_location'].format(HOME, '*')))
     data, att = l_utils.get_dataset(locs)
 
-    CV = 5
+    CV = cfg['CV']
+    nodes = map(int, cfg['nodes'].split(','))
+    netFile = cfg['netFile']
+    # CV = 5
     #nodes = [ 256, 16]
     # nodes = [256, 16]
     lr0 = 1e-4
@@ -59,7 +68,7 @@ if __name__ == '__main__':
     batch_size = 100
     cntn = False
 
-    for c in range(1, CV):
+    for c in range(CV):
         print 'CV', c
         lr = lr0
         #te, tr = create_data(data, c)
@@ -88,14 +97,14 @@ if __name__ == '__main__':
             sess.run(init)
 
             if cntn:
-                saver.restore(sess, netFile.format(c))
+                saver.restore(sess, netFile.format(HOME, c))
 
             t00 = datetime.datetime.now()
             st1 = ''
             for a in range(iterations):
 
-                te_loss = run_data(data[0], c+1, input, sess, xy, '/home/weihao/tmp/te.csv')
-                tr_loss = run_data(data[0], -c-1, input, sess, xy, '/home/weihao/tmp/tr.csv')
+                te_loss = run_data(data[0], c+1, input, sess, xy, '{}/../tmp/te.csv'.format(HOME))
+                tr_loss = run_data(data[0], -c-1, input, sess, xy, '{}/../tmp/tr.csv'.format(HOME))
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
                 str = "it: {0} {1:.3f} {2} {3} {4}".format(
@@ -119,6 +128,6 @@ if __name__ == '__main__':
                             t_count += len(b0[d:d+batch_size])
                 st1 = '{}'.format(t_loss/t_count)
 
-                saver.save(sess, netFile.format(c))
+                saver.save(sess, netFile.format(HOME, c))
 
         tf.reset_default_graph()

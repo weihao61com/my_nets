@@ -4,23 +4,26 @@ import glob
 import numpy as np
 import pickle
 import os
-from LANL_Utils import l_utils, sNet3
+from LANL_Utils import l_utils, sNet3, HOME
 import tensorflow as tf
 
+sys.path.append('{}/my_nets'.format(HOME))
+from utils import Utils
+
 SEGMENT = 150000
-
-
-SEG = 10000
-CV = 5
-dct = False
-dim = 200
-threads = 2
-location = '/home/weihao/tmp/L'
-out_location = '/home/weihao/Projects/p_files/L/L_{}'
-nodes = [1024, 128]
-eval_file = '/home/weihao/tmp/fit.csv'
-step = 1000
-att = dim+1
+#
+#
+# SEG = 10000
+# CV = 5
+# dct = False
+# dim = 200
+# threads = 2
+# location = '/home/weihao/tmp/L'
+# out_location = '/home/weihao/Projects/p_files/L/L_{}'
+# nodes = [1024, 128]
+# eval_file = '/home/weihao/tmp/fit.csv'
+# step = 1000
+# att = dim+1
 
 
 def get_values(lines):
@@ -34,68 +37,83 @@ def get_values(lines):
     return np.mean(np.array(y)), x
 
 
-fp0 = open(eval_file, 'w')
+if __name__ == '__main__':
 
-for c in range(CV):
+    cfg = Utils.load_json_file('config.json')
+    eval_file = cfg['eval_file'].format(HOME)
+    location = cfg['location'].format(HOME)
+    SEG = cfg['SEG']
+    dct = cfg['dct']>0
+    dim = cfg['dim']
+    step =cfg['testing_step']
 
-    netFile = '/home/weihao/Projects/NNs/L/L_{}'.format(c)
-    files = glob.glob(os.path.join(location, 'L_*.csv'))
-    idx = l_utils.rdm_ids(files)
+    fp0 = open(eval_file, 'w')
+    CV = cfg['CV']
 
-    output = tf.placeholder(tf.float32, [None, 1])
-    input = tf.placeholder(tf.float32, [None, att])
-    learning_rate = tf.placeholder(tf.float32, shape=[])
+    for c in range(CV):
 
-    avg_file = os.path.join('/home/weihao/Projects/p_files/L', 'Avg.p')
-    with open(avg_file, 'r') as fp:
-        A = pickle.load(fp)
-    avgf = A[0]
-    stdf = A[1]
-    avg0 = A[2]
+        netFile = cfg['netFile'].format(HOME, c)
+        files = glob.glob(os.path.join(location, 'L_*.csv'))
+        idx = l_utils.rdm_ids(files)
 
-    net = sNet3({'data': input})
-    net.real_setup(nodes, 1)
-    xy = net.layers['output']
+        out_location = cfg['out_location'].format(HOME, c)
+        par_location = os.path.dirname(out_location)
+        avg_file = os.path.join(par_location, 'Avg.p')
+        with open(avg_file, 'r') as fp:
+            A = pickle.load(fp)
+        avgf = A[0]
+        stdf = A[1]
+        avg0 = A[2]
+        att = len(avgf)
 
-    init = tf.global_variables_initializer()
-    saver = tf.train.Saver()
+        output = tf.placeholder(tf.float32, [None, 1])
+        input = tf.placeholder(tf.float32, [None, att])
+        learning_rate = tf.placeholder(tf.float32, shape=[])
+        nodes = map(int, cfg['nodes'].split(','))
 
-    with tf.Session() as sess:
-        sess.run(init)
+        net = sNet3({'data': input})
+        net.real_setup(nodes, 1)
+        xy = net.layers['output']
 
-        saver.restore(sess, netFile)
-        for filename in idx:
-            if not idx[filename] == c:
-                continue
+        init = tf.global_variables_initializer()
+        saver = tf.train.Saver()
 
-            #filename = '/home/weihao/tmp/L/L_11.csv'
+        with tf.Session() as sess:
+            sess.run(init)
 
-            with open(filename, 'r') as fp:
-                line0 = fp.readlines()
+            saver.restore(sess, netFile)
+            for filename in idx:
+                if not idx[filename] == c:
+                    continue
 
-                print len(line0)
-                start = 0
-                seg_step = 1000000
+                #filename = '/home/weihao/tmp/L/L_11.csv'
 
-                for start in range(0, len(line0), seg_step):
+                with open(filename, 'r') as fp:
+                    line0 = fp.readlines()
 
-                    lines = line0[start:start+SEGMENT]
-                    avg, x = get_values(lines)
+                    print len(line0)
+                    start = 0
+                    seg_step = 1000000
 
-                    a = 0
-                    r = []
-                    while a<=len(x)-SEG:
+                    for start in range(0, len(line0), seg_step):
 
-                        features = l_utils.feature_final(x[a:a+SEG], dct, dim)
-                        features = (features-avgf)/stdf
-                        features = features.reshape((1, len(features)))
-                        feed = {input: features}
-                        results = sess.run(xy, feed_dict=feed)[:, 0]
-                        a += step
-                        r.append(results[0])
+                        lines = line0[start:start+SEGMENT]
+                        avg, x = get_values(lines)
 
-                    fp0.write('{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0))
-                    # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
-    tf.reset_default_graph()
+                        a = 0
+                        r = []
+                        while a<=len(x)-SEG:
 
-fp0.close()
+                            features = l_utils.feature_final(x[a:a+SEG], dct, dim)
+                            features = (features-avgf)/stdf
+                            features = features.reshape((1, len(features)))
+                            feed = {input: features}
+                            results = sess.run(xy, feed_dict=feed)[:, 0]
+                            a += step
+                            r.append(results[0])
+
+                        fp0.write('{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0))
+                        # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
+        tf.reset_default_graph()
+
+    fp0.close()
