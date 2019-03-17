@@ -1,9 +1,9 @@
 {
-  "SEG": 10000,
+  "SEG": 6000,
   "CV": 5,
   "dct": 0,
   "dim": 1000,
-  "threads": 1,
+  "threads": 2,
   "location": "{}/../tmp/L",
   "out_location": "{}/p_files/L/L_{}",
   "nodes": "1024, 128",

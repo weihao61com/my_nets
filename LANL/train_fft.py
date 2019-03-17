@@ -24,7 +24,15 @@ from utils import Utils
 # out_location = '/home/weihao/Projects/p_files/L/L_{}'
 
 
-def process(c):
+def process(cg):
+    c= cg[0]
+    files = cg[1]
+    ids = cg[2]
+    SEG = cg[3]
+    dct = cg[4]
+    dim = cg[5]
+    out_loc = cg[6]
+
     data = []
     for filename in sorted(files):
         if ids[filename] == c:
@@ -49,14 +57,13 @@ def process(c):
         pickle.dump(data, fp)
 
 
-if __name__ == '__main__':
-
-    cfg = Utils.load_json_file('config.json')
+def main1(config, cnt):
+    cfg = Utils.load_json_file(config)
     SEG = cfg['SEG']
     dct = cfg['dct'] > 0
     dim = cfg['dim']
 
-    for id in range(1000):
+    for id in range(cnt):
         out_loc = cfg['out_location'].format(HOME, id)
         if not os.path.exists(out_loc):
             os.mkdir(out_loc)
@@ -64,15 +71,18 @@ if __name__ == '__main__':
             files = glob.glob(os.path.join(cfg['location'].format(HOME), 'L_*.csv'))
             ids = l_utils.rdm_ids(files)
 
-            numbers = range(cfg['CV'])
+            cg = []
+            for a in range(cfg['CV']):
+                cg.append([a, files, ids, SEG, dct, dim, out_loc])
+            #numbers = range(cfg['CV'])
 
             if cfg['threads']>1:
                 pool = ThreadPool(cfg['threads'])
-                results = pool.map(process, numbers)
+                results = pool.map(process, cg)
                 pool.close()
                 pool.join()
             else:
-                for c in numbers:
+                for c in cg:
                     process(c)
 
         if os.path.exists('STOP'):
@@ -95,3 +105,7 @@ if __name__ == '__main__':
     # plt.subplot(3, 1, 3)
     # plt.plot(np.log(abs(f.imag)))
     # plt.show()
+
+if __name__ == '__main__':
+    config = 'config.json'
+    main1(config, 3)

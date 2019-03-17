@@ -37,9 +37,8 @@ def get_values(lines):
     return np.mean(np.array(y)), x
 
 
-if __name__ == '__main__':
-
-    cfg = Utils.load_json_file('config.json')
+def main3(config):
+    cfg = Utils.load_json_file(config)
     eval_file = cfg['eval_file'].format(HOME)
     location = cfg['location'].format(HOME)
     SEG = cfg['SEG']
@@ -66,9 +65,7 @@ if __name__ == '__main__':
         avg0 = A[2]
         att = len(avgf)
 
-        output = tf.placeholder(tf.float32, [None, 1])
         input = tf.placeholder(tf.float32, [None, att])
-        learning_rate = tf.placeholder(tf.float32, shape=[])
         nodes = map(int, cfg['nodes'].split(','))
 
         net = sNet3({'data': input})
@@ -113,8 +110,13 @@ if __name__ == '__main__':
                             a += step
                             r.append(results[0])
                         if len(r)>0:
-                            fp0.write('{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0))
+                            fp0.write('{},{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0, np.std(r)))
                         # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
         tf.reset_default_graph()
 
     fp0.close()
+
+
+if __name__ == '__main__':
+    config = 'config.json'
+    main3(config)

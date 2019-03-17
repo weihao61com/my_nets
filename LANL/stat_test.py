@@ -18,11 +18,12 @@ def csv_line(dd):
 
     return output
 
-filename = sys.argv[1]
+filename = '/home/weihao/tmp/L/L_11.csv' #sys.argv[1]
 
 
 with open(filename, 'r') as fp:
     lines = fp.readlines()
+
 #
 # rm = len(lines)%seg
 # lines = lines[rm:]
@@ -41,9 +42,7 @@ with open(filename, 'r') as fp:
 # plt.plot(np.std(x, 0))
 # plt.show()
 
-nseg = len(lines)/seg
-
-id = 250
+id = 50
 ls = lines[id*seg:(id+1)*seg]
 x = []
 y = []
@@ -53,24 +52,12 @@ for line in ls:
     y.append(v[1])
 
 y = np.mean(np.array(y))
-print 'total data', len(lines), y, nseg
+print 'total data', len(lines), y
 
-ch = 10
-x = np.array(x)
-xv = x.reshape(ch, seg/ch)
-plt.plot(x)
-fig, ax = plt.subplots()
 
-for a in range(ch):
-    f = abs(np.fft.fft(xv[a, :]))
-    f0 = f[0]
-    f = f[1:seg/ch/2+1]
-    f = f.reshape(15,500)
-    f = np.mean(f, 1)
-    ax.plot(f[4:], c='{}'.format(float(a)/ch), label='{}'.format(a))
-    print a, f0, np.mean(f), np.mean(f[4:])
+nx = (seg-seg%4096)/4096
+x = np.array(x[:nx*4096])
+a = x.reshape(4096, nx)- np.mean(x)
 
-leg = ax.legend();
-ax.legend(loc='upper right', frameon=False)
-
+plt.plot(np.mean(a, 0),'.-')
 plt.show()

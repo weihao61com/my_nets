@@ -49,9 +49,8 @@ def run_data(data, c, inputs, sess, xy, filename=None):
     return np.mean(np.abs(results-truth))
 
 
-if __name__ == '__main__':
-
-    cfg = Utils.load_json_file('config.json')
+def main2(config, cntn):
+    cfg = Utils.load_json_file(config)
 
     locs = sorted(glob.glob(cfg['out_location'].format(HOME, '*')))
     data, att = l_utils.get_dataset(locs)
@@ -66,7 +65,6 @@ if __name__ == '__main__':
     iterations = 20
     loop = 1
     batch_size = 100
-    cntn = False
 
     for c in range(CV):
         print 'CV', c
@@ -131,3 +129,8 @@ if __name__ == '__main__':
                 saver.save(sess, netFile.format(HOME, c))
 
         tf.reset_default_graph()
+
+
+if __name__ == '__main__':
+    config = 'config.json'
+    main2(config, False)
