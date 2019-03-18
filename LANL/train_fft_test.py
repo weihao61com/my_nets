@@ -62,7 +62,7 @@ def fft_test(config):
             A = pickle.load(fp)
         avgf = A[0]
         stdf = A[1]
-        avg0 = A[2]
+        # avg0 = A[2]
         att = len(avgf)
 
         input = tf.placeholder(tf.float32, [None, att])
@@ -110,7 +110,9 @@ def fft_test(config):
                             a += step
                             r.append(results[0])
                         if len(r)>0:
-                            fp0.write('{},{},{},{},{},{}\n'.format(c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0, np.std(r)))
+                            fp0.write('{},{},{},{},{},{}\n'.
+                                      format(c, avg, len(r), np.mean(r),
+                                             np.median(r), np.std(r)))
                         # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
         tf.reset_default_graph()
 

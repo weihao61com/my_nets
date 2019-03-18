@@ -280,15 +280,15 @@ class l_utils:
                     v1 = np.array(v1)
                     avg = np.mean(v1, 0)
                     std = np.std(v1, 0)
-                    avg0 = np.mean(np.array(v0))
+                    # avg0 = np.mean(np.array(v0))
                     with open(avg_file, 'w') as fp:
-                        pickle.dump((avg, std, avg0), fp)
+                        pickle.dump((avg, std), fp)
                 else:
                     with open(avg_file, 'r') as fp:
                         A = pickle.load(fp)
                     avg = A[0]
                     std = A[1]
-                    avg0 = A[2]
+                    # avg0 = A[2]
 
                 for f in d_out:
                     if f not in sub_data:
