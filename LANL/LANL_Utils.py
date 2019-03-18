@@ -19,20 +19,23 @@ class sNet3(Network):
     def setup(self):
         pass
 
-    def real_setup(self, nodes, outputs):
+    def real_setup(self, nodes, outputs, verbose=True):
         self.feed('data')
         for a in range(len(nodes)):
-            self.dropout(keep_prob=0.3, name='drop_{}'.format(a))
+            self.dropout(keep_prob=0.8, name='drop_{}'.format(a))
             self.fc(nodes[a], name= 'fc_{}'.format(a))
             #self.fc_s(nodes[a], name= 'fc_{}'.format(a))
 
         self.fc(outputs, relu=False, name='output')
         #self.fc_s(outputs, sig=False, name='output')
 
-        print("number of layers = {} {}".format(len(self.layers), nodes))
+        if verbose:
+            print("number of layers = {} {}".format(len(self.layers), nodes))
 
 
 class l_utils:
+
+    SEGMENT = 150000
 
     @staticmethod
     def rdm_ids(files):
@@ -202,13 +205,13 @@ class l_utils:
             d = abs(fft(x))
             v0 = d[0]
             dv = np.array(d[1:len(d)/2+1])
-            win = len(dv)/dim
-            dv = dv.reshape(dim, win)
-            # dv = np.std(dv, 1)
+            win = len(dv)/dim*2
+            dv = dv.reshape(dim/2, win)
+            d0 = np.std(dv, 1)
             dv = np.mean(dv, 1)
             #ax.plot(dv[:400], c='{}'.format(float(a) / NF), label='{0:5.2f}'.format(np.mean(y)))
             #print '{0:5.2f} {1:5.2f} {2:9.0f}'.format(np.mean(y), d[0].real / len(x), dv[18])
-        return np.concatenate((np.array([v0]), dv))
+        return np.concatenate((np.array([v0]), dv, d0))
 
     @staticmethod
     def csv_line(dd):
@@ -220,6 +223,24 @@ class l_utils:
                 output = '{},{}'.format(output, d)
 
         return output
+
+    @staticmethod
+    def load_data(filename):
+        with open(filename, 'r') as fp:
+            lines = fp.readlines()
+            if len(lines)==(l_utils.SEGMENT + 1):
+                x = []
+                for line in lines[1:]:
+                    x.append(float(line))
+                y = None
+            else:
+                x = []
+                y = []
+                for line in lines:
+                    a = map(float, line.split(','))
+                    x.append(a[0])
+                    y.append(a[1])
+        return x, y
 
     @staticmethod
     def get_dataset(subs, st='L_*.p', avg_file='Avg.p'):

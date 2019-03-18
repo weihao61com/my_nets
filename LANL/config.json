@@ -1,13 +1,14 @@
 {
-  "SEG": 6000,
+  "SEG": 4096,
   "CV": 5,
   "dct": 0,
-  "dim": 1000,
+  "dim": 1024,
   "threads": 2,
   "location": "{}/../tmp/L",
   "out_location": "{}/p_files/L/L_{}",
   "nodes": "1024, 128",
   "netFile": "{}/NNs/L/C_{}/L",
   "eval_file": "{}/tmp/fit.csv",
+  "refit_file": "{}/tmp/refit.p",
   "testing_step": 1000
 }

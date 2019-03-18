@@ -37,7 +37,7 @@ def get_values(lines):
     return np.mean(np.array(y)), x
 
 
-def main3(config):
+def fft_test(config):
     cfg = Utils.load_json_file(config)
     eval_file = cfg['eval_file'].format(HOME)
     location = cfg['location'].format(HOME)
@@ -119,4 +119,4 @@ def main3(config):
 
 if __name__ == '__main__':
     config = 'config.json'
-    main3(config)
+    fft_test(config)

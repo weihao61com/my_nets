@@ -49,7 +49,7 @@ def run_data(data, c, inputs, sess, xy, filename=None):
     return np.mean(np.abs(results-truth))
 
 
-def main2(config, cntn):
+def nn_fit(config, cntn):
     cfg = Utils.load_json_file(config)
 
     locs = sorted(glob.glob(cfg['out_location'].format(HOME, '*')))
@@ -133,4 +133,4 @@ def main2(config, cntn):
 
 if __name__ == '__main__':
     config = 'config.json'
-    main2(config, False)
+    nn_fit(config, False)

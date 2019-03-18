@@ -45,8 +45,6 @@ def process(cg):
             rps.sort()
             pr = 0
             for a in range(NF):
-                #rm = rps[a] - pr
-                #lines = lines[rm:]
                 A = l_utils.get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
                 A[0] = A[0]/t_scale
                 data.append(A)
@@ -57,7 +55,7 @@ def process(cg):
         pickle.dump(data, fp)
 
 
-def main1(config, cnt):
+def extract_features(config, cnt):
     cfg = Utils.load_json_file(config)
     SEG = cfg['SEG']
     dct = cfg['dct'] > 0
@@ -108,4 +106,4 @@ def main1(config, cnt):
 
 if __name__ == '__main__':
     config = 'config.json'
-    main1(config, 3)
+    extract_features(config, 3)
