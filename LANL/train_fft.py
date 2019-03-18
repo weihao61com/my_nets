@@ -47,7 +47,8 @@ def process(cg):
             for a in range(NF):
                 A = l_utils.get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
                 A[0] = A[0]/t_scale
-                data.append(A)
+                if A[0]>0.02:
+                    data.append(A)
                 #pr = rps[a]
     print "Total data", c, len(data)
     filename = os.path.join(out_loc, 'L_{}.p'.format(c))

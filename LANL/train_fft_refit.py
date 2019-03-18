@@ -1,31 +1,40 @@
-from LANL_Utils import l_utils
+from LANL_Utils import l_utils, HOME
 import sys
 import numpy as np
 #import matplotlib.pyplot as plt
 import pickle
 
+sys.path.append('{}/my_nets'.format(HOME))
+from utils import Utils
 
-def process(x, y):
+
+def process(nx, ny):
+    x = []
+    y = []
+    for a in range(len(nx)):
+        if ny[a]>0.03:
+            x.append(nx[a])
+            y.append(ny[a])
     z = np.polyfit(x, y, 2)
     p = np.poly1d(z)
     error = []
+    ny = []
     for a in range(len(x)):
+        ny.append(p(x[a]))
         error.append(y[a] - p(x[a]))
-
+    # plt.subplot(1,2,1)
+    # plt.plot(x,y,'.')
+    # plt.subplot(1,2,2)
+    # plt.hist(ny, 40)
+    # plt.show()
     return np.average(np.abs(error)), z
 
-
-HOME = '/home/weihao/Projects'
-if sys.platform=='darwin':
-    HOME = '/Users/weihao/Projects'
-
-sys.path.append('{}/my_nets'.format(HOME))
-from utils import Utils
 
 def fft_refit(config):
     cfg = Utils.load_json_file(config)
     eval_file = cfg['eval_file'].format(HOME)
     rst_file = cfg['refit_file'].format(HOME)
+    print eval_file
 
     dd = np.array(Utils.read_csv(eval_file)).astype(float)
 
@@ -54,7 +63,7 @@ def fft_refit(config):
     with open(rst_file, 'w') as fp:
         pickle.dump(refit, fp)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     config = 'config.json'
     fft_refit(config)

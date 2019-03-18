@@ -113,7 +113,7 @@ def fft_run(config, filename):
         main5(cfg, filename)
     else:
         files = glob.glob(os.path.join(filename, '*.csv'))
-        fp = open('{}/../LANL/rst.csv', 'r')
+        fp = open('{}/tmp/rst.csv'.format(HOME), 'w')
         for file in files:
             A, B = main5(cfg, file)
             fp.write('{},{},{}\n'.format(os.path.basename(file)[:-4], A, B))

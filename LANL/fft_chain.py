@@ -6,9 +6,9 @@ from train_fft_run import fft_run
 
 config = 'config.json'
 
-extract_features(config, 20)
+extract_features(config, 5)
 nn_fit(config, False)
 fft_test(config)
-fft_refit()
+fft_refit(config)
 fft_run(config, '/home/weihao/Downloads/test')
 

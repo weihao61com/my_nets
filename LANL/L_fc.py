@@ -62,7 +62,7 @@ def nn_fit(config, cntn):
     #nodes = [ 256, 16]
     # nodes = [256, 16]
     lr0 = 1e-4
-    iterations = 20
+    iterations = 10
     loop = 1
     batch_size = 100
 

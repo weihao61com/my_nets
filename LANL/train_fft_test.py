@@ -90,7 +90,7 @@ def fft_test(config):
 
                     print len(line0)
                     start = 0
-                    seg_step = 1000000
+                    seg_step = 100000
                     t_scale = float(line0[0].split(',')[1])
 
                     for start in range(0, len(line0), seg_step):
