@@ -26,7 +26,7 @@ else:
 w2 = cam.cx
 h2 = cam.cy
 
-output_file = '/Users/weihao/tmp/feature.csv'
+output_file = '/home/weihao/tmp/feature.csv'
 fp = open(output_file, 'w')
 
 with open(filename, 'r') as f:
