@@ -34,7 +34,7 @@ def net_run(cfg, x):
         A = pickle.load(fp)
     avgf = A[0]
     stdf = A[1]
-    avg0 = A[2]
+    #avg0 = A[2]
     att = len(avgf)
     rst_file = cfg['refit_file'].format(HOME)
     with open(rst_file, 'r') as fp:
@@ -74,11 +74,13 @@ def net_run(cfg, x):
                 a += step
                 r.append(results[0])
             if len(r) > 0:
-                v_mean = run_refit(np.mean(r) + avg0, refit[c][0])
-                v_median = run_refit(np.median(r) + avg0, refit[c][0])
-                #print(
-                #    '{},{},{},{},{}'.format(c, len(r), v_mean, v_median,
-                #                              np.std(r)))
+                v_mean = run_refit(np.mean(r) , refit[c][0])
+                v_median = run_refit(np.median(r), refit[c][0])
+                print(
+                    '{},{},{},{},{}'.format(c, len(r), v_mean, v_median,
+                                              np.std(r)))
+                plt.plot(r, '.')
+                plt.show()
                 output1.append(v_mean)
                 output2.append(v_median)
         tf.reset_default_graph()
@@ -92,7 +94,7 @@ def main5(cfg, filename, scale=10):
 
     if y is not None:
         length = len(x)
-        step = length/20
+        step = length/100
         for a in range(0, length, step):
             X = np.array(x[a: a+l_utils.SEGMENT])
             Y = np.array(y[a: a+l_utils.SEGMENT])
@@ -124,7 +126,7 @@ def fft_run(config, filename):
 if __name__ == '__main__':
     config = 'config.json'
     filename = '/home/weihao/tmp/L/L_11.csv'
-    # filename = '/home/weihao/Downloads/test/seg_0a42ba.csv'
+    #filename = '/home/weihao/Downloads/test/'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 

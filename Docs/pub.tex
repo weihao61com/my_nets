@@ -1,0 +1,137 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2018
+
+% ready for submission
+% \usepackage{neurips_2018}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2018}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+     \usepackage[final]{neurips_2018}
+
+% to avoid loading the natbib package, add option nonatbib:
+%     \usepackage[nonatbib]{neurips_2018}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\title{TBD NeurIPS 2019}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+\author{%
+  Wei HAO \\
+  Uber Technologies, Inc. \\
+  \texttt{weihao@uber.com} \\
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\maketitle
+
+\begin{abstract}
+RANSAC is …
+It has been widely used in computer vision…
+The machine learning has failed to improve the traditional approach.
+This paper propose a XXNet
+
+\end{abstract}
+
+\section{Introduction}
+The RANSAC (Random Sample Consensus) algorithm[1, 11] is a powerful technique for estimating the parameters of a model with the data that may be contaminated by outliers. Introduced in 1981, it is still widely used to solve various problem. Especially in computer vision: epipolar geometry estimation, multi-view geometry, object retrieval, motion estimation, structure from motion and features-based localization.
+Recently, deep learning has shown great success in several areas, as well as in computer vision: image classification, object detection, and ... [...]
+However the Deep Learning is still not able to compete with traditional algorithm, like RANSAC, in geometry related areas[2]. CNN to image like Posenet
+In this paper, we replace the RANSAC with machine learning algorithm, which should be able to fit complicated models while recognize the outliers in the input data. In the case of relative pose estimation we don’t have to worry about the camera matrix and image distortion. And the inputs of RANSAC is limited to the location of the match point in the images. We can add additional information to the input feature to further improve the performance. 
+
+\section{Architectural Details (Network Design)}
+The most important part of the new neural network (XXNet) is able to handle the input feature list with variable size with no particular order. Recurrent neural network (RNN) is contain cyclic connections that make them a more powerful tool to model sequence data than feed-forward neural networks.
+
+Architect
+The XXnet has two steps: First a small set of input features, randomly selected and randomlyordered, is sent to the same subnetwork. Second the outputs of subnetwork are aggregated to get the final result. (Figure \ref{xxNet}).
+
+\begin{figure}
+  \centering
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{figures/xxNet.png}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.28\linewidth}
+    \includegraphics[width=\linewidth]{figures/subNet.png}
+    \caption{}
+  \end{subfigure}
+  \caption{(a) xxNet. (b) subnet}
+  \label{xxNet}
+\end{figure}
+
+
+\subsection{xxNet}
+xxNet
+
+\subsection{subnet}
+subNet
+
+\section{Experiment}
+To test the XXnet, e used two real world datasets: KITTI dataset[4] and indoor 7-scene[5]. (Table \ref{results})
+
+\section{Conclusion}
+\label{headings}
+
+TBD
+
+\begin{table}
+  \caption{Sample table title}
+  \label{results}
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \multicolumn{2}{c}{Part}                   \\
+    \cmidrule(r){1-2}
+    Name     & Description     & Size ($\mu$m) \\
+    \midrule
+    Dendrite & Input terminal  & $\sim$100     \\
+    Axon     & Output terminal & $\sim$10      \\
+    Soma     & Cell body       & up to $10^6$  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section*{References}
+
+\medskip
+
+[1] Fisher, M., Bolles, R. (1981) Random sample consensus: A paradigm for model 
+fitting with applications to image analysis and automated cartography. Comm. of 
+the ACM 24(6), 381–395
+T. Sattler, W. Maddern, C. Toft, A. Torii, L. Hammarstrand, E. Stenborg, D. Safari, M. Okutomi, M. Pollefeys, J. Sivic, F. Kahl, T. Pajdla, Benchmarking 6DOF Outdoor Visual Localization in Changing Conditions Conference on Computer Vision and Pattern Recognition (CVPR) 2018
+A. Kendall, M. Grimes, and R. Cipolla. PoseNet: A Convolutional Network for Real-Time 6-DOF Camera Relocalization. In Proc. ICCV, 2015.
+Geiger, A., Lenz, P., Stiller, and C., Urtasun, R. (2013). Vision meets robotics: The KITTI dataset. The International Journal of Robotics Research, 32(11), 1231–1237. 
+J. Shotton, B. Glocker, C. Zach, S. Izadi, A. Criminisi, and A. Fitzgibbon. Scene coordinate regression forests for camera relocalization in RGB-D images. In Computer Vision and Pattern Recognition (CVPR), 2013 IEEE
+
+\end{document}

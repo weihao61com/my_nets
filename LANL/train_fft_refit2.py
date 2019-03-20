@@ -8,23 +8,43 @@ sys.path.append('{}/my_nets'.format(HOME))
 from utils import Utils
 
 
-def process(nx, ny):
+def process(nx, ny, e):
     x = []
     y = []
+    yp = []
     for a in range(len(nx)):
-        if ny[a]>0.03:
+        if ny[a]>0.0:
             x.append(nx[a])
             y.append(ny[a])
-    z = np.polyfit(x, y, 2)
-    p = np.poly1d(z)
+        b = ny[a]
+        if b<0.5:
+            b += 1
+        yp.append(b)
+    z = np.polyfit(y, x, 2)
+    x=np.array(x)
+    y=np.array(y)
     error = []
     ny = []
-    for a in range(len(x)):
-        ny.append(p(x[a]))
-        error.append(y[a] - p(x[a]))
-    # plt.subplot(1,2,1)
-    # plt.plot(x,y,'.')
-    # plt.subplot(1,2,2)
+    b = z[1] * z[1] - 4 * z[0] * (z[2] - x)
+    c = z[0]*y*y +z[1]*y + z[2]
+
+    plt.subplot(1, 2, 1)
+    plt.plot(y, x, '.')
+    plt.subplot(1, 2, 2)
+    plt.plot(y, e, '.')
+    plt.show()
+
+    error.append(0)
+    #
+    # for a in range(len(x)):
+    #     a1 = (np.sqrt(b[a])-z[1])/2/z[0]
+    #     ny.append(a1)
+    #     error.append(y[a] - a1)
+    # plt.subplot(1,3,1)
+    # plt.plot(y,x,'.')
+    # plt.subplot(1,3,2)
+    # plt.plot(y,ny,'.')
+    # plt.subplot(1,3,3)
     # plt.hist(ny, 40)
     # plt.show()
     return np.average(np.abs(error)), z
@@ -38,8 +58,8 @@ def fft_refit(config):
 
     dd = np.array(Utils.read_csv(eval_file)).astype(float)
 
-    print process(dd[:, 3], dd[:, 1])
-    print process(dd[:, 4], dd[:, 1])
+    print process(dd[:, 3], dd[:, 1], dd[:, 5])
+    print process(dd[:, 4], dd[:, 1], dd[:, 5])
 
     data = {}
     for d in dd:
@@ -52,8 +72,8 @@ def fft_refit(config):
     refit = {}
     for c in data:
         dd = np.array(data[c])
-        a1, z1 = process(dd[:, 3], dd[:, 1])
-        a2, z2 = process(dd[:, 4], dd[:, 1])
+        a1, z1 = process(dd[:, 3], dd[:, 1], dd[:, 5])
+        a2, z2 = process(dd[:, 4], dd[:, 1], dd[:, 5])
         print dd.shape, a1, a2, z1, z2
         refit[c] = [z1,z2]
         e1.append(a1)
@@ -63,23 +83,7 @@ def fft_refit(config):
     with open(rst_file, 'w') as fp:
         pickle.dump(refit, fp)
 
-    x = []
-    y1= []
-    y2 = []
-    for c in data:
-        dd = np.array(data[c])
-        z = refit[c]
-        p1 = np.poly1d(z[0])
-        p2 = np.poly1d(z[1])
-        for a in range(dd.shape[0]):
-            x.append(dd[a,1])
-            y1.append(p1(dd[a, 3]))
-            y2.append(p2(dd[a, 4]))
-    plt.subplot(2,1,1)
-    plt.plot(x, y1, '.')
-    plt.subplot(2,1,2)
-    plt.plot(x, y2,'.')
-    plt.show()
+
 
 if __name__ == '__main__':
     config = 'config.json'

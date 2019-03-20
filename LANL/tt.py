@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 #     nt += 1
 
 
-filename = '/home/weihao/LANL/median1.csv'
+filename = '/home/weihao/Projects/tmp/rst.csv'
 x = []
 y = []
 with open(filename, 'r') as fp:

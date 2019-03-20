@@ -19,10 +19,11 @@ class sNet3(Network):
     def setup(self):
         pass
 
-    def real_setup(self, nodes, outputs, verbose=True):
+    def real_setup(self, nodes, outputs, keep_prob=0.5, verbose=True):
         self.feed('data')
         for a in range(len(nodes)):
-            self.dropout(keep_prob=0.5, name='drop_{}'.format(a))
+            if keep_prob<1:
+                self.dropout(keep_prob=keep_prob, name='drop_{}'.format(a))
             self.fc(nodes[a], name= 'fc_{}'.format(a))
             #self.fc_s(nodes[a], name= 'fc_{}'.format(a))
 
@@ -205,13 +206,16 @@ class l_utils:
             d = abs(fft(x))
             v0 = d[0]
             dv = np.array(d[1:len(d)/2+1])
-            win = len(dv)/dim*2
-            dv = dv.reshape(dim/2, win)
-            d0 = np.std(dv, 1)
+            win = len(dv)/dim
+            dv = dv.reshape(dim, win)
             dv = np.mean(dv, 1)
+            # win = len(dv) / dim * 2
+            # dv = dv.reshape(dim / 2, win)
+            # d0 = np.std(dv, 1)
+            # dv = np.mean(dv, 1)
             #ax.plot(dv[:400], c='{}'.format(float(a) / NF), label='{0:5.2f}'.format(np.mean(y)))
             #print '{0:5.2f} {1:5.2f} {2:9.0f}'.format(np.mean(y), d[0].real / len(x), dv[18])
-        return np.concatenate((np.array([v0]), dv, d0))
+        return dv # np.concatenate((np.array([v0]), dv, d0))
 
     @staticmethod
     def csv_line(dd):

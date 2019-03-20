@@ -6,7 +6,7 @@ import pickle
 import os
 from LANL_Utils import l_utils
 
-seg = 4096
+seg = 2048
 
 filename = '/home/weihao/tmp/L/L_11.csv' #sys.argv[1]
 #id = 10000000 # int(sys.argv[2])
@@ -20,7 +20,7 @@ line0 = line0[a:a+l_utils.SEGMENT]
 
 step = int(len(line0)-seg)/100
 m0 = None
-dim = 128
+dim = 256
 sp = int(dim*0.4)
 A1 = []
 A2 = []
