@@ -94,9 +94,13 @@ class VisualOdometry2:
         # ratio test as per Lowe's paper
         for i, (m, n) in enumerate(matches):
             if m.distance < 0.8 * n.distance:
-                values = (curent_feature[0][m.trainIdx],
-                          self.feature[0][m.queryIdx],
-                          self.feature[0][n.queryIdx],
+                #values = (curent_feature[0][m.trainIdx],
+                #          self.feature[0][m.queryIdx],
+                #          self.feature[0][n.queryIdx],
+                #          m.distance, n.distance)
+                values = (self.feature[0][m.queryIdx],
+                          curent_feature[0][m.trainIdx],
+                          curent_feature[0][n.trainIdx],
                           m.distance, n.distance)
                 pts1.append(values)
 

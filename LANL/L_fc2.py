@@ -77,7 +77,7 @@ def nn_fit2(config, cntn):
     # CV = 5
     #nodes = [ 256, 16]
     # nodes = [256, 16]
-    lr = 1e-4
+    lr = 1e-3
     iterations = 1000
     loop = 100
     batch_size = 100
@@ -135,7 +135,7 @@ def nn_fit2(config, cntn):
                     t_loss += A
                     t_count += len(b0[d:d+batch_size])
             st1 = '{}'.format(t_loss/t_count)
-
+            lr *= 0.99
             saver.save(sess, netFile.format(HOME))
 
     tf.reset_default_graph()
