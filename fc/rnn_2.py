@@ -150,7 +150,7 @@ class rNet(Network):
                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
-def run_test(input_dic, sess, xy, te, cfg, mul):
+def run_test(input_dic, sess, xy, te, cfg, mul=-1):
 
     tr_pre_data = te.prepare(multi=mul)
     tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', cfg)
