@@ -161,6 +161,42 @@ def run_test(input_dic, sess, xy, te, cfg, mul=-1):
     exit(0)
 
 
+def avg_correction(tr, avg_file):
+    with open(avg_file, 'r') as fp:
+        A = pickle.load(fp)
+    av = A[0]
+    st = A[1]
+    for d in range(len(tr.data[0])):
+        for a in range(tr.data[0][d][0].shape[0]):
+            tr.data[0][d][0][a, :] -= av
+            tr.data[0][d][0][a, :] /= st
+    return tr
+
+
+def get_avg_file(tr, avg_file):
+    av = None
+    st = None
+    nt = 0
+    for d in tr.data[0]:
+        if nt == 0:
+            av = np.sum(d[0], 0)
+            st = np.sum(d[0]*d[0], 0)
+        else:
+            av += np.sum(d[0], 0)
+            st += np.sum(d[0] * d[0], 0)
+        nt += d[0].shape[0]
+    av /= nt
+    st /= nt
+    st = np.sqrt(st - av*av)
+    print "averages:"
+    for a in range(len(av)):
+        print a, av[a], st[a]
+
+    with open(avg_file, 'w') as fp:
+        pickle.dump((av,st), fp)
+
+    return
+
 if __name__ == '__main__':
 
     config_file = "rnn_config.json"
@@ -174,11 +210,16 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
+    avg_file = cfg.netFile + '_avg.p'
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
+        get_avg_file(tr, avg_file)
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
         tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
         cfg.att = te.sz[1]
+        tr = avg_correction(tr, avg_file)
+        tr0 = avg_correction(tr0, avg_file)
+
     else:
         if test == 'te':
             te = DataSet([cfg.te_data[0]], cfg)
@@ -186,6 +227,7 @@ if __name__ == '__main__':
             te = DataSet([cfg.tr_data[0]], cfg)
         cfg.att = te.sz[1]
 
+    te = avg_correction(te, avg_file)
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, \
