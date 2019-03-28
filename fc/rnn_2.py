@@ -197,6 +197,12 @@ def get_avg_file(tr, avg_file):
 
     return
 
+
+def avg_file_name(p):
+    basename = os.path.basename(p)
+    pathname = os.path.dirname(p)
+    return pathname + '_' + basename+'_avg.p'
+
 if __name__ == '__main__':
 
     config_file = "rnn_config.json"
@@ -210,7 +216,7 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    avg_file = cfg.netFile + '_avg.p'
+    avg_file = avg_file_name(cfg.netFile)
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
