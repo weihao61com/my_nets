@@ -44,7 +44,7 @@ def run_data(data, c, inputs, sess, xy, filename=None):
                 skip=1
             for a in range(len(truth)):
                 if a%skip==0:
-                    fp.write('{},{}\n'.format(results[a], truth[a]))
+                    fp.write('{},{}\n'.format(truth[a], results[a]))
 
     return np.mean(np.abs(results-truth))
 
@@ -53,8 +53,9 @@ def nn_fit(config, cntn):
     cfg = Utils.load_json_file(config)
 
     locs = sorted(glob.glob(cfg['out_location'].format(HOME, '*')))
+    print locs[0]
     data, att = l_utils.get_dataset(locs)
-
+    print 'att', att
     CV = cfg['CV']
     nodes = map(int, cfg['nodes'].split(','))
     netFile = cfg['netFile']
@@ -80,7 +81,7 @@ def nn_fit(config, cntn):
 
         xy = net.layers['output']
         loss = tf.reduce_sum(tf.abs(tf.subtract(xy, output)))
-        # loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
+        #loss = tf.reduce_sum(tf.square(tf.subtract(xy, output)))
 
         opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                         beta2=0.999, epsilon=0.00000001,
@@ -101,8 +102,8 @@ def nn_fit(config, cntn):
             st1 = ''
             for a in range(iterations):
 
-                te_loss = run_data(data[0], c+1, input, sess, xy, '{}/../tmp/te.csv'.format(HOME))
-                tr_loss = run_data(data[0], -c-1, input, sess, xy, '{}/../tmp/tr.csv'.format(HOME))
+                te_loss = run_data(data[0], c+1, input, sess, xy, '{}/tmp/te.csv'.format(HOME))
+                tr_loss = run_data(data[0], -c-1, input, sess, xy, '{}/tmp/tr.csv'.format(HOME))
 
                 t1 = (datetime.datetime.now()-t00).seconds/3600.0
                 str = "it: {0} {1:.3f} {2} {3} {4}".format(
@@ -129,7 +130,6 @@ def nn_fit(config, cntn):
                 saver.save(sess, netFile.format(HOME, c))
 
         tf.reset_default_graph()
-
 
 if __name__ == '__main__':
     config = 'config.json'

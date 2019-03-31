@@ -39,24 +39,24 @@ def run_data(truth, features, inputs, sess, xy, filename=None):
 
     if filename is not None:
         with open(filename, 'w') as fp:
-            skip = int(len(truth)/2000)
-            if skip==0:
-                skip=1
+            # skip = int(len(truth)/2000)
+            # if skip==0:
+            #     skip=1
             for a in range(len(truth)):
-                if a%skip==0:
-                    fp.write('{},{}\n'.format(results[a], truth[a]))
+                fp.write('{},{}\n'.format(truth[a], results[a]))
 
     return np.mean(np.abs(results-truth))
 
 
 def nn_fit2(config, cntn):
     cfg = Utils.load_json_file(config)
-    data_file = cfg['eval_file'].format(HOME)
+    data_file = "{}/tmp/fit_full.csv" #cfg['eval_file']
+    data_file = data_file.format(HOME)
     dd = np.array(Utils.read_csv(data_file)).astype(float)
     print dd.shape
 
     T = dd[:, 1]
-    F = np.concatenate((dd[:,:1], dd[:,3:]), axis=1)
+    F = np.concatenate((dd[:, :1], dd[:,3:]), axis=1)
 
     T1 = []
     T2 = []
@@ -87,7 +87,7 @@ def nn_fit2(config, cntn):
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
     net = sNet3({'data': input})
-    net.real_setup(node2, 1, keep_prob=1)
+    net.real_setup(node2, 1, keep_prob=0.8)
 
     xy = net.layers['output']
     loss = tf.reduce_sum(tf.abs(tf.subtract(xy, output)))

@@ -50,10 +50,10 @@ class PinholeCamera:
 class Utils:
 
     @staticmethod
-    def read_csv(filename):
+    def read_csv(filename, delimiter=','):
         data = []
         with open(filename, 'r') as fp:
-            csv_reader = csv.reader(fp, delimiter=',')
+            csv_reader = csv.reader(fp, delimiter=delimiter)
             for row in csv_reader:
                 if 'latitude' in row:
                     print '\t\t\t', row

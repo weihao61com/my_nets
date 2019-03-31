@@ -23,6 +23,27 @@ from utils import Utils
 # location = '/home/weihao/tmp/L'
 # out_location = '/home/weihao/Projects/p_files/L/L_{}'
 
+def ana_4096(lines):
+
+    dx = SortedDict()
+    dy = SortedDict()
+    pa = None
+    nt = 0
+    for l in lines:
+        x = nt % 4096
+        a = np.array(map(float, l.split(',')))
+        if not x in dx:
+            dx[x] = []
+            dy[x] = []
+        if pa is not None:
+            pa = pa-a
+            dx[x].append(pa[0])
+            dy[x].append(pa[1])
+        pa = a
+        nt += 1
+
+    for x in dx:
+        print x, np.std(dx[x]), np.std(dy[x])
 
 def process(cg):
     c= cg[0]
@@ -38,17 +59,17 @@ def process(cg):
         if ids[filename] == c:
             with open(filename, 'r') as fp:
                 lines = fp.readlines()
+            #ana_4096(lines[1234567:1234567+l_utils.SEGMENT])
             NF = int (len(lines) / 10000)
             t_scale = float(lines[0].split(',')[1])
             print 'records', c, filename, len(lines), len(lines) / SEG, NF, t_scale
             rps = np.random.randint(0, len(lines) - SEG - 1, NF)
             rps.sort()
-            pr = 0
             for a in range(NF):
                 A = l_utils.get_features(lines[rps[a]:rps[a]+SEG], dct, dim)
                 A[0] = A[0]/t_scale
-                if A[0]>0.02:
-                    data.append(A)
+                #if 7>A[0]>0.1:
+                data.append(A)
                 #pr = rps[a]
     print "Total data", c, len(data)
     filename = os.path.join(out_loc, 'L_{}.p'.format(c))

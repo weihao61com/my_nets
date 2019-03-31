@@ -74,7 +74,8 @@ def fft_test(config):
 
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
-
+        err1 = []
+        err2 = []
         with tf.Session() as sess:
             sess.run(init)
 
@@ -84,17 +85,18 @@ def fft_test(config):
                     continue
 
                 #filename = '/home/weihao/tmp/L/L_11.csv'
-
                 with open(filename, 'r') as fp:
                     line0 = fp.readlines()
 
                     print len(line0)
-                    seg_step = 10000
+                    seg_step = 100000
                     t_scale = float(line0[0].split(',')[1])
 
                     for start in range(0, len(line0), seg_step):
 
                         lines = line0[start:start+SEGMENT]
+                        if len(lines)<SEGMENT:
+                            break
                         avg, x = get_values(lines)
                         avg /= t_scale
                         a = 0
@@ -108,13 +110,19 @@ def fft_test(config):
                             results = sess.run(xy, feed_dict=feed)[:, 0]
                             a += step
                             r.append(results[0])
-                        if len(r)>0:
-                            fp0.write('{},{},{},{},{},{}\n'.
-                                      format(c, avg, len(r), np.mean(r),
-                                             np.median(r), np.std(r)))
+                        if len(r) > 0:
+                            #plt.plot(r)
+                            #plt.show()
+                            r = np.array(r)
+                            dr = r - avg
+                            dr = np.mean(np.abs(dr))
+                            err1.append(np.mean(r)-avg)
+                            err2.append(np.median(r)-avg)
+                            fp0.write('{},{},{},{},{},{},{},{},{}\n'.
+                                      format(c,filename, avg, len(r), np.mean(r), np.median(r), np.std(r), dr, r[0]))
                         # print c, avg, len(r), np.mean(r)+avg0, np.median(r)+avg0
         tf.reset_default_graph()
-
+        print 'errors', np.mean(np.abs(err1)), np.mean(np.abs(err2))
     fp0.close()
 
 

@@ -94,6 +94,7 @@ class l_utils:
         d = []
 
         for dd in data:
+            #if dd[0]>0.05 and dd[0]<0.5:
             t.append(dd[0])
             d.append(dd[1])
         x = np.array(d)
@@ -195,9 +196,9 @@ class l_utils:
     def feature_final(x, dct, dim):
         if dct:
             d = fftpack.dct(x)
+            d[0] = d[0]/len(x)
             win = len(d) / dim
-            v0 = d[0]
-            d[0] = d[1]
+            #d[0] = d[1]
             dv = np.array(d).reshape(dim, win)
             dv = np.std(dv, 1)
             #ax.plot(dv[:400], c='{}'.format(float(a) / NF), label='{0:5.2f}'.format(np.mean(y)))
@@ -205,7 +206,8 @@ class l_utils:
         else:
             d = abs(fft(x))
             v0 = d[0]
-            dv = np.array(d[1:len(d)/2+1])
+            #dv = np.array(d[1:len(d)/2+1])
+            dv = np.array(d[:len(d)/2])
             win = len(dv)/dim
             dv = dv.reshape(dim, win)
             dv = np.mean(dv, 1)
@@ -230,6 +232,12 @@ class l_utils:
 
     @staticmethod
     def load_data(filename):
+        p_file = filename+".p"
+        if os.path.exists(p_file):
+            with open(p_file, 'r') as fp:
+                A = pickle.load(fp)
+                return A[0], A[1]
+
         with open(filename, 'r') as fp:
             lines = fp.readlines()
             if len(lines)==(l_utils.SEGMENT + 1):
@@ -242,8 +250,12 @@ class l_utils:
                 y = []
                 for line in lines:
                     a = map(float, line.split(','))
-                    x.append(a[0])
+                    x.append(int(a[0]))
                     y.append(a[1])
+
+        with open(p_file, 'w') as fp:
+            pickle.dump((x, y), fp)
+
         return x, y
 
     @staticmethod

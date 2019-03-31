@@ -20,21 +20,21 @@ def process(nx, ny, e):
         if b<0.5:
             b += 1
         yp.append(b)
-    z = np.polyfit(y, x, 2)
+    z = np.polyfit(x, y, 2)
     x=np.array(x)
     y=np.array(y)
     error = []
     ny = []
     b = z[1] * z[1] - 4 * z[0] * (z[2] - x)
-    c = z[0]*y*y +z[1]*y + z[2]
+    c = z[0]*x*x +z[1]*x + z[2]
 
     plt.subplot(1, 2, 1)
     plt.plot(y, x, '.')
     plt.subplot(1, 2, 2)
-    plt.plot(y, e, '.')
+    plt.plot(y, c, '.')
     plt.show()
 
-    error.append(0)
+    #error.append(0)
     #
     # for a in range(len(x)):
     #     a1 = (np.sqrt(b[a])-z[1])/2/z[0]
@@ -47,7 +47,7 @@ def process(nx, ny, e):
     # plt.subplot(1,3,3)
     # plt.hist(ny, 40)
     # plt.show()
-    return np.average(np.abs(error)), z
+    return np.average(np.abs(c-y)), z
 
 
 def fft_refit(config):
@@ -58,22 +58,24 @@ def fft_refit(config):
 
     dd = np.array(Utils.read_csv(eval_file)).astype(float)
 
-    print process(dd[:, 3], dd[:, 1], dd[:, 5])
-    print process(dd[:, 4], dd[:, 1], dd[:, 5])
+    print process(dd[:, 1], dd[:, 0], dd[:, 3])
+    print process(dd[:, 2], dd[:, 0], dd[:, 3])
 
+    exit()
     data = {}
+    data[0] = []
     for d in dd:
-        if not d[0] in data:
-            data[d[0]] = []
-        data[d[0]].append(d)
+        #if not d[0] in data:
+        #    data[d[0]] = []
+        data[0].append(d)
 
     e1 = []
     e2 = []
     refit = {}
     for c in data:
         dd = np.array(data[c])
-        a1, z1 = process(dd[:, 3], dd[:, 1], dd[:, 5])
-        a2, z2 = process(dd[:, 4], dd[:, 1], dd[:, 5])
+        a1, z1 = process(dd[:, 1], dd[:, 0], dd[:, 3])
+        a2, z2 = process(dd[:, 2], dd[:, 0], dd[:, 3])
         print dd.shape, a1, a2, z1, z2
         refit[c] = [z1,z2]
         e1.append(a1)

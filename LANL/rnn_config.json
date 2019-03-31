@@ -5,14 +5,17 @@
   "dim": 1024,
   "threads": 5,
   "location": "{}/../tmp/L",
-  "out_location": "{}/p_files/L/L_{}",
+  "out_location": "{}/p_files/L_normal/L_{}",
   "nodes": "1024, 128",
-  "Rnodes": "1024, 128",
   "node2": "2048, 128, 16",
-  "netFile": "{}/NNs/L/FC_{}/L",
+  "netFile": "{}/NNs/L/C_{}/L",
   "netFile2": "{}/NNs/L/F/L",
   "eval_file": "{}/tmp/fit.csv",
-  "reval_file": "r.csv",
   "refit_file": "{}/tmp/refit.p",
-  "testing_step": 256
+  "testing_step": 256,
+  "n_att": 128,
+  "nodes0": "1024, 128",
+  "nodes1": "128",
+  "nodes2": "128",
+  "SIG": 0
 }
