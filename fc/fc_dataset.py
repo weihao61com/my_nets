@@ -414,19 +414,26 @@ class DataSet:
         self.id = None
         #self.att = self.sz[1]
 
-    def get_next(self, rd=True):
-        self.load_next_data()
+    def get_next(self, rd=True, avg=None):
+        rt = self.load_next_data()
+        if rt == 0:
+            return None
+
+        if avg and rt==2:
+            self.avg_correction(avg)
 
         if self.index == 0:
             return None
+
         return self.prepare(rd)
 
     def load_next_data(self, sub_sample=-1):
         self.bucket = 0
 
         if len(self.dataset) == 1 and self.index == 0:
-            return
+            return 0
 
+        rt = 1
         self.index += 1
         if self.index == len(self.dataset):
             self.verbose = False
@@ -439,6 +446,7 @@ class DataSet:
             if self.att<att:
                 for a in range(len(data)):
                     data[a][0] = data[a][0][:,:self.att]
+            rt = 2
 
         if self.cache:
             self.memories[self.index] = data
@@ -446,12 +454,13 @@ class DataSet:
         self.data = []
         step = np.ceil(float(len(data))/self.batch_size)
         step = int(len(data)/step)
-        print 'Step', step, len(data)
+        # print 'Step', step, len(data)
         for a in range(0, len(data), step):
             b = a + step
             if b > len(data):
                 b = len(data)
             self.data.append(data[a:b])
+        return rt
 
     def prepare_cnn(self, rd=False):
         pre_data = []
@@ -563,6 +572,17 @@ class DataSet:
 
         return outputs
 
+    def avg_correction(self, avg_file):
+        print avg_file
+        with open(avg_file, 'r') as fp:
+            A = pickle.load(fp)
+        av = A[0]
+        st = A[1]
+        for b in range(len(self.data)):
+            for d in range(len(self.data[b])):
+                for a in range(self.data[b][d][0].shape[0]):
+                    self.data[b][d][0][a, :] -= av
+                    self.data[b][d][0][a, :] /= st
 
     def create_bucket(self, data, multi):
 

@@ -160,20 +160,6 @@ def run_test(input_dic, sess, xy, te, cfg, mul=-1):
 
     exit(0)
 
-
-def avg_correction(data, avg_file):
-    with open(avg_file, 'r') as fp:
-        A = pickle.load(fp)
-    av = A[0]
-    st = A[1]
-    for b in range(len(data)):
-        for d in range(len(data[b])):
-            for a in range(data[b][d][0].shape[0]):
-                data[b][d][0][a, :] -= av
-                data[b][d][0][a, :] /= st
-    return data
-
-
 def get_avg_file(tr, avg_file):
     av = None
     st = None
@@ -224,8 +210,8 @@ if __name__ == '__main__':
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
         tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
         cfg.att = te.sz[1]
-        tr.data = avg_correction(tr.data, avg_file)
-        tr0.data = avg_correction(tr0.data, avg_file)
+        tr.avg_correction(avg_file)
+        tr0.avg_correction(avg_file)
 
     else:
         if test == 'te':
@@ -234,7 +220,7 @@ if __name__ == '__main__':
             te = DataSet([cfg.tr_data[0]], cfg)
         cfg.att = te.sz[1]
 
-    te.data = avg_correction(te.data, avg_file)
+    te.avg_correction(avg_file)
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, \
@@ -343,7 +329,7 @@ if __name__ == '__main__':
                             ll3,_= sess.run([last_loss, opt],feed_dict=feed)
                             tl3 += ll3
                             nt += n0
-                    tr_pre_data = tr.get_next()
+                    tr_pre_data = tr.get_next(avg=avg_file)
                 N_total += 1
                 if N_total % cfg.INC_win == 0:
                     lr *= cfg.INC_step
