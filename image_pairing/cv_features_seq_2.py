@@ -13,7 +13,7 @@ HOME = '{}/../../'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 3
+range2 = 1
 range1 = -range2
 key = 'office'
 mode = 'Train'
@@ -31,14 +31,13 @@ print key, mode
 #pose_file = 'dataset_train.txt'
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
-#
-#location = '{}/datasets/kitty'.format(HOME)
-#poses_dic, cam = load_kitty_poses(location, key)
-#key = 'kitty_{}'.format(key)
-
-
-location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
-poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+if key.startswith('0'):
+    location = '{}/datasets/kitty'.format(HOME)
+    poses_dic, cam = load_kitty_poses(location, key)
+    key = 'kitty_{}'.format(key)
+else:
+    location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
+    poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
 filename = '{}/p_files/{}_{}_cv_s{}_2.p'.format(HOME, key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)

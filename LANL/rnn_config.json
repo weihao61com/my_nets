@@ -17,5 +17,7 @@
   "nodes0": "1024, 128",
   "nodes1": "128",
   "nodes2": "128",
-  "SIG": 0
+  "SIG": 0,
+  "lr": 1e-5,
+  "continue": "true"
 }

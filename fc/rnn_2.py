@@ -161,16 +161,17 @@ def run_test(input_dic, sess, xy, te, cfg, mul=-1):
     exit(0)
 
 
-def avg_correction(tr, avg_file):
+def avg_correction(data, avg_file):
     with open(avg_file, 'r') as fp:
         A = pickle.load(fp)
     av = A[0]
     st = A[1]
-    for d in range(len(tr.data[0])):
-        for a in range(tr.data[0][d][0].shape[0]):
-            tr.data[0][d][0][a, :] -= av
-            tr.data[0][d][0][a, :] /= st
-    return tr
+    for b in range(len(data)):
+        for d in range(len(data[b])):
+            for a in range(data[b][d][0].shape[0]):
+                data[b][d][0][a, :] -= av
+                data[b][d][0][a, :] /= st
+    return data
 
 
 def get_avg_file(tr, avg_file):
@@ -221,10 +222,10 @@ if __name__ == '__main__':
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
         cfg.att = te.sz[1]
-        tr = avg_correction(tr, avg_file)
-        tr0 = avg_correction(tr0, avg_file)
+        tr.data = avg_correction(tr.data, avg_file)
+        tr0.data = avg_correction(tr0.data, avg_file)
 
     else:
         if test == 'te':
@@ -233,7 +234,7 @@ if __name__ == '__main__':
             te = DataSet([cfg.tr_data[0]], cfg)
         cfg.att = te.sz[1]
 
-    te = avg_correction(te, avg_file)
+    te.data = avg_correction(te.data, avg_file)
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, \
@@ -344,8 +345,8 @@ if __name__ == '__main__':
                             nt += n0
                     tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % 400 == 0:
-                    lr *= 0.9
+                if N_total % cfg.INC_win == 0:
+                    lr *= cfg.INC_step
             if lr<1e-6:
                 break
 

@@ -158,7 +158,7 @@ class rNet(Network):
 
 
 def create_T_F(y, x, t0):
-    t = np.average(y) / t0
+    t = np.average(y)#  / t0
     # if t > 0.1 and t < 7.0:
     f = x
     return t, f
@@ -217,7 +217,6 @@ def generate_data(file1, prob):
 
     T = np.array(T)
     F = np.array(F)
-    print 'GD', len(T)
     #    , np.min(T), np.max(T), np.average(T), np.std(T),\
     #    np.average(F), np.std(F), np.min(F), np.max(F)
     return T, F
@@ -280,7 +279,7 @@ def run_test(file1, inputs, sess, xy, cfg, c=0):
 
 def gen_data(cfg):
     files = glob.glob(os.path.join(cfg['location'].format(HOME), 'L_*.csv'))
-    print files
+    print len(files)
     ids = l_utils.rdm_ids(files)
 
     file2 = []
@@ -289,7 +288,7 @@ def gen_data(cfg):
             file2.append(f)
 
     gen = 5
-    step = 4000
+    step = 10000
     SEG = cfg['SEG']
     for f in files:
         basename = os.path.basename(f)[:-4]
@@ -331,8 +330,8 @@ def train(c, cfg, test=None):
         else:
             file2.append(f)
 
-    lr = 1e-6
-    cntn = True
+    lr = cfg['lr']
+    cntn = cfg['continue']=='true'
     iterations = 1000
     loop = 5
     batch_size = 100
