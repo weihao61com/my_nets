@@ -25,6 +25,6 @@
     "att": 4,
     "multi": 1,
     "SIG": 0,
-    "INC_win": 5000,
-    "INC_step": 0.1
+    "INC_win": 500,
+    "INC_step": 0.9
 }
