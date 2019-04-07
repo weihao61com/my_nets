@@ -1,12 +1,12 @@
 {
     "batch_size": 100,
-    "_te": "p_files/kitty_02_Test_cv_s3_2.p",
-    "_tr": "p_files/kitty_00_Train_cv_s3_2.p",
-    "te0": "p_files/heads_Test_cv_s3_2.p",
-    "tr0": "p_files/heads_Train_cv_s3_2.p",
+    "te": "p_files/kitty_02_Test_cv_s3_2.p",
+    "tr": "p_files/kitty_00_Train_cv_s3_2.p",
+    "_te0": "p_files/heads_Test_cv_s3_2.p",
+    "_tr0": "p_files/heads_Train_cv_s3_2.p",
     "_tr1": "p_files/chess_Train_cv_s3.p",
     "_tr2": "p_files/fire_Train_cv_s3.p",
-    "tr3": "p_files/office_Train_cv_s3_2.p",
+    "_tr3": "p_files/office_Train_cv_s3_2.p",
     "_te3": "p_files/office_Test_cv_s3_2.p",
     "_tr4": "p_files/pumpkin_Train_cv_s3.p",
     "_tr5": "p_files/redkitchen_Train_cv_s3.p",
@@ -25,6 +25,5 @@
     "att": 4,
     "multi": 1,
     "SIG": 0,
-    "INC_win": 500,
-    "INC_step": 0.9
+    "INC_win": 5
 }

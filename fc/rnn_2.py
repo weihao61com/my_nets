@@ -175,7 +175,7 @@ def get_avg_file(tr, avg_file):
     av /= nt
     st /= nt
     st = np.sqrt(st - av*av)
-    print "averages:"
+    print "Saving averages:", avg_file
     for a in range(len(av)):
         print a, av[a], st[a]
 
@@ -332,7 +332,7 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next(avg=avg_file)
                 N_total += 1
                 if N_total % cfg.INC_win == 0:
-                    lr *= cfg.INC_step
+                    lr -= 1e-7
             if lr<1e-6:
                 break
 

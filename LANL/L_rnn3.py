@@ -9,6 +9,8 @@ import glob
 import numpy as np
 import pickle
 import random
+from scipy import fftpack, fft
+
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -158,9 +160,23 @@ class rNet(Network):
 
 
 def create_T_F(y, x, t0):
-    t = np.average(y)#  / t0
+    x = np.array(x)
+    y = np.array(y)
+    win = 300
+    sz = len(x) / win
+    b = x.reshape((win, sz)).T
+    dd = []
+    for a in range(win):
+        d = abs(fft(b[:, a]))
+        dd.append(d)
+
+    dd = np.array(dd)
+    d0 = np.mean(dd, 0)
+    # d0 = np.std(dd, 0)
+    # d0 = np.median(dd, 0)
+    t = np.average(y) / t0
     # if t > 0.1 and t < 7.0:
-    f = x
+    f = d0[1:sz / 2 + 1]
     return t, f
 
 
@@ -201,7 +217,7 @@ def generate_data(file1, prob):
     for f in file1:
         ids.append(get_id(f))
 
-    files = glob.glob(os.path.join(HOME, 'tmp/L*.p'))
+    files = glob.glob(os.path.join(HOME, 'tmp0/L*.p'))
     T = []
     F = []
     random.shuffle(files)
@@ -219,10 +235,7 @@ def generate_data(file1, prob):
 
     T = np.array(T)
     F = np.array(F)
-<<<<<<< Updated upstream
-=======
     # print 'GD', len(T)
->>>>>>> Stashed changes
     #    , np.min(T), np.max(T), np.average(T), np.std(T),\
     #    np.average(F), np.std(F), np.min(F), np.max(F)
     return T, F
@@ -283,9 +296,8 @@ def run_test(file1, inputs, sess, xy, cfg, c=0):
     fp.close()
     print np.mean(e0), np.mean(e1)
 
-def gen_data(cfg):
+def gen_data(cfg, tmp='tmp'):
     files = glob.glob(os.path.join(cfg['location'].format(HOME), 'L_*.csv'))
-    print len(files)
     ids = l_utils.rdm_ids(files)
 
     file2 = []
@@ -294,11 +306,11 @@ def gen_data(cfg):
             file2.append(f)
 
     gen = 5
-    step = 10000
+    step = 4000
     SEG = cfg['SEG']
     for f in files:
         basename = os.path.basename(f)[:-4]
-        basename = os.path.join(HOME, 'tmp', basename)
+        basename = os.path.join(HOME, tmp, basename)
         x, y = l_utils.load_data(f)
         t0 = y[0]
         print f, len(x)/150000, basename, t0
@@ -307,9 +319,9 @@ def gen_data(cfg):
         for g in range(gen):
             T = []
             F = []
-            rps = np.random.randint(0, len(x) - SEG - 1, N)
+            rps = np.random.randint(0, len(x) - l_utils.SEGMENT - 1, N)
             for r in rps:
-                t, f = create_T_F(y[r:r + SEG], x[r:r + SEG], t0)
+                t, f = create_T_F(y[r:r + l_utils.SEGMENT], x[r:r + l_utils.SEGMENT], t0)
                 T.append(t)
                 F.append(f)
             fn = basename + '_{}.p'.format(g)
@@ -319,11 +331,13 @@ def gen_data(cfg):
                     pickle.dump((T, F), fp)
 
 
-def train(c, cfg, test=None):
+def sub_avg(data, mn, st):
+    dd = data[1]
+    for a in range(len(dd)):
+        dd[a, :] = (dd[a, :]-mn)/st
+    return data
 
-    SEG = cfg['SEG']
-    att = cfg['n_att']
-    feature_len = SEG/att
+def train(c, cfg, test=None):
 
     files = glob.glob(os.path.join(cfg['location'].format(HOME), 'L_*.csv'))
     ids = l_utils.rdm_ids(files)
@@ -336,15 +350,18 @@ def train(c, cfg, test=None):
         else:
             file2.append(f)
 
-<<<<<<< Updated upstream
-    lr = cfg['lr']
-    cntn = cfg['continue']=='true'
-    iterations = 1000
-=======
-    lr = 1e-6
-    cntn = False
-    iterations = 100
->>>>>>> Stashed changes
+    if test is None:
+        data2 = generate_data(file2, .1)
+        data1 = generate_data(file1, 1.1)
+
+    SEG = data1[1].shape[1]
+    att = 25
+    feature_len = SEG/att
+    cfg['n_att'] = att
+
+    lr = 1e-7
+    cntn = 'cntn' in cfg
+    iterations = 10000
     loop = 5
     batch_size = 100
     output = tf.placeholder(tf.float32, [None, 1])
@@ -356,7 +373,21 @@ def train(c, cfg, test=None):
     cfg['ref_node'] = len_ref
     cfg['refs'] = np.ones(len_ref)
     cfg['refs'] = cfg['refs'].reshape((1, len_ref))
-    netFile = cfg['netFile']
+    netFile = cfg['netFile'].format(HOME, c)
+    avg_file = os.path.dirname(netFile)+'_avg.p'
+    if not cntn:
+        mn = np.mean(data2[1], 0)
+        st = np.std(data2[1], 0)
+        with open(avg_file, 'w') as fp:
+            pickle.dump((mn, st), fp)
+    else:
+        with open(avg_file, 'r') as fp:
+            A = pickle.load(fp)
+            mn = A[0]
+            st = A[1]
+
+    data1 = sub_avg(data1, mn, st)
+    data2 = sub_avg(data2, mn, st)
 
     inputs = {0: tf.placeholder(tf.float32, [None, len_ref])}
 
@@ -368,9 +399,6 @@ def train(c, cfg, test=None):
     for a in range(feature_len + 1):
         input_dic['input_{}'.format(a)] = inputs[a]
 
-    if test is None:
-        data2 = generate_data(file2, .1)
-        data1 = generate_data(file1, 1.1)
 
     net = rNet(input_dic)
     net.real_setup(cfg, SIG=(cfg['SIG'] == 1))
@@ -393,12 +421,12 @@ def train(c, cfg, test=None):
         sess.run(init)
 
         if test is not None:
-            saver.restore(sess, netFile.format(HOME, c))
+            saver.restore(sess, netFile)
             run_test(file1, input_dic, sess, xy,  cfg)
             exit(0)
 
         if cntn:
-            saver.restore(sess, netFile.format(HOME, c))
+            saver.restore(sess, netFile)
 
         st1 = ''
         for a in range(iterations):
@@ -414,6 +442,8 @@ def train(c, cfg, test=None):
             t_loss = 0
             t_count = 0
             dd = generate_data(file2, 0.1)
+            dd = sub_avg(dd, mn, st)
+
             truth = dd[0]
             features = dd[1]
             b0 = truth.reshape((len(truth), 1))
@@ -433,9 +463,9 @@ def train(c, cfg, test=None):
                     _, A = sess.run([opt, loss], feed_dict=feed)
                     t_loss += A
                     t_count += len(truth[d:d + batch_size])
-            st1 = '{}'.format(t_loss / t_count)
+            st1 = '{} {}'.format(t_loss , t_count)
 
-            saver.save(sess, netFile.format(HOME, c))
+            saver.save(sess, netFile)
 
     tf.reset_default_graph()
 
@@ -451,10 +481,11 @@ if __name__ == '__main__':
     cfg = Utils.load_json_file(config_file)
 
     if test is None:
-        train(0, cfg)
-    elif test =='gen':
         gen_data(cfg)
+        train(0, cfg)
+    elif test =='t':
         train(0, cfg)
     elif test == '0':
         train(0, cfg, 't')
-
+    elif test == 'g':
+        gen_data(cfg, 'tmp')
