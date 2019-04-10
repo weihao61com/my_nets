@@ -175,7 +175,7 @@ def get_avg_file(tr, avg_file):
     av /= nt
     st /= nt
     st = np.sqrt(st - av*av)
-    print "averages:"
+    print "Saving averages:", avg_file
     for a in range(len(av)):
         print a, av[a], st[a]
 

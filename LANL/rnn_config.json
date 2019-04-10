@@ -1,5 +1,5 @@
 {
-  "SEG": 4096,
+  "SEG": 2048,
   "CV": 5,
   "dct": 0,
   "dim": 1024,
@@ -14,10 +14,18 @@
   "refit_file": "{}/tmp/refit.p",
   "testing_step": 256,
   "n_att": 128,
+<<<<<<< Updated upstream
   "nodes0": "1024, 128",
   "nodes1": "128",
   "nodes2": "128",
   "SIG": 0,
   "lr": 1e-5,
   "continue": "true"
+=======
+  "nodes0": "256, 64",
+  "nodes1": "64",
+  "nodes2": "64",
+  "SIG": 0,
+  "cntn": 0
+>>>>>>> Stashed changes
 }

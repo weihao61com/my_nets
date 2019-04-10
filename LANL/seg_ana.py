@@ -6,6 +6,7 @@ import pickle
 import os
 from LANL_Utils import l_utils
 from scipy import fftpack, fft
+<<<<<<< Updated upstream
 
 
 def plot_line(lines):
@@ -22,12 +23,125 @@ def plot_line(lines):
     plt.plot(np.log(d[1:]))
 
     plt.show()
+=======
+>>>>>>> Stashed changes
 
 seg = 2048
 
-filename = '/home/weihao/tmp/L/L_11.csv' #sys.argv[1]
-#id = 10000000 # int(sys.argv[2])
+def cal_feature0(x):
+    win = 300
+    sz = len(x)/win
+    b = x.reshape((win, sz))
+    d = abs(fft(np.mean(b, 0)))
+    return d[1:sz/2+1]
 
+# LF
+def cal_feature2(x):
+    win = 300
+    sz = len(x)/win
+    b = x.reshape((win, sz))
+    dd = []
+    for a in range(win):
+        d = abs(fft(b[a, :]))
+        dd.append(d)
+
+    dd = np.array(dd)
+    d0 = np.mean(dd, 0)
+    #d0 = np.std(dd, 0)
+    #d0 = np.median(dd, 0)
+    return d0[1:sz/2+1]
+    #return d0[1:100]
+
+
+# HF
+def cal_feature(x):
+    win = 500
+    sz = len(x)/win
+    b = x.reshape((win, sz))
+    dd = []
+    for a in range(sz):
+        d = abs(fft(b[:, a]))
+        dd.append(d)
+
+    dd = np.array(dd)
+    d0 = np.mean(dd, 0)
+    #d0 = np.std(dd, 0)
+    #d0 = np.median(dd, 0)
+    return d0[1:win/2+1]
+    #return d0[1:100]
+
+avg_spec = None
+for f in range(1, 16):
+    filename = '/Users/weihao/tmp/L/L_{}.csv'.format(f) #sys.argv[1]
+    #id = 10000000 # int(sys.argv[2])
+
+    with open(filename, 'r') as fp:
+        lines = fp.readlines()
+
+    v = map(float, lines[0].split(','))
+    t0 = v[1]
+
+    #print 'total data', len(lines)
+
+    a1 = 0 #10000000 #int(sys.argv[1])
+    line0 = lines[a1:a1+l_utils.SEGMENT]
+    x, y = l_utils.get_values(line0)
+    d1 = cal_feature(x)
+    # d1 = cal_feature2(x)
+    # for a in range(251):
+    #     a1 = d1[0][a]
+    #     a2 = d1[1][a]
+    #     print a, a1.real, a1.imag, a2.real, a2.imag, abs(a1), abs(a2)
+    #
+    # raise Exception()
+    #
+
+    if avg_spec is None:
+        avg_spec = d1.copy()
+    #d1 -= avg_spec
+    print np.mean(y)/t0, np.mean(d1), np.std(d1)
+
+    a1 += (len(lines)-l_utils.SEGMENT)/3
+    line0 = lines[a1:a1+l_utils.SEGMENT]
+    x, y = l_utils.get_values(line0)
+    d2 = cal_feature(x)
+    #d2 -= avg_spec
+    print np.mean(y)/t0, np.mean(d2), np.std(d2)
+
+    a1 += (len(lines)-l_utils.SEGMENT)/3
+    line0 = lines[a1:a1+l_utils.SEGMENT]
+    x, y = l_utils.get_values(line0)
+    d3 = cal_feature(x)
+    #d3 -= avg_spec
+    print np.mean(y)/t0, np.mean(d3), np.std(d3)
+
+    a1 += (len(lines)-l_utils.SEGMENT)/3
+    line0 = lines[a1:a1+l_utils.SEGMENT]
+    x, y = l_utils.get_values(line0)
+    d4 = cal_feature(x)
+    #d4 -= avg_spec
+    print np.mean(y)/t0, np.mean(d4), np.std(d4)
+
+    #
+    # plt.subplot(2,2,1)
+    # plt.plot(d1)
+    # plt.subplot(2,2,2)
+    # plt.plot(d2)
+    # plt.subplot(2,2,3)
+    # plt.plot(d3)
+    # plt.subplot(2,2,4)
+    # plt.plot(d4)
+    # plt.plot(d3)
+    # plt.plot(d2)
+    # plt.plot(d1)
+    # plt.show()
+
+raise Exception()
+
+#    break
+
+
+<<<<<<< Updated upstream
 a = 165000# int(sys.argv[1])
 with open(filename, 'r') as fp:
     line0 = fp.readlines()
@@ -36,6 +150,9 @@ print 'total data', len(line0)
 line0 = line0[a:a+10000]#l_utils.SEGMENT]
 
 plot_line(line0)
+=======
+
+>>>>>>> Stashed changes
 
 step = int(len(line0)-seg)/100
 m0 = None
@@ -49,10 +166,11 @@ fp = open('/home/weihao/tmp/r.csv', 'w')
 for id in range(0, len(line0)-seg, step):
     lines = line0[id:id+seg]
 
+
     x = []
     y = []
     for line in lines:
-        v= map(float, line.split(','))
+        v = map(float, line.split(','))
         x.append(v[0])
         y.append(v[1])
 

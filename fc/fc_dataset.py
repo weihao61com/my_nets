@@ -573,7 +573,7 @@ class DataSet:
         return outputs
 
     def avg_correction(self, avg_file):
-        print avg_file
+        print 'Reading average file', avg_file
         with open(avg_file, 'r') as fp:
             A = pickle.load(fp)
         av = A[0]

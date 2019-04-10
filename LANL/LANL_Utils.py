@@ -60,6 +60,18 @@ class l_utils:
         return idx
 
     @staticmethod
+    def get_values(lines):
+        x = []
+        y = []
+        for line in lines:
+            v = map(float, line.split(','))
+            x.append(v[0])
+            y.append(v[1])
+        x = np.array(x)
+        y = np.array(y)
+        return x, y
+
+    @staticmethod
     def get_features(lines, dct, dim):
         #if not len(lines) == SEG:
         #    raise Exception("Wrong data length {}".format(len(lines)))
