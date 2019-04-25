@@ -286,21 +286,35 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
+            t1 = datetime.datetime.now()
+            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
+                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
+
             tr_pre_data = tr0.prepare()
             tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
 
             te_pre_data = te.prepare()
             te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
-            t1 = datetime.datetime.now()
-            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
-                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
             s = -1
             while True:
                 s += len(tr_loss)/2
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
                 if s==len(tr_loss)-1:
                     break
+
+            # tr_pre_data = tr0.prepare(multi=-1)
+            # tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
+            #
+            # te_pre_data = te.prepare(multi=-1)
+            # te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
+            #
+            # s = -1
+            # while True:
+            #     s += len(tr_loss)/2
+            #     str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+            #     if s==len(tr_loss)-1:
+            #         break
 
             print str, str1
 
