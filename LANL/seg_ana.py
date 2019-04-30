@@ -6,7 +6,6 @@ import pickle
 import os
 from LANL_Utils import l_utils
 from scipy import fftpack, fft
-<<<<<<< Updated upstream
 
 
 def plot_line(lines):
@@ -23,17 +22,21 @@ def plot_line(lines):
     plt.plot(np.log(d[1:]))
 
     plt.show()
-=======
->>>>>>> Stashed changes
+
 
 seg = 2048
 
-def cal_feature0(x):
-    win = 300
-    sz = len(x)/win
-    b = x.reshape((win, sz))
-    d = abs(fft(np.mean(b, 0)))
-    return d[1:sz/2+1]
+def cal_feature(x):
+    win = 4096
+    sz = 16
+    d = abs(fft(x[:win]))
+    d = d.reshape((win/sz, sz))
+    d = np.mean(d, 1)
+    return d[1:win/sz/2+1]
+    #sz = len(x)/win
+    #b = x.reshape((win, sz))
+    #d = abs(fft(np.mean(b, 0)))
+    #return d[1:sz/2+1]
 
 # LF
 def cal_feature2(x):
@@ -54,7 +57,7 @@ def cal_feature2(x):
 
 
 # HF
-def cal_feature(x):
+def cal_feature1(x):
     win = 500
     sz = len(x)/win
     b = x.reshape((win, sz))
@@ -123,25 +126,23 @@ for f in range(1, 16):
     print np.mean(y)/t0, np.mean(d4), np.std(d4)
 
     #
-    # plt.subplot(2,2,1)
-    # plt.plot(d1)
-    # plt.subplot(2,2,2)
-    # plt.plot(d2)
-    # plt.subplot(2,2,3)
-    # plt.plot(d3)
-    # plt.subplot(2,2,4)
-    # plt.plot(d4)
-    # plt.plot(d3)
-    # plt.plot(d2)
-    # plt.plot(d1)
-    # plt.show()
+    plt.subplot(2,2,1)
+    plt.plot(d1)
+    plt.subplot(2,2,2)
+    plt.plot(d2)
+    plt.subplot(2,2,3)
+    plt.plot(d3)
+    plt.subplot(2,2,4)
+    plt.plot(d4)
+    plt.plot(d3)
+    plt.plot(d2)
+    plt.plot(d1)
+    plt.show()
 
 raise Exception()
 
 #    break
 
-
-<<<<<<< Updated upstream
 a = 165000# int(sys.argv[1])
 with open(filename, 'r') as fp:
     line0 = fp.readlines()
@@ -150,9 +151,6 @@ print 'total data', len(line0)
 line0 = line0[a:a+10000]#l_utils.SEGMENT]
 
 plot_line(line0)
-=======
-
->>>>>>> Stashed changes
 
 step = int(len(line0)-seg)/100
 m0 = None

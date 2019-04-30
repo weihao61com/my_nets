@@ -58,8 +58,8 @@ def fft_refit(config):
 
     dd = np.array(Utils.read_csv(eval_file)).astype(float)
 
-    print process(dd[:, 1], dd[:, 0], dd[:, 3])
-    print process(dd[:, 2], dd[:, 0], dd[:, 3])
+    print process(dd[:, 2], dd[:, 0], dd[:, 4])
+    print process(dd[:, 3], dd[:, 0], dd[:, 4])
 
     exit()
     data = {}
