@@ -347,7 +347,7 @@ if __name__ == '__main__':
                     tr_pre_data = tr.get_next(avg=avg_file)
                 N_total += 1
                 if N_total % cfg.INC_win == 0:
-                    lr -= 1e-8
+                    lr -= cfg.d_lr
             if lr<1e-6:
                 break
 
