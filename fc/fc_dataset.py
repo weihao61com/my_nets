@@ -443,9 +443,23 @@ class DataSet:
         else:
             data = load_data(self.dataset[self.index], self.verbose, sub_sample)
             att = data[0][0].shape[1]
-            if self.att<att:
+            if self.att == 9:
+                for a in range(len(data)):
+                    f0 = data[a][0][:,:4]
+                    length = f0.shape[0]
+                    f1 = data[a][0][:,6].reshape((length, 1)) # distance
+                    f2 = data[a][0][:,7].reshape((length, 1)) # ratio
+                    f3 = (data[a][0][:,8] - data[a][0][:,9]).reshape((length, 1))  # angle difference
+                    f4 = data[a][0][:,11].reshape((length, 1)) # ratio
+                    f5 = data[a][0][:,12].reshape((length, 1)) # ratio
+
+                    data[a][0] = np.concatenate((f0, f1, f2, f3, f4, f5), 1)
+                pass
+            elif self.att<att:
                 for a in range(len(data)):
                     data[a][0] = data[a][0][:,:self.att]
+            else:
+                raise Exception('ATT error {} {}'.format(self.att, att))
             rt = 2
 
         if self.cache:

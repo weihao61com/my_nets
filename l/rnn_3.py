@@ -150,7 +150,7 @@ class rNet(Network):
                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
-def run_test(input_dic, sess, xy, te, cfg, mul=-1):
+def run_test(input_dic, sess, xy, te, cfg, mul):
 
     tr_pre_data = te.prepare(multi=mul)
     tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', cfg)
@@ -160,35 +160,6 @@ def run_test(input_dic, sess, xy, te, cfg, mul=-1):
 
     exit(0)
 
-def get_avg_file(tr, avg_file):
-    av = None
-    st = None
-    nt = 0
-    for d in tr.data[0]:
-        if nt == 0:
-            av = np.sum(d[0], 0)
-            st = np.sum(d[0]*d[0], 0)
-        else:
-            av += np.sum(d[0], 0)
-            st += np.sum(d[0] * d[0], 0)
-        nt += d[0].shape[0]
-    av /= nt
-    st /= nt
-    st = np.sqrt(st - av*av)
-    print "Saving averages:", avg_file
-    for a in range(len(av)):
-        print a, av[a], st[a]
-
-    with open(avg_file, 'w') as fp:
-        pickle.dump((av,st), fp)
-
-    return
-
-
-def avg_file_name(p):
-    basename = os.path.basename(p)
-    pathname = os.path.dirname(p)
-    return pathname + '_' + basename+'_avg.p'
 
 if __name__ == '__main__':
 
@@ -203,16 +174,11 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    avg_file = avg_file_name(cfg.netFile)
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
-        get_avg_file(tr, avg_file)
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.15)
         cfg.att = te.sz[1]
-        tr.avg_correction(avg_file)
-        tr0.avg_correction(avg_file)
-
     else:
         if test == 'te':
             te = DataSet([cfg.te_data[0]], cfg)
@@ -220,7 +186,6 @@ if __name__ == '__main__':
             te = DataSet([cfg.tr_data[0]], cfg)
         cfg.att = te.sz[1]
 
-    te.avg_correction(avg_file)
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, \
@@ -251,13 +216,12 @@ if __name__ == '__main__':
         n = 'output_{}'.format(a)
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
-    print 'output', len(xy)
 
     loss = None
     last_loss = None
     for a in xy:
-        #if a<10:
-        #    continue
+        if a<10:
+            continue
         last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         if loss is None:
             loss = last_loss
@@ -267,7 +231,7 @@ if __name__ == '__main__':
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
-        minimize(loss)
+        minimize(last_loss)
     # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.global_variables_initializer()
@@ -279,7 +243,10 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg)
+            mul = -1
+            if len(sys.argv) > 2:
+                mul = int(sys.argv[2])
+            run_test(input_dic, sess, xy, te, cfg, mul)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
@@ -287,35 +254,21 @@ if __name__ == '__main__':
         str1 = ''
         for a in range(iterations):
 
-            t1 = datetime.datetime.now()
-            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
-                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
-
             tr_pre_data = tr0.prepare()
             tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
 
             te_pre_data = te.prepare()
             te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
+            t1 = datetime.datetime.now()
+            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
+                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
             s = -1
             while True:
                 s += len(tr_loss)/2
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
                 if s==len(tr_loss)-1:
                     break
-
-            # tr_pre_data = tr0.prepare(multi=-1)
-            # tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
-            #
-            # te_pre_data = te.prepare(multi=-1)
-            # te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
-            #
-            # s = -1
-            # while True:
-            #     s += len(tr_loss)/2
-            #     str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-            #     if s==len(tr_loss)-1:
-            #         break
 
             print str, str1
 
@@ -344,10 +297,10 @@ if __name__ == '__main__':
                             ll3,_= sess.run([last_loss, opt],feed_dict=feed)
                             tl3 += ll3
                             nt += n0
-                    tr_pre_data = tr.get_next(avg=avg_file)
+                    tr_pre_data = tr.get_next()
                 N_total += 1
-                if N_total % cfg.INC_win == 0:
-                    lr -= 1e-8
+                if N_total % 1000 == 0:
+                    lr *= 0.9
             if lr<1e-6:
                 break
 
