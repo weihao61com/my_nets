@@ -11,8 +11,9 @@
   "node2": "2048, 128, 16",
   "netFile": "{}/NNs/L/FC_{}/L",
   "netFile2": "{}/NNs/L/F/L",
-  "eval_file": "{}/tmp/fit.csv",
+  "eval_file": "{}/tmp/test.csv",
   "reval_file": "r.csv",
   "refit_file": "{}/tmp/refit.p",
-  "testing_step": 256
+  "testing_step": 256,
+  "lr": 1e-3
 }

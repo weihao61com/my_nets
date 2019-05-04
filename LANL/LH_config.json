@@ -1,9 +1,10 @@
 {
-  "SEG": 2048,
+  "SEG": 500,
   "CV": 5,
+  "L_step": 300,
   "dct": 0,
   "dim": 1024,
-  "threads": 5,
+  "threads": 7,
   "location": "{}/../tmp/L",
   "out_location": "{}/p_files/L_normal/L_{}",
   "nodes": "1024, 128",
@@ -18,6 +19,8 @@
   "nodes1": "128",
   "nodes2": "128",
   "SIG": 0,
-  "lr": 1e-5,
-  "continue": "true"
+  "lr": 1e-6,
+  "cntn": 0,
+  "tmp": "tmp"
+
 }

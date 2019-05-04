@@ -219,10 +219,7 @@ def generate_data(file1, prob):
 
     T = np.array(T)
     F = np.array(F)
-<<<<<<< Updated upstream
-=======
     # print 'GD', len(T)
->>>>>>> Stashed changes
     #    , np.min(T), np.max(T), np.average(T), np.std(T),\
     #    np.average(F), np.std(F), np.min(F), np.max(F)
     return T, F
@@ -336,15 +333,10 @@ def train(c, cfg, test=None):
         else:
             file2.append(f)
 
-<<<<<<< Updated upstream
     lr = cfg['lr']
     cntn = cfg['continue']=='true'
     iterations = 1000
-=======
-    lr = 1e-6
-    cntn = False
-    iterations = 100
->>>>>>> Stashed changes
+
     loop = 5
     batch_size = 100
     output = tf.placeholder(tf.float32, [None, 1])
