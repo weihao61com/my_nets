@@ -45,6 +45,7 @@ def run_data(data, inputs, sess, xy, fname, cfg):
     if sys.platform == 'darwin':
         filename = '/Users/weihao/tmp/{}.csv'.format(fname)
     fp = open(filename, 'w')
+    rs = []
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
@@ -52,7 +53,8 @@ def run_data(data, inputs, sess, xy, fname, cfg):
         truth.append(truth_dic[id])
         t = truth_dic[id]
         if random.random() < 0.2:
-            r = np.linalg.norm(t - result)
+            r = np.linalg.norm(t - result[-1])
+            rs.append(r)
             mm = result[-1]
             if len(mm)==3:
                 fp.write('{},{},{},{},{},{},{}\n'.
@@ -60,6 +62,12 @@ def run_data(data, inputs, sess, xy, fname, cfg):
             else:
                 fp.write('{},{},{}\n'.
                          format(t[0], mm[0], r))
+    fp.close()
+    rs = sorted(rs)
+    length = len(rs)
+    fp = open(filename+'.csv', 'w')
+    for a in range(length):
+        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
