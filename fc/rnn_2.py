@@ -52,9 +52,9 @@ def run_data(data, inputs, sess, xy, fname, cfg):
         results.append(result)
         truth.append(truth_dic[id])
         t = truth_dic[id]
+        r = np.linalg.norm(t - result[-1])
+        rs.append(r)
         if random.random() < 0.2:
-            r = np.linalg.norm(t - result[-1])
-            rs.append(r)
             mm = result[-1]
             if len(mm)==3:
                 fp.write('{},{},{},{},{},{},{}\n'.
@@ -327,6 +327,9 @@ if __name__ == '__main__':
 
             print str, str1
 
+            if lr<1e-7:
+                break
+
             tl3 = 0
             #tl4 = 0
             #tl5 = 0
@@ -356,8 +359,6 @@ if __name__ == '__main__':
                 N_total += 1
                 if N_total % cfg.INC_win == 0:
                     lr -= cfg.d_lr
-            if lr<1e-6:
-                break
 
             str1 = "{0:.3f} ".format(tl3/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)

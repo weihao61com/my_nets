@@ -39,8 +39,6 @@ rs0 = []
 rs1 = []
 rs2 = []
 for d in data:
-    if random() > 1000.0/len(data):
-        continue
 
     d0 = d[0]
     d0[:, 0] = d0[:, 0] * w2 + w2
@@ -60,9 +58,13 @@ for d in data:
     a = d[1][:3]
     dr = a - b
     r0 = np.linalg.norm(dr)
+    rs.append(r0)
+
+    if random() > 1000.0/len(data):
+        continue
+
     fp.write('{},{},{},{},{},{},{}\n'.
              format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
-    rs.append(r0)
     rs0.append(abs(dr[0]))
     rs1.append(abs(dr[1]))
     rs2.append(abs(dr[2]))
@@ -74,3 +76,9 @@ print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     np.median(rs0),np.median(rs1),np.median(rs2))
 fp.close()
 
+rs = sorted(rs)
+length = len(rs)
+fp = open(output_file + '.csv', 'w')
+for a in range(length):
+    fp.write('{},{}\n'.format(rs[a], float(a) / length))
+fp.close()
