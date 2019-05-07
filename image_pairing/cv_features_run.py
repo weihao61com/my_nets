@@ -58,22 +58,30 @@ for d in data:
     a = d[1][:3]
     dr = a - b
     r0 = np.linalg.norm(dr)
+    if r0>180:
+        r0 = r0 - 180
+    elif r0>90:
+        r0 = 180 - r0
     rs.append(r0)
+    rs0.append(abs(dr[0]))
+    rs1.append(abs(dr[1]))
+    rs2.append(abs(dr[2]))
+    angs.append(np.linalg.norm(a))
 
     if random() > 1000.0/len(data):
         continue
 
     fp.write('{},{},{},{},{},{},{}\n'.
              format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
-    rs0.append(abs(dr[0]))
-    rs1.append(abs(dr[1]))
-    rs2.append(abs(dr[2]))
-    angs.append(np.linalg.norm(a))
+
 
 print 'name, median, Anger-error, mx, my, mz'
 print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     os.path.basename(filename), np.median(rs), np.median(angs),
     np.median(rs0),np.median(rs1),np.median(rs2))
+print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
+    os.path.basename(filename), np.mean(rs), np.mean(angs),
+    np.mean(rs0),np.mean(rs1),np.mean(rs2))
 fp.close()
 
 rs = sorted(rs)
