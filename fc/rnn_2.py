@@ -266,7 +266,8 @@ if __name__ == '__main__':
     for a in xy:
         #if a<10:
         #    continue
-        last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        #last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
         if loss is None:
             loss = last_loss
         else:
