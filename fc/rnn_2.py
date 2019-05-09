@@ -53,7 +53,7 @@ def run_data(data, inputs, sess, xy, fname, cfg):
         truth.append(truth_dic[id])
         t = truth_dic[id]
         r = np.linalg.norm(t - result[-1])
-        rs.append(r)
+        rs.append(r*r)
         if random.random() < 0.2:
             mm = result[-1]
             if len(mm)==3:
@@ -266,8 +266,9 @@ if __name__ == '__main__':
     for a in xy:
         #if a<10:
         #    continue
-        #last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
-        last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
+        print a
+        last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        # last_loss = tf.norm(tf.subtract(xy[a], output))
         if loss is None:
             loss = last_loss
         else:
