@@ -105,7 +105,7 @@ class Utils:
         for a in range(v1.shape[1]):
             diff = v1[:,a,:]- v2
             r = np.linalg.norm(diff, axis=1)
-            loss = np.mean(r)
+            loss = np.mean(r*r)
             L.append(loss)
             M.append(np.median(r))
         return L, M
