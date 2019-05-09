@@ -139,8 +139,8 @@ class rNet(Network):
                     self.fc_w2(ws=self.ws[1][b], name=n)
                 ref_out = n
 
-            #if a < cfg.feature_len/2:
-            #    continue
+            if a < cfg.feature_len/2:
+                continue
 
             self.feed(ref_out)
             for b in range(len(self.ws[2])):
@@ -328,7 +328,7 @@ if __name__ == '__main__':
 
             print str, str1
 
-            if lr<1e-7:
+            if lr<1e-9:
                 break
 
             tl3 = 0
