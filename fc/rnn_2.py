@@ -14,10 +14,9 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils
 from fc_dataset import DataSet
 
-def run_data(data, inputs, sess, xy, fname, cfg):
+
+def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
     att = cfg.att
-    rst_dic = {}
-    truth_dic = {}
     for b in data:
         length = b[0].shape[1]/att
         feed = {}
@@ -37,6 +36,9 @@ def run_data(data, inputs, sess, xy, fname, cfg):
                 rst_dic[b[2][a]] = []
             rst_dic[b[2][a]].append(result[:, a, :])
             truth_dic[b[2][a]] = b[1][a]
+
+
+def run_data(rst_dic, truth_dic, fname):
 
     results = []
     truth = []
@@ -158,10 +160,15 @@ class rNet(Network):
                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
-def run_test(input_dic, sess, xy, te, cfg, mul=-1):
+def run_test(input_dic, sess, xy, te, cfg, mul=1):
 
-    tr_pre_data = te.prepare(multi=mul)
-    tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'test', cfg)
+    rst_dic = {}
+    truth_dic = {}
+    for a in range(mul):
+        tr_pre_data = te.prepare(multi=-1)
+        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
 
     for a in range(len(tr_loss)):
         print a, tr_loss[a], tr_median[a]
@@ -289,7 +296,7 @@ if __name__ == '__main__':
 
         if test is not None:
             saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg)
+            run_test(input_dic, sess, xy, te, cfg, 10)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
