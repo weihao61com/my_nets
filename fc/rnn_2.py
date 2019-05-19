@@ -295,8 +295,11 @@ if __name__ == '__main__':
         sess.run(init)
 
         if test is not None:
+            mul = 1
+            if len(sys.argv) > 2:
+                mul = int(sys.argv[2])
             saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg, 10)
+            run_test(input_dic, sess, xy, te, cfg, mul)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
