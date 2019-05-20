@@ -1,0 +1,281 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2019
+
+% ready for submission
+% \usepackage{neurips_2019}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2019}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+     \usepackage[final]{neurips_2019}
+
+% to avoid loading the natbib package, add option nonatbib:
+%     \usepackage[nonatbib]{neurips_2019}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+% my
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+
+
+
+\title{Fitting Complicated Model(s) by Learning}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+\author{%
+  Wei HAO \\
+  Uber Technologies, Inc. \\
+  \texttt{weihao@uber.com} \\
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+RANSAC is a power technique for estimating the parameters of a model with noisy data. 
+It has been widely used in computer vision and other fields for  many decades. In recent years the deep learning has shown great success in computer vision, sequential data processing and many other areas. However in geometry area the deep learning has failed to improve the traditional algorithm RANSAC. 
+In this paper we introduce RASnet, a neural network that follows the RANSAC paradigm, which learns to fit random sampled data first and then aggregates the results afterword. 
+ Our tests demonstrate that the RASnet improves the performance of RANSAC significantly. It opens opportunity to bring more features into the input feature to improve the performance further without know the details of the underline model(s).
+\end{abstract}
+
+\section{Introduction}
+The RANSAC (Random Sample Consensus) algorithm[1] is a powerful technique for estimating the parameters of a model with the data that may be contaminated by noise and outliers. Introduced in 1981, it is still widely used to solve various problems, especially in computer vision like epipolar geometry estimation, multi-view geometry, motion estimation, structure from motion and features-based localization (homographies).
+Recently, deep learning has shown great success in several areas, as well as in computer vision: image classification, object detection, image segmentation, etc.
+However the Deep Learning is still not able to compete with the traditional algorithm RANSAC in geometry related areas[2].
+%(why DenseVLAD and NetVLAD do not work?). CNN to image like Posenet.
+
+In this paper we introduced a neural network, a machine learning approch, to replace traditional RANSAC. This neural network follows the RANSAC paradigm, which learns to fit a samll randomly sampled input dataset first, and aggregates the outcomes afterward to obtain the final result. We call it RASnet (a neural network based on RAndom Sample). Taking the advantage of machine learning, RASnet is able to fit complicated unknown model(s) while recognize the outliers in the input data.
+
+The ability to estimate the relative pose between camera views is essential for many computer vision applications. In this paper, We will compare the results of RANSAC and RASnet for the relative poses calculation. 
+Triditionally RANSAC is used after the potential matching points are detected in the two images, and
+the list of cooridinates of matching points in both images is used as inputs.
+Despite of great success, RANSAC relies deeply on the understanding of physical model(s) that fits the data. With machine learning approch (RASnet), we don’t have to worry about the issues like camera intrinsic matrix and image distortion anymore. 
+For comapresion, we use the same list of cooridinates of matching points as RASnet input feature. However 
+%And the input feature will not be limited to the coordinates of the matching point any more.
+% we use the same list as the features for RASnet
+%Triditionally RANSAC is used after the potential matching points are detected in the two images. However the success of RANSAC relies on the deep understanding of physical model(s) that fits the data. With machine learning approch (RASnet),
+ %In the case of estimating the camera motion from a pair of images[3], RANSAC is used after the potential matching points are detected in the two images. However the success of RANSAC relies on the deep understanding of physical model(s) that fits the data. With machine learning approch (RASnet),  
+% we don’t have to worry about the issues like camera intrinsic matrix and image distortion. And 
+the input feature is limited to the same list any more. We can add additional information to the feature to further improve the performance. 
+
+
+%
+% In case of multi-model fitting: 
+% Energy-based Geometric Multi-Model Fitting
+%
+
+% For this reason, we pursue a machine learning
+%approach and design a neural network that has the capacity
+%to learn these parameters in a discriminative fashion from
+%training data.
+
+
+\section{Network Design}
+One of the main function of RASnet is capable of handling the input feature array with variable size and no particular order. Similar to RANSAC, RASnet has two steps. First a small set of input features with fixed size are selected and ordered randomly. A subnet is trained with these selected features independently. In the second step, the outputs of subnet from first step are aggregated to get the final result. The block diagrma is shown in Figure \ref{xxNet}(a).
+
+%In this application we chose Recurrent Neural Network (RNN) as the basic of the sub-network. With RNN's powerful internal memories,  %it is able to remember important things from the inputs, which enables them to get precise prediction. On top of RNN we add an input %layer and output layer (shown in Figure \ref{xxNet}(b)).
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{figures/RASnet.png}
+    \caption{}
+  \end{subfigure} 
+  \begin{subfigure}[b]{0.28\linewidth}
+    \includegraphics[width=\linewidth]{figures/subNet.png}
+    \caption{}
+  \end{subfigure}
+  \caption{(a) RASnet architecture. A small set of input features is sellected as input of a subnet. The outputs of those subnet are aggregated afterward to obtain the final results. (b) The RNN subnet with 3 sections ($H$, $H_{in}$ and $H_{out}$) }
+  \label{xxNet}
+\end{figure}
+
+
+%Recurrent neural network (RNN) is contain cyclic connections that make them a more powerful tool to model sequence data than feed-forward neural networks.  
+
+%\subsection{Details or Training Methodology}
+In this application we chose Recurrent Neural Network (RNN) as the subnet(Figure \ref{xxNet}(b)) for its powerful internal memories.
+With the orderless input feature, RNN is able to remember important things from the inputs and get precise prediction. The RNN subnet has 3 sections $H$, $H_{in}$ and $H_{out}$. We use one hidden layer in $H_{in}$ and $H_{out}$, and 2 hidden layers for $H$.
+  %it is able to remember important things from the inputs, which enables them to get precise prediction. It has 3 sections (Figure \ref{xxNet}(b)). We uses fully-connected neural network for each section ($H$, $H_{in}$ and $H_{out}$). $H_{in}$ and $H_{out}$ have one hidden layer and $H$ has 2 hiddhen layers. 
+ All the layers use $ReLU$ as activattion function except the final output layer that has no activation function. 
+
+
+For the training, we focused on training the RNN subnet with the truth independently. And a simple median filter is used as the agrrgator to obtain the final result.
+
+
+\section{Experiment}
+To test RASnet, we used it to estimate the camera motion from a pair of image in a video sequence. The common procedure for camara motion estimation using RANSAC is: Detect features in image, matching conresponding features between images, compute Essential Matrices using the RANSAC, and then compute the rotation and translation at the end.
+
+We used opencv[6] for the SIFT[7] feature detection and feature matching.  After putative matches are detected, the opencv RANASC impelementation  (\verb+cv2.findEssentialMat+ and \verb+cv2.recoverPose+) is used to get the relative pose between 2 images.
+And all the parameters in those algorithmes are set to the default value from opencv. For RASnet, the putative matches are used as input fetatures array.
+
+Since only the relative rotation of the cameras can be recovered with RANSAC. We compare the measurement of relative rotaion only. The error is defined as angle between the true relative direction and pridicted direction.
+The testing results are evaluated by RMS(root mean squqre) and CE50 (the circular error at 50th percent). The RMS is a good indicator for outliers and the CE50 represents the accuracy of the fitting.
+
+
+\subsection{Datasets}
+We used two real world datasets: KITTI dataset[4] and indoor 7-scene[5].
+From the KITTI dataset, we selected grayscale odometry dataset. We used the images from a single camera (image\_0 in the dataset). And we used only 2 video sequences. The video sequence 0 is used as training data and sequnce 2 is used as the testing data.
+Frm the dataset 7-scese, we picked the RGB images only in the office scene. With these selections. the testing dataset covers the both indoor and outdoor scenes with both high and low quality images.
+
+
+For each frame in the video, every frame within 3 sequence number are paired for relative pose calculation. The number of images and 
+the number image paires for training and testing are listed in Table \ref{results}).
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ccccccccccc}
+
+       \toprule  
+&  \multicolumn{2}{c}{Number images}&& \multicolumn{2}{c}{Number of image pairs} && \multicolumn{3}{c}{Number of neurons of Hidden Layers}  \\
+    \cline{2-3}
+    \cline{5-6}
+    \cline{8-10}
+            Dataset & Training  &Testing && Training  &Testing  &&H\_in& H          & H\_out\\
+  \hline KITTI      &4541       &4661     &&27234       &27954      &&   32 & 1024, 128 & 32       \\ 
+  \hline Office     &6000       &4000     &&35922       &23952      &&  16 &256,32    & 16   \\ 
+    \bottomrule
+  \end{tabular}
+  \caption{Dataset deatils and Rnn-subnet configration details.}
+  \label{results}
+\end{table}
+
+% Cumulative distribution of error
+%*** standard method: error at 50\% and average distance***
+
+
+
+\subsection{RNN-Subnet Training Methodology}
+
+Based on quality of the images, we chose a smaller network for Office scene and a larger one for KITTI dataset. The number of neurons in hidden layers are lised in Table \ref{results}.
+
+For training, we pick 20 features randomly and feed into the RNN-subnet in a random order. In case of the number of features is less than 20, we duplicate the fetures in the feature array randomly. Since  the RANSAC need several points to get a triangulation, we skip the outputs for the first 10 steps in RNN and start the minimization in the last 10 steps. L2 loss function is used.
+
+And the Adam-stochastic gradient descent  optimizer is use as gradient-descent optimizer for the training (the configuration
+parameters for Adam are chosen as beta\_1 = 0.9, beta\_2
+= 0.999 and eps = 1e-4). We used an Adaptive learning rate method. The training started at learning rate 1e-4. and it is reduced by 10e-7 every epoch. That leads to 1000 epoch in training.
+In epoch, we generated 50 subsets of features for each data point.
+
+%back-propagation
+
+\subsection{Final Results}
+To get the final reults, we split the feature array in groups, with 20 features in each group. For the group with smaller than 20 features we fill it with random duplicated features in the array. Each group is fed into RNN subnet to get the inital result and a median filter is applied to the final output. Tabel \ref{fresults} reports the final results.We can see the RASnet improves the results dramatically in both dataset.
+
+In the office dataset, due to the low quality of image, the outliers might be a bigger issue. One can see the result of RASnet improves nearly 60\% in RMS. Whilt in KITTI dataset the images have high qualities, the outliers may not as bad as Office dataset, and the accuracy (CE50) improves over 40\%.
+
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{cccccccccc}
+     \toprule
+  & \multicolumn{2}{c}{RANSAC} & & \multicolumn{2}{c}{RASnet}     & & \multicolumn{2}{p{2cm}}{RASnet with more features}  \\
+\cline{2-3}
+\cline{5-6}
+\cline{8-9}
+     Dataset & RMS & CE50  &&RMS & CE50  &&RMS & CE50  \\ 
+  \hline KITTI      &0.153     &0.089      && 0.114 & 0.051   && 0.109   & 0.048   \\ 
+  \hline Office     &1.258     &0.426      && 0.528 &0.312    && 0.521   & 0.306    \\ 
+    \bottomrule
+  \end{tabular}
+  \caption{Testing result.Angular error (degrees)}
+  \label{fresults}
+\end{table}
+
+With RASnet, we are no longer limited to the coordinates of matched feature point in both images. 
+We have tested RASnet with additional features:
+
+\begin{itemize}
+\item Distance between 2 matched features
+\item Ratio of distance from the closest match to the distance of the second closest match
+\item difference in orientation
+\item scale of the key point in first image
+\item scale of the key point in second image
+\end{itemize}
+
+The regression result with additional features is also listed tabel \ref{fresults}. One can see the result is slightlt improved
+
+\section{Conclusion}
+
+
+This paper introduces a ... The novelty of the papar... It is capable to hadle outliers. The proposed neural network yields better result comparing with triditional RANSCA algorithm. This method also opens oppotunity to adding more features to the equation, and to get the ... that the hiddn mathmatic model is not well known.  For the example the transition between...
+
+transition, more feature like descriptor.
+
+
+
+\section*{References}
+
+\medskip
+
+[1] Fisher, M., Bolles, R. (1981) Random sample consensus: A paradigm for model fitting with applications to image analysis and automated cartography. Comm. of the ACM 24(6), 381–395
+
+[2] T. Sattler, W. Maddern, C. Toft, A. Torii, L. Hammarstrand, E. Stenborg, D. Safari, M. Okutomi, M. Pollefeys, J. Sivic, F. Kahl, T. Pajdla, Benchmarking 6DOF Outdoor Visual Localization in Changing Conditions Conference on Computer Vision and Pattern Recognition (CVPR) 2018
+
+%[3] A. Kendall, M. Grimes, and R. Cipolla. PoseNet: A Convolutional Network for Real-Time 6-DOF Camera Relocalization. In Proc. %ICCV, 2015. Geiger, A., Lenz, P., Stiller, and C., Urtasun, R. (2013). Vision meets robotics: The KITTI dataset. The International %Journal of Robotics Research,  (11), 1231–1237. 
+
+%[3] D. Nister, An efficient solution to the five-point relative pose problem, IEEE Transactions on
+%attern Analysis and Machine Intelligence 26 (2004), no. 6, 756–770.
+
+[4] A. Geiger, P. Lenz, and R. Urtasun. Are we ready for autonomous
+driving? the kitti vision benchmark suite. In Computer
+Vision and Pattern Recognition (CVPR), Providence,
+USA, June 2012.
+
+[5] J. Shotton, B. Glocker, C. Zach, S. Izadi, A. Criminisi, and A. Fitzgibbon. Scene coordinate regression forests for camera relocalization in RGB-D images. In Computer Vision and Pattern Recognition (CVPR), 2013 IEEE
+
+[6] G. Bradski, “The OpenCV Library,” Dr. Dobb’s
+Journal of Software Tools, 2000.
+
+[7]. Lowe D.G.: Distinctive Image Features From Scale-Invariant Keypoints, International
+Journal of Computer Vision, Vol. 60, pp. 91–110, 2004.
+
+[a] Badrinarayanan, V., Kendall, A., Cipolla, R.: Segnet: A deep convolutional
+encoder-decoder architecture for image segmentation. arXiv:1511.00561 (2015)
+
+[b] Long, J., Shelhamer, E., Darrell, T.: Fully convolutional networks for semantic
+segmentation. In: CVPR. (2015)
+
+
+\end{document}
