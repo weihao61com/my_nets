@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/Users/weihao/Projects/p_files/heads_Test_cv_s3.p'
+filename = '/home/weihao/Projects/p_files/office_Test_cv_s3_2.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -38,9 +38,11 @@ angs = []
 rs0 = []
 rs1 = []
 rs2 = []
+att = 0
 for d in data:
 
     d0 = d[0]
+    att += d0.shape[0]
     d0[:, 0] = d0[:, 0] * w2 + w2
     d0[:, 1] = d0[:, 1] * h2 + h2
     d0[:, 2] = d0[:, 2] * w2 + w2
@@ -73,6 +75,8 @@ for d in data:
 
     fp.write('{},{},{},{},{},{},{}\n'.
              format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
+print 'att', att/len(data)
+
 
 #rs = np.sqrt(rs)
 print 'name, median, Anger-error, mx, my, mz'
