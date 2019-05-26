@@ -15,6 +15,65 @@ from utils import Utils
 from fc_dataset import DataSet
 
 
+def run_data_0(data, inputs, sess, xy, fname, cfg):
+    att = cfg.att
+    rst_dic = {}
+    truth_dic = {}
+    for b in data:
+        length = b[0].shape[1]/att
+        feed = {}
+        b_sz = b[0].shape[0]
+
+        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
+        for a in range(length):
+            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+        result = []
+        for a in xy:
+            r = sess.run(xy[a], feed_dict=feed)
+            result.append(r)
+
+        result = np.array(result)
+        for a in range(len(b[2])):
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
+
+    results = []
+    truth = []
+
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+    rs = []
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        results.append(result)
+        truth.append(truth_dic[id])
+        t = truth_dic[id]
+        r = np.linalg.norm(t - result[-1])
+        rs.append(r*r)
+        if random.random() < 0.2:
+            mm = result[-1]
+            if len(mm)==3:
+                fp.write('{},{},{},{},{},{},{}\n'.
+                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            else:
+                fp.write('{},{},{}\n'.
+                         format(t[0], mm[0], r))
+    fp.close()
+    rs = sorted(rs)
+    length = len(rs)
+    fp = open(filename+'.csv', 'w')
+    for a in range(length):
+        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+    fp.close()
+
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+
+
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
     att = cfg.att
     for b in data:
@@ -273,13 +332,14 @@ if __name__ == '__main__':
     for a in xy:
         #if a<10:
         #    continue
-        print a
+        print a,
         last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         # last_loss = tf.norm(tf.subtract(xy[a], output))
         if loss is None:
             loss = last_loss
         else:
             loss = loss + last_loss
+    print
 
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
@@ -312,10 +372,10 @@ if __name__ == '__main__':
                 format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
 
             tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
+            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
 
             te_pre_data = te.prepare()
-            te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
+            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
             s = -1
             while True:

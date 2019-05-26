@@ -85,10 +85,9 @@ print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     np.median(rs0),np.median(rs1),np.median(rs2))
 print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     os.path.basename(filename), np.sqrt(np.mean(rs)), np.mean(angs),
-    np.mean(rs0),np.mean(rs1),np.mean(rs2))
-print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
-    os.path.basename(filename), np.mean(np.sqrt(rs)), np.mean(angs),
-    np.mean(rs0),np.mean(rs1),np.mean(rs2))
+    np.sqrt(np.mean(rs0)),np.sqrt(np.mean(rs1)),np.sqrt(np.mean(rs2)))
+#print '{0}, {1:.4f} '.format(
+#    os.path.basename(filename), np.mean(np.sqrt(rs)))
 fp.close()
 
 rs = sorted(rs)

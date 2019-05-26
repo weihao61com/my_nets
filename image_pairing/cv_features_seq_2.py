@@ -14,8 +14,9 @@ HOME = '{}/../../'.format(this_file_path)
 #HOME = '/home/weihao/Projects'
 
 range2 = 1
+range3 = 0
 range1 = -range2
-key = 'office'
+key = 'heads'
 mode = 'Train'
 #key = '02'
 #mode = 'Test'
@@ -74,7 +75,7 @@ for seq in poses_dic:
         #    break
         pose1 = poses[img_id1]
         for img_id2 in poses:
-            if img_id2-img_id1 == 0:
+            if abs(img_id2-img_id1)<=range3:
                 continue
             if range1 <= img_id2-img_id1 <= range2:
                 pose2 = poses[img_id2]
