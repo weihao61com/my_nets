@@ -33,9 +33,9 @@ print key, mode
 #poses_dic, cam = load_cambridge_poses(location, pose_file)
 
 if key.startswith('0'):
-    location = '{}/datasets/kitty'.format(HOME)
+    location = '{}/datasets/kitti'.format(HOME)
     poses_dic, cam = load_kitty_poses(location, key)
-    key = 'kitty_{}'.format(key)
+    key = 'kitti_{}'.format(key)
 else:
     location = "{}/datasets/indoors/{}".format(HOME, key) #office" #heads
     poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
