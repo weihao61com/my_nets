@@ -123,8 +123,10 @@ class VisualOdometry2:
 
     def get_features_2(self, id1, pose1, pose2):
 
-        self.pose_R = np.linalg.inv(pose2.m3x3).dot(pose1.m3x3)
-        self.pose_T = pose2.tran - pose1.tran
+        #self.pose_R = np.linalg.inv(pose2.m3x3).dot(pose1.m3x3)
+        #self.pose_T = pose2.tran - pose1.tran
+        self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
+        self.pose_T = np.linalg.inv(pose1.m3x3).dot(pose2.tran - pose1.tran)
         if id1 != self.id:
             self.id = id1
             self.feature = self.get_feature(pose1)

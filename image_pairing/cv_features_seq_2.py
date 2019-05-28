@@ -16,10 +16,10 @@ HOME = '{}/../../'.format(this_file_path)
 range2 = 1
 range3 = 0
 range1 = -range2
-key = 'heads'
-mode = 'Train'
-#key = '02'
-#mode = 'Test'
+#key = 'heads'
+#mode = 'Train'
+key = '02'
+mode = 'Test'
 
 if len(sys.argv)>1:
     key = sys.argv[1]
