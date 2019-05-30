@@ -170,7 +170,8 @@ class rNet(Network):
         for a in range(len(nodes)):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
-        ws.append(self.create_ws('out', ins, cfg.num_output))
+        #ws.append(self.create_ws('out', ins, cfg.num_output))
+        ws.append(self.create_ws('out', ins, 3))
         self.ws.append(ws)
 
     def setup(self):
@@ -304,7 +305,8 @@ if __name__ == '__main__':
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    #output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    output = tf.placeholder(tf.float32, [None, 3])
     cfg.ref_node = cfg.nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))

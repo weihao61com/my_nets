@@ -15,11 +15,11 @@ HOME = '{}/../../'.format(this_file_path)
 
 range2 = 1
 range3 = 0
-range1 = -range2
+range1 = 0 #-range2
 #key = 'heads'
 #mode = 'Train'
-key = '02'
-mode = 'Test'
+key = '00'
+mode = 'Train'
 
 if len(sys.argv)>1:
     key = sys.argv[1]
@@ -71,7 +71,7 @@ for seq in poses_dic:
     #poses = pose_realign(poses_dic[seq])
     poses = poses_dic[seq]
     for img_id1 in poses:
-        #if len(data)>50:
+        # if len(data)>50:
         #    break
         pose1 = poses[img_id1]
         for img_id2 in poses:

@@ -4,6 +4,8 @@ from imagery_utils import image_resize
 from pose_ana import *
 import pickle
 import os
+from bluenotelib.common import quaternion
+from bluenotelib.common.bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
 
 STAGE_FIRST_FRAME = 0
 STAGE_SECOND_FRAME = 1
@@ -127,12 +129,24 @@ class VisualOdometry2:
         #self.pose_T = pose2.tran - pose1.tran
         self.pose_R = np.linalg.inv(pose1.m3x3).dot(pose2.m3x3)
         self.pose_T = np.linalg.inv(pose1.m3x3).dot(pose2.tran - pose1.tran)
+
+        # a1 = Utils.rotationMatrixToEulerAngles(self.pose_R)*180/np.pi
+        angle = np.array(BlueNoteSensorRotation.get_rotation_angles(self.pose_R, RotationSequence.XZY))
+        # a1 = BlueNoteSensorRotation.get_rotation_angles(pose1.m3x3, RotationSequence.XZY)
+        # print 'detail', id1, angle[0],angle[1],angle[2],
+        # a1 = pose1.tran
+        # print a1[0],a1[1],a1[2],
+        # a1 = pose2.tran - pose1.tran
+        # print a1[0],a1[1],a1[2],np.linalg.norm(pose2.tran - pose1.tran),
+        # a1 = self.pose_T
+        #print a1[0], a1[1], a1[2]
+
         if id1 != self.id:
             self.id = id1
             self.feature = self.get_feature(pose1)
 
         px = self.get_match_point_2(self.get_feature(pose2))
-        if len(px) > 20:
+        if len(px) > 10:
             features = []
             for p in px:
                 p0 = p[0].pt
@@ -154,8 +168,7 @@ class VisualOdometry2:
                 features.append(f)
 
             self.features = np.array(features)
-            self.truth = np.concatenate(
-                (Utils.rotationMatrixToEulerAngles(self.pose_R)*180/np.pi, self.pose_T))
+            self.truth = np.concatenate((angle, self.pose_T))
         else:
             self.features = []
 

@@ -90,6 +90,7 @@ class Utils:
             y = np.arctan2(-R[2, 0], sy)
             z = 0
         return np.array([x, y, z])
+        #return np.array([(x+z)/2, y, (x-z)/2])
 
     @staticmethod
     def calculate_loss(v1, v2):
