@@ -13,9 +13,9 @@ HOME = '{}/../../'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 1
+range2 = 3
 range3 = 0
-range1 = 0 #-range2
+range1 = -range2
 #key = 'heads'
 #mode = 'Train'
 key = '00'
