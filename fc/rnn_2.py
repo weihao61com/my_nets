@@ -62,7 +62,7 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
             else:
                 fp.write('{},{},{}\n'.
-                         format(t[0], mm[0], r))
+                         format(t, mm[0], r))
     fp.close()
     rs = sorted(rs)
     length = len(rs)
@@ -122,7 +122,7 @@ def run_data(rst_dic, truth_dic, fname):
                      format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
             else:
                 fp.write('{},{},{}\n'.
-                         format(t[0], mm[0], r))
+                         format(t, mm[0], r))
     fp.close()
     rs = sorted(rs)
     length = len(rs)
@@ -170,8 +170,11 @@ class rNet(Network):
         for a in range(len(nodes)):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
-        #ws.append(self.create_ws('out', ins, cfg.num_output))
-        ws.append(self.create_ws('out', ins, 3))
+
+        if cfg.num_output==3:
+            ws.append(self.create_ws('out', ins, cfg.num_output))
+        else:
+            ws.append(self.create_ws('out', ins, 1))
         self.ws.append(ws)
 
     def setup(self):
@@ -305,8 +308,10 @@ if __name__ == '__main__':
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    #output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    output = tf.placeholder(tf.float32, [None, 3])
+    if cfg.num_output==3:
+        output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    else:
+        output = tf.placeholder(tf.float32, [None, 1])
     cfg.ref_node = cfg.nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
@@ -424,7 +429,10 @@ if __name__ == '__main__':
                                 feed[inputs[a + 1]] = x
                                 n0 = x.shape[0]
                             feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
-                            feed[output] = b[1][c:c + cfg.batch_size]
+                            o = b[1][c:c + cfg.batch_size]
+                            if len(o.shape) == 1:
+                                o = o.reshape((len(o), 1))
+                            feed[output] = o
 
                             ll3,_= sess.run([last_loss, opt],feed_dict=feed)
                             tl3 += ll3

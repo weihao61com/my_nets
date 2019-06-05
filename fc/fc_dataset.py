@@ -619,9 +619,9 @@ class DataSet:
                 if self.num_output==3:
                     truth = d[1][:self.num_output]
                 else:
-                    truth = d[1][3:self.num_output]
+                    truth = d[1][self.num_output]
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
-                          truth.reshape(3), self.id)
+                          truth, self.id)
                 outputs.append(output)
 
             self.id += 1

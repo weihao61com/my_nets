@@ -101,6 +101,8 @@ class Utils:
 
     @staticmethod
     def calculate_stack_loss_avg(v1, v2):
+        if len(v2.shape)==1:
+            v2 = v2.reshape((len(v2), 1))
         L = []
         M = []
         for a in range(v1.shape[1]):
