@@ -403,9 +403,10 @@ class DataSet:
         self.verbose = True
         self.cache = cache
         self.memories = {}
-        self.t_scale = cfg.t_scale
+        self.t_scale = map(float, cfg.t_scale.split(','))
         self.net_type = cfg.net_type
         self.num_output = cfg.num_output
+        self.num_output1 = cfg.num_output1
         self.att = cfg.att
 
         self.load_next_data(sub_sample)
@@ -553,7 +554,7 @@ class DataSet:
                     ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
                 else:
                     raise Exception()
-                outs.append(a[1]*self.t_scale)
+                outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
                 ids.append(a[2])
             dd = (np.array(ins), np.array(outs), ids)
             pre_data.append(dd)
@@ -616,12 +617,10 @@ class DataSet:
             for a in range(0, len(input), self.nPar+self.nAdd):
                 it = input[a:a + self.nPar+self.nAdd]
                 #truth = d[1][:self.num_output]
-                if self.num_output==3:
-                    truth = d[1][:self.num_output]
-                else:
-                    truth = d[1][3:self.num_output]
+                truth = d[1][self.num_output1:self.num_output]
+                Nout = self.num_output - self.num_output1
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
-                          truth.reshape(3), self.id)
+                          truth.reshape(Nout), self.id)
                 outputs.append(output)
 
             self.id += 1

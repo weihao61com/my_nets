@@ -10,6 +10,43 @@ from utils import Utils, PinholeCamera
 from glob import glob
 import os
 
+
+def load_TUM_poses(location, pose_file):
+    file_dir = os.path.join(location, pose_file)
+    rgb_file = os.path.join(file_dir, 'rgb.txt')
+    rgb = SortedDict()
+    T0 = None
+    with open(rgb_file) as f:
+        for line in f.readlines()[3:]:
+            strs = line.split(' ')
+            t = float(strs[0])
+            if T0 is None:
+                T0 = t
+            t -= T0
+            rgb[t] = strs[1][:-1]
+
+    ps = SortedDict()
+    rgb_file = os.path.join(file_dir, 'groundtruth.txt')
+    with open(rgb_file) as f:
+        for line in f.readlines()[3:]:
+            strs = map(float, line[:-1].split(' '))
+            t = strs[0] - T0
+            ps[t] = np.array(strs[1:])
+
+    id = 0
+    poses = SortedDict()
+    for t in rgb:
+        p = Pose(file_dir, interp_poses(ps, t), rgb[t], data=1)
+        poses[id] = p
+        id += 1
+
+    focal = 525.0
+    cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
+    # cam = PinholeCamera(480.0, 640.0, focal, focal, 240.0, 320.0)
+
+    return {pose_file: poses}, cam
+
+
 def load_indoor_7_poses(location, pose_file):
     poses = SortedDict()
     filename = '{}/{}'.format(location, pose_file)
@@ -97,6 +134,24 @@ def get_pose(location, pose_file):
         pose_pre = pose
 
     return {'0': out_pose}
+
+def interp_poses(ps, tp):
+    keys = ps.keys()
+    tl = keys[0]
+    th = keys[-1]
+    for t in keys[1:]:
+        if t>tp:
+            th = t
+            break
+        tl = t
+
+    pl = ps[tl]
+    ph = ps[th]
+    dp = ph-pl
+    dt = th-tl
+    p = pl + dp*(tp-tl)/(dt)
+    return p
+
 
 
 if __name__ == '__main__':

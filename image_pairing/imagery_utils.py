@@ -6,6 +6,9 @@ from sortedcontainers import SortedDict
 import os
 import cv2
 
+
+import evo.core.transformations as tr
+
 class SiftFeature:
     def __init__(self, target=2000):
         self.th=0.5
@@ -50,6 +53,7 @@ def image_resize(img, scale = 1.01):
 class Pose:
     def __init__(self, line, location, pose_file, data=0, id=0):
         strs = line[:-1].split()
+        self.fs = None
         if data==0:
             a = np.reshape(np.array(map(float, strs)), (3, 4))
             nm = '{0}/sequences/{1}/image_1/{2}.png'.format(location, pose_file, str(id).zfill(6))
@@ -61,11 +65,13 @@ class Pose:
             # mx = np.array([[0,1,0], [0,0,1], [-1,0,0]])
             # mx = np.array([[1,0,0], [0,1,0], [0,0,1]])
 
-            self.filename = '{}/{}'.format(location, strs[0])
-            a = np.array(map(float, strs[1:]))
-            self.tran = a[:3]
-            q = Quaternion(qw=a[3], qx=a[4], qy=a[5], qz=a[6])
-            self.m3x3 = Quaternion.to_rotation_matrix(q)
+            self.filename = os.path.join(line, pose_file)
+            a = location
+            tran = a[:3]
+            quat = a[3:]  # n x 4
+            quat = np.roll(quat, 1, axis=0)
+            self.tran = tran
+            self.m3x3 = tr.quaternion_matrix(quat)[:3,:3]
         elif data==2: # microsoft indoor 7
             self.filename = pose_file
             p_file = pose_file[:-9] + 'pose.txt'

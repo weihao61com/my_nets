@@ -64,7 +64,7 @@ def get_location(line):
 
 
 class VisualOdometry2:
-    def __init__(self, cam, sf):
+    def __init__(self, cam, sf, mini_match=20):
         # self.detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=10)
         FLANN_INDEX_KDTREE = 1
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
@@ -74,21 +74,25 @@ class VisualOdometry2:
         self.feature = None
         self.id = -1
         self.sift_feature = sf
+        self.mini_match = mini_match
 
     def get_feature(self, pose, scale=0):
-        try:
-            # print pose.filename
-            img = cv2.imread(pose.filename)
-        except:
-            raise Exception("failed load file {}".format(pose.filename))
+        if pose.fs is None:
 
-        if scale > 1:
-            img = image_resize(img, scale)
-        fs = self.sift_feature.get_sift_feature(img)
+            try:
+                # print pose.filename
+                img = cv2.imread(pose.filename)
+            except:
+                raise Exception("failed load file {}".format(pose.filename))
 
-        # fs = self.detector.detectAndCompute(img, None)
-        # print pose.filename, len(fs[1])
-        return fs
+            if scale > 1:
+                img = image_resize(img, scale)
+            fs = self.sift_feature.get_sift_feature(img)
+
+            # fs = self.detector.detectAndCompute(img, None)
+            # print pose.filename, len(fs[1])
+            pose.fs = fs
+        return pose.fs
 
     def get_match_point_2(self, curent_feature):
         matches = self.matcher.knnMatch(self.feature[1], curent_feature[1], k=2)
@@ -146,7 +150,7 @@ class VisualOdometry2:
             self.feature = self.get_feature(pose1)
 
         px = self.get_match_point_2(self.get_feature(pose2))
-        if len(px) > 10:
+        if len(px) > self.mini_match:
             features = []
             for p in px:
                 p0 = p[0].pt

@@ -9,7 +9,7 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/office_Test_cv_s3_2.p'
+filename = '/home/weihao/Projects/p_files/heads_Test_r.p'
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -56,14 +56,19 @@ for d in data:
                                    method=cv2.RANSAC)
     mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
-    b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+    b = -Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+    for c in b:
+        if c<-90:
+            c = 180 + c
+        if c>90:
+            c = 180-c
     a = d[1][:3]
     dr = a - b
     r0 = np.linalg.norm(dr)
-    if r0>180:
-        r0 = r0 - 180
-    elif r0>90:
-        r0 = 180 - r0
+    #if r0>180:
+    #    r0 = r0 - 180
+    #elif r0>90:
+    #    r0 = 180 - r0
     rs.append(r0*r0)
     rs0.append(abs(dr[0]))
     rs1.append(abs(dr[1]))

@@ -72,7 +72,7 @@ def load_data(filename, verbose = True, sub_sample=-1):
                         n_data.append(d)
                 data = n_data
         if verbose:
-            print "loading", filename, datetime.datetime.now()-t0, \
+            print "loading", filename, '\n', datetime.datetime.now()-t0, \
                 length, len(data), avg_param, nr/nt
         return data
     data_out = None
