@@ -535,6 +535,33 @@ class DataSet:
 
         return pre_data
 
+    def prepare_evt(self, rd=True, multi=1, rdd=True):
+        pre_data = []
+        if rdd:
+            self.reshuffle_data()
+        self.id = 0
+        for d in self.data:
+            data = self.create_bucket_evt(d, multi)
+            if rd:
+                np.random.shuffle(data)
+            ins = []
+            outs = []
+            ids = []
+            for ds in data:
+                for a in ds:
+                    if self.net_type == 'fc':
+                        ins.append(a[0])
+                    elif self.net_type == 'cnn':
+                        ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
+                    else:
+                        raise Exception()
+                    outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
+                    ids.append(a[2])
+            dd = (np.array(ins), np.array(outs), ids)
+            pre_data.append(dd)
+
+        return pre_data
+
     def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []
         if rdd:
@@ -598,6 +625,37 @@ class DataSet:
                     self.data[b][d][0][a, :] -= av
                     self.data[b][d][0][a, :] /= st
 
+    def create_bucket_evt(self, data, multi):
+
+        outputs = []
+
+        sz_in = data[0][0].shape
+
+        for d in data:
+            bucket = []
+            input = d[0]
+            if multi > 0:
+                num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
+            else:
+                num = int(np.ceil(len(input) / float(self.nPar + self.nAdd))*abs(multi))
+            length = num * (self.nPar + self.nAdd)
+
+            while len(input) < length:
+                input = np.concatenate((input, input))
+            input = input[:length]
+            for a in range(0, len(input), self.nPar+self.nAdd):
+                it = input[a:a + self.nPar+self.nAdd]
+                #truth = d[1][:self.num_output]
+                truth = d[1][self.num_output1:self.num_output]
+                Nout = self.num_output - self.num_output1
+                output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
+                          truth.reshape(Nout), self.id)
+                bucket.append(output)
+            outputs.append(bucket)
+            self.id += 1
+
+        return outputs
+
     def create_bucket(self, data, multi):
 
         outputs = []
@@ -605,12 +663,14 @@ class DataSet:
         sz_in = data[0][0].shape
 
         for d in data:
+            bucket = []
             input = d[0]
             if multi > 0:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
                 num = int(np.ceil(len(input) / float(self.nPar + self.nAdd))*abs(multi))
             length = num * (self.nPar + self.nAdd)
+
             while len(input) < length:
                 input = np.concatenate((input, input))
             input = input[:length]
@@ -622,7 +682,6 @@ class DataSet:
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
                           truth.reshape(Nout), self.id)
                 outputs.append(output)
-
             self.id += 1
 
         return outputs

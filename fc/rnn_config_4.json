@@ -1,5 +1,5 @@
 {
-    "batch_size": 100,
+    "batch_size": 10,
     "_tea": "p_files/kitti_02_Test_cv_s1_2.p",
     "_tra": "p_files/kitti_00_Train_cv_s1_2.p",
     "_te0": "p_files/heads_Test_r.p",
@@ -21,9 +21,9 @@
     "feature_len": 20,
     "num_output": 5,
     "num_output1": 4,
-    "lr": 1e-4,
+    "lr": 1e-5,
     "memory_size": 100000,
-    "loop": 10,
+    "loop": 1,
     "t_scale": "10,10,10,1000,1000,1000",
     "nodes_0_base": "1024, 128",
     "nodes_1_out": "32",
@@ -32,5 +32,5 @@
     "multi": 1,
     "SIG": 0,
     "INC_win": 1,
-    "d_lr": 1e-7
+    "d_lr": 1e-8
 }
