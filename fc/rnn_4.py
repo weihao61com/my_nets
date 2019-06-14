@@ -342,6 +342,7 @@ if __name__ == '__main__':
         else:
             loss = loss + last_loss
     print
+    loss = last_loss
 
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
