@@ -171,10 +171,8 @@ class rNet(Network):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
 
-        if cfg.num_output==3:
-            ws.append(self.create_ws('out', ins, cfg.num_output))
-        else:
-            ws.append(self.create_ws('out', ins, 1))
+        Nout = cfg.num_output - cfg.num_output1
+        ws.append(self.create_ws('out', ins, Nout))
         self.ws.append(ws)
 
     def setup(self):
@@ -308,10 +306,12 @@ if __name__ == '__main__':
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    if cfg.num_output==3:
-        output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    else:
-        output = tf.placeholder(tf.float32, [None, 1])
+    Nout = cfg.num_output - cfg.num_output1
+    setattr(cfg, 'Nout', Nout)
+
+    # output = tf.placeholder(tf.float32, [None, cfg.num_output])
+    output = tf.placeholder(tf.float32, [None, Nout])
+
     cfg.ref_node = cfg.nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
@@ -415,7 +415,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=cfg.multi)
+                tr_pre_data = tr.prepare_evt(multi=cfg.multi)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

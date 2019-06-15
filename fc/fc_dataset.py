@@ -419,6 +419,7 @@ class DataSet:
         if rt == 0:
             return None
 
+        raise Exception('get_next NIY.')
         if avg and rt==2:
             self.avg_correction(avg)
 
