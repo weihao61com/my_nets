@@ -308,10 +308,9 @@ if __name__ == '__main__':
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    if cfg.num_output==3:
-        output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    else:
-        output = tf.placeholder(tf.float32, [None, 1])
+    Nout = cfg.num_output - cfg.num_output1
+
+    output = tf.placeholder(tf.float32, [None, Nout])
     cfg.ref_node = cfg.nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
