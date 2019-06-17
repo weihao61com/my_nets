@@ -8,6 +8,10 @@ import sys
 import pickle
 import shutil
 import csv
+#import evo.core.transformations as tr
+from bluenotelib.common.bluenote_sensor_rotation \
+    import BlueNoteSensorRotation, RotationSequence
+
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -419,3 +423,26 @@ class Utils:
     def run_cmd(cmd):
         print(cmd)
         os.system(cmd)
+
+    @staticmethod
+    def get_A_T(Q):
+        #A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
+        A = np.array(BlueNoteSensorRotation.
+                         get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
+        T = Q[:3, 3]
+        return A, T
+
+    @staticmethod
+    def get_relative_A_T(Q1, Q2):
+        Q_inv = np.linalg.inv(Q1)
+        Q = Q_inv.dot(Q2)
+        return Utils.get_A_T(Q)
+
+    @  staticmethod
+    def create_Q(A, T):
+        M = np.array(BlueNoteSensorRotation.rotation_matrix
+                     (A[0], A[1], A[2], sequence=RotationSequence.XZY))
+        M = np.concatenate((M, np.array(T).reshape(3, 1)), axis=1)
+        M = np.concatenate((M, np.array([0,0,0,1]).reshape(1,4)))
+        #M[:3, 3] = T
+        return M

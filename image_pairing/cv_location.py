@@ -135,7 +135,8 @@ class VisualOdometry2:
         self.pose_T = np.linalg.inv(pose1.m3x3).dot(pose2.tran - pose1.tran)
 
         # a1 = Utils.rotationMatrixToEulerAngles(self.pose_R)*180/np.pi
-        angle = np.array(BlueNoteSensorRotation.get_rotation_angles(self.pose_R, RotationSequence.XZY))
+        angle = np.array(BlueNoteSensorRotation.
+                         get_rotation_angles(self.pose_R, RotationSequence.XZY))
         # a1 = BlueNoteSensorRotation.get_rotation_angles(pose1.m3x3, RotationSequence.XZY)
         # print 'detail', id1, angle[0],angle[1],angle[2],
         # a1 = pose1.tran

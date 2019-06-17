@@ -53,7 +53,7 @@ def load_indoor_7_poses(location, pose_file):
     id = 0
     with open(filename) as f:
         for line in f.readlines():
-            print line, len(line)
+            print line[:-2], len(line)
             if len(line)>8:
                 folder_id = int(line[8:-2])
             else:
@@ -74,13 +74,13 @@ def load_indoor_7_poses(location, pose_file):
 
     return poses, cam
 
-def load_kitty_poses(location, pose_file):
+def load_kitti_poses(location, pose_file):
     poses = SortedDict()
-    filename = '{}/poses/{}.txt'.format(location, pose_file)
+    filename = '{}/poses/{}'.format(location, pose_file)
     id = 0
     with open(filename) as f:
         for line in f.readlines():
-            poses[id] = Pose(line, location, pose_file, data=0, id=id)
+            poses[id] = Pose(line, location, pose_file[:-4], data=0, id=id)
             id += 1
 
     focal = 719  # 719
@@ -98,13 +98,16 @@ def load_cambridge_poses(location, pose_file):
         for line in fp.readlines():
             if cnt>=0:
                 strs = line.split(" ")
-                seq = strs[0][:4]
-                if not seq in poses:
-                    poses[seq] = SortedDict()
-                id = int(strs[0][10:15])
-                p = Pose(line, location, pose_file, data=1)
+                seq = strs[0].split('/')
+                if not seq[0] in poses:
+                    poses[seq[0]] = SortedDict()
+                id = int(seq[1][5:10])
+                p = Pose(line, location, strs[0], data=1)
                 if os.path.exists(p.filename):
-                    poses[seq][id-1] = Pose(line, location, pose_file, data=1)
+                    poses[seq[0]][id] = p
+                else:
+                    raise Exception('file not found: {}'.format(p.filename))
+
             cnt += 1
 
     focal = 1400*0.7*.7
@@ -135,6 +138,7 @@ def get_pose(location, pose_file):
 
     return {'0': out_pose}
 
+
 def interp_poses(ps, tp):
     keys = ps.keys()
     tl = keys[0]
@@ -153,16 +157,41 @@ def interp_poses(ps, tp):
     return p
 
 
-
 if __name__ == '__main__':
 
-    location = '/Users/weihao/BlueNoteData/cambridge/ShopFacade'
-    pose_file = '/dataset_train.txt'
+    #location = '/home/weihao/Projects/datasets/cambridge/StMarysChurch'
+    #pose_file = 'dataset_train.txt'
+    location = '/home/weihao/Projects/datasets/indoors/office'
+    pose_file = 'TestSplit.txt'
+    # location = '/home/weihao/Projects/datasets/kitti'
+    # pose_file = '00.txt'
 
-    poses = get_pose(location, pose_file)
-    with open('w.txt', 'w') as fp:
+    poses = None
+    if 'indoor' in location:
+        poses, _ = load_indoor_7_poses(location, pose_file)
+    if 'kitti' in location:
+        poses, _ = load_kitti_poses(location, pose_file)
+    if 'cambridge' in location:
+        poses, _ = load_cambridge_poses(location, pose_file)
+
+    if poses is None:
+        raise Exception('Poses not found {} {}'.format(location, pose_file))
+    with open('/home/weihao/tmp/w.csv', 'w') as fp:
         for id in poses:
-            p = poses[id]
-            fp.write('{} {} {} {} {} {} {}\n'.format(id, p[0], p[1], p[2], p[3], p[4], p[5]))
-
-
+            ps = poses[id]
+            print id, len(ps)
+            pre_pose = None
+            for p_id in ps:
+                p = ps[p_id]
+                if pre_pose is not None:
+                    Q1 = pre_pose.Q4
+                    Q2 = p.Q4
+                    fp.write('{},{}'.format(id,p_id))
+                    A, T = Utils.get_A_T(Q1)
+                    fp.write(',{},{},{},{},{},{}'.
+                             format(A[0], A[1], A[2], T[0], T[1], T[2]))
+                    A, T = Utils.get_relative_A_T(Q1, Q2)
+                    fp.write(',{},{},{},{},{},{}\n'.
+                             format(A[0], A[1], A[2], T[0], T[1], T[2]))
+                pre_pose = p
+            break

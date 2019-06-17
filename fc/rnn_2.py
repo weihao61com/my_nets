@@ -113,16 +113,23 @@ def run_data(rst_dic, truth_dic, fname):
         results.append(result)
         truth.append(truth_dic[id])
         t = truth_dic[id]
-        r = np.linalg.norm(t - result[-1])
+        dr = t - result[-1]
+        r = np.linalg.norm(dr)
         rs.append(r*r)
-        if random.random() < 0.2:
+
+        if random.random() < 1.2:
             mm = result[-1]
-            if len(mm)==3:
-                fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            else:
-                fp.write('{},{},{}\n'.
-                         format(t, mm[0], r))
+            for a in range(len(t)):
+                if a>0:
+                    fp.write(',')
+                fp.write('{},{}'.format(t[a], mm[a]))
+            fp.write(',{}\n'.format(r))
+            # if len(mm)==3:
+            #     fp.write('{},{},{},{},{},{},{}\n'.
+            #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+            # else:
+            #     fp.write('{},{},{}\n'.
+            #              format(t, mm[0], r))
     fp.close()
     rs = sorted(rs)
     length = len(rs)
@@ -226,7 +233,7 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
     rst_dic = {}
     truth_dic = {}
     for a in range(mul):
-        tr_pre_data = te.prepare(multi=-1)
+        tr_pre_data = te.prepare(multi=-1, rd = False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
     tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
@@ -415,7 +422,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare_evt(multi=cfg.multi)
+                tr_pre_data = tr.prepare(multi=cfg.multi)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

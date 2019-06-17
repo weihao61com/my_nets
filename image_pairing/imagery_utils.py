@@ -54,24 +54,25 @@ class Pose:
     def __init__(self, line, location, pose_file, data=0, id=0):
         strs = line[:-1].split()
         self.fs = None
-        if data==0:
+        if data==0: # kitti
             a = np.reshape(np.array(map(float, strs)), (3, 4))
             nm = '{0}/sequences/{1}/image_1/{2}.png'.format(location, pose_file, str(id).zfill(6))
             self.filename = nm
             self.m3x3 = a[:, :3]
             self.tran = a[:, 3]
+            self.Q4 = np.concatenate((a, np.array([[0,0,0,1]])))
+
             #q = Quaternion(m3x3=self.m3x3)
-        elif data==1:
+        elif data==1: # cambridge
             # mx = np.array([[0,1,0], [0,0,1], [-1,0,0]])
             # mx = np.array([[1,0,0], [0,1,0], [0,0,1]])
 
-            self.filename = os.path.join(line, pose_file)
-            a = location
-            tran = a[:3]
-            quat = a[3:]  # n x 4
-            quat = np.roll(quat, 1, axis=0)
-            self.tran = tran
-            self.m3x3 = tr.quaternion_matrix(quat)[:3,:3]
+            self.filename = os.path.join(location, pose_file)
+            a = map(float, strs[1:])
+            self.tran = a[:3]
+            M = tr.quaternion_matrix(a[3:])
+            M[:3, 3] = self.tran
+            self.Q4 = M
         elif data==2: # microsoft indoor 7
             self.filename = pose_file
             p_file = pose_file[:-9] + 'pose.txt'
@@ -80,6 +81,15 @@ class Pose:
             self.tran = m3x4[:3, 3]
             basename = os.path.basename(pose_file)[:-10]
             self.id = int(basename[-6:])
+            self.Q4 = m3x4
+        elif data ==3: #TUM????
+            self.filename = os.path.join(line, pose_file)
+            a = location
+            tran = a[:3]
+            quat = a[3:]  # n x 4
+            quat = np.roll(quat, 1, axis=0)
+            self.tran = tran
+            self.m3x3 = tr.quaternion_matrix(quat)[:3,:3]
 
     def get_direction(self, pose, cam):
         return np.linalg.inv(pose.m3x3).dot(self.m3x3)
