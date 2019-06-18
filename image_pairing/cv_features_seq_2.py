@@ -13,11 +13,11 @@ HOME = '{}/../../'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 1
+range2 = 3
 range3 = 0
-range1 = 0 # -range2
-key = 'office'
-mode = 'Test'
+range1 = -range2
+key = '00'
+mode = 'Train'
 #key = 'rgbd_dataset_freiburg3_long_office_household'
 #mode = 'Train'
 
@@ -34,7 +34,7 @@ print key, mode
 
 if key.startswith('0'):
     location = '{}/datasets/kitti'.format(HOME)
-    poses_dic, cam = load_kitti_poses(location, key)
+    poses_dic, cam = load_kitti_poses(location, key+".txt")
     key = 'kitti_{}'.format(key)
 elif key.startswith('rgbd'):
     location = '{}/datasets/TUM'.format(HOME)

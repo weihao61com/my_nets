@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
     if poses is None:
         raise Exception('Poses not found {} {}'.format(location, pose_file))
-    with open('/home/weihao/tmp/w.csv', 'w') as fp:
+    with open('/home/weihao/tmp/p_ana.csv', 'w') as fp:
         for id in poses:
             ps = poses[id]
             print id, len(ps)
@@ -187,11 +187,21 @@ if __name__ == '__main__':
                     Q1 = pre_pose.Q4
                     Q2 = p.Q4
                     fp.write('{},{}'.format(id,p_id))
-                    A, T = Utils.get_A_T(Q1)
+                    A, T = Utils.get_A_T(Q2)
                     fp.write(',{},{},{},{},{},{}'.
                              format(A[0], A[1], A[2], T[0], T[1], T[2]))
                     A, T = Utils.get_relative_A_T(Q1, Q2)
                     fp.write(',{},{},{},{},{},{}\n'.
                              format(A[0], A[1], A[2], T[0], T[1], T[2]))
+                else:
+                    A, T = Utils.get_A_T(p.Q4)
+                    print p.Q4
+                    for a in range(3):
+                        print A[a], T[a]
+                    Q = Utils.create_Q(A, T)
+                    print Q
+                    A, T = Utils.get_A_T(Q)
+                    for a in range(3):
+                        print A[a], T[a]
                 pre_pose = p
             break
