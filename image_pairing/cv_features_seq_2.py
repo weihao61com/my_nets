@@ -13,9 +13,9 @@ HOME = '{}/../../'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 3
+range2 = 1
 range3 = 0
-range1 = -range2
+range1 = 0 #-range2
 key = '00'
 mode = 'Train'
 #key = 'rgbd_dataset_freiburg3_long_office_household'

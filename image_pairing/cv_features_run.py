@@ -9,7 +9,13 @@ import datetime
 import pickle
 import cv2
 
-filename = '/home/weihao/Projects/p_files/heads_Test_r.p'
+HOME = '/home/weihao/Projects/'
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects/'
+
+filename = '{}/p_files/office_Test_cv_s3_2.p'.format(HOME)
+
+#filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
@@ -20,13 +26,14 @@ else:
     focal = 525.0
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
 
+
 #focal = 719  # 719
 #cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
 
 w2 = cam.cx
 h2 = cam.cy
 
-output_file = '/home/weihao/tmp/feature.csv'
+output_file = '{}/tmp/feature.csv'.format(HOME)
 fp = open(output_file, 'w')
 
 with open(filename, 'r') as f:
@@ -81,16 +88,20 @@ for d in data:
     fp.write('{},{},{},{},{},{},{}\n'.
              format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
 print 'att', att/len(data)
-
+angs = np.array(angs)
+rs0 = np.array(rs0)
+rs1 = np.array(rs1)
+rs2 = np.array(rs2)
 
 #rs = np.sqrt(rs)
 print 'name, median, Anger-error, mx, my, mz'
 print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     os.path.basename(filename), np.sqrt(np.median(rs)), np.median(angs),
     np.median(rs0),np.median(rs1),np.median(rs2))
-print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
-    os.path.basename(filename), np.sqrt(np.mean(rs)), np.mean(angs),
-    np.sqrt(np.mean(rs0)),np.sqrt(np.mean(rs1)),np.sqrt(np.mean(rs2)))
+print 'Average(RMS), {0:.4f} {1:.4f} {2:.4f} {3:.4f} {4:.4f}'.format(
+    np.sqrt(np.mean(rs)), np.sqrt(np.mean(angs*angs)),
+    np.sqrt(np.mean(rs0*rs0)),np.sqrt(np.mean(rs1*rs1)),
+    np.sqrt(np.mean(rs2*rs2)))
 #print '{0}, {1:.4f} '.format(
 #    os.path.basename(filename), np.mean(np.sqrt(rs)))
 fp.close()

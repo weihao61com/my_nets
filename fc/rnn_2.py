@@ -57,12 +57,11 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
         rs.append(r*r)
         if random.random() < 0.2:
             mm = result[-1]
-            if len(mm)==3:
-                fp.write('{},{},{},{},{},{},{}\n'.
-                     format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            else:
-                fp.write('{},{},{}\n'.
-                         format(t, mm[0], r))
+            for a in range(len(t)):
+                if a > 0:
+                    fp.write(',')
+                fp.write('{},{}'.format(t[a], mm[a]))
+            fp.write(',{}\n'.format(r))
     fp.close()
     rs = sorted(rs)
     length = len(rs)

@@ -138,7 +138,6 @@ def get_pose(location, pose_file):
 
     return {'0': out_pose}
 
-
 def interp_poses(ps, tp):
     keys = ps.keys()
     tl = keys[0]
@@ -157,14 +156,11 @@ def interp_poses(ps, tp):
     return p
 
 
+
 if __name__ == '__main__':
 
-    #location = '/home/weihao/Projects/datasets/cambridge/StMarysChurch'
-    #pose_file = 'dataset_train.txt'
-    location = '/home/weihao/Projects/datasets/indoors/office'
-    pose_file = 'TestSplit.txt'
-    # location = '/home/weihao/Projects/datasets/kitti'
-    # pose_file = '00.txt'
+    location = '/Users/weihao/Projects/datasets/kitti'
+    pose_file = '00.txt'
 
     poses = None
     if 'indoor' in location:

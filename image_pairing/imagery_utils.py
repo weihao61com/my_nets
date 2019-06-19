@@ -7,8 +7,6 @@ import os
 import cv2
 
 
-import evo.core.transformations as tr
-
 class SiftFeature:
     def __init__(self, target=2000):
         self.th=0.5
