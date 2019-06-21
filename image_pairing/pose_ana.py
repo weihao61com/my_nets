@@ -138,6 +138,7 @@ def get_pose(location, pose_file):
 
     return {'0': out_pose}
 
+
 def interp_poses(ps, tp):
     keys = ps.keys()
     tl = keys[0]
@@ -159,8 +160,12 @@ def interp_poses(ps, tp):
 
 if __name__ == '__main__':
 
-    location = '/Users/weihao/Projects/datasets/kitti'
-    pose_file = '00.txt'
+    #location = '/home/weihao/Projects/datasets/cambridge/StMarysChurch'
+    #pose_file = 'dataset_train.txt'
+    #location = '/home/weihao/Projects/datasets/indoors/office'
+    #pose_file = 'TestSplit.txt'
+    location = '/home/weihao/Projects/datasets/kitti'
+    pose_file = '02.txt'
 
     poses = None
     if 'indoor' in location:
@@ -177,6 +182,7 @@ if __name__ == '__main__':
             ps = poses[id]
             print id, len(ps)
             pre_pose = None
+            pre_pose2 = None
             for p_id in ps:
                 p = ps[p_id]
                 if pre_pose is not None:
@@ -194,10 +200,20 @@ if __name__ == '__main__':
                     print p.Q4
                     for a in range(3):
                         print A[a], T[a]
-                    Q = Utils.create_Q(A, T)
+                    # Q = Utils.create_Q(A, T)
+                    Q = np.linalg.inv(p.Q4)
                     print Q
                     A, T = Utils.get_A_T(Q)
                     for a in range(3):
                         print A[a], T[a]
+
+                if pre_pose2 is not None:
+                    A1, T1 = Utils.get_relative_A_T(pre_pose2.Q4, pre_pose.Q4)
+                    A2, T2 = Utils.get_relative_A_T(pre_pose.Q4, p.Q4)
+                    A = np.linalg.norm(A1-A2)
+                    T = np.linalg.norm(T1-T2)
+                    if A<0.2 and T<0.2:
+                        print p_id, A ,T
                 pre_pose = p
-            break
+                pre_pose2 = pre_pose
+            #break

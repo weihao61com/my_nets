@@ -419,7 +419,7 @@ class DataSet:
         if rt == 0:
             return None
 
-        raise Exception('get_next NIY.')
+        # raise Exception('get_next NIY.')
         if avg and rt==2:
             self.avg_correction(avg)
 
@@ -455,7 +455,7 @@ class DataSet:
                     f5 = data[a][0][:,12].reshape((length, 1)) # ratio
 
                     data[a][0] = np.concatenate((f0, f1, f2, f3, f4, f5), 1)
-                pass
+                #pass
             elif self.att<att:
                 for a in range(len(data)):
                     data[a][0] = data[a][0][:,:self.att]

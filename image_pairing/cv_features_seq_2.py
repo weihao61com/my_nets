@@ -15,9 +15,11 @@ HOME = '{}/../../'.format(this_file_path)
 
 range2 = 1
 range3 = 0
-range1 = 0 #-range2
-key = '00'
-mode = 'Train'
+range1 = 0# -range2
+key = "08"
+mode = "Train"
+# key = 'office'
+# mode = 'Test'
 #key = 'rgbd_dataset_freiburg3_long_office_household'
 #mode = 'Train'
 
