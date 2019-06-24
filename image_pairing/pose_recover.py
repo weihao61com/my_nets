@@ -16,6 +16,9 @@ if __name__ == '__main__':
     data = Utils.read_csv(result_file)
     print len(data)
     output_file = '/home/weihao/tmp/rst.csv'
+    rg = 3
+
+    skip = (rg-1)*rg
 
     #A0 = [4.281100483954916	,66.64036592495356,10.843025665174292]
     #T0 = [-0.6582703,-0.66375178,0.51635194]

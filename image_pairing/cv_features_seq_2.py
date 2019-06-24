@@ -13,11 +13,11 @@ HOME = '{}/../../'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 1
+range2 = 3
 range3 = 0
-range1 = 0# -range2
-key = "08"
-mode = "Train"
+range1 = -range2
+key = "03"
+mode = "Test"
 # key = 'office'
 # mode = 'Test'
 #key = 'rgbd_dataset_freiburg3_long_office_household'

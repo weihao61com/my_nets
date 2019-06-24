@@ -109,6 +109,7 @@ def run_data(rst_dic, truth_dic, fname):
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
+        # result = np.mean(dst, axis=0)
         results.append(result)
         truth.append(truth_dic[id])
         t = truth_dic[id]
