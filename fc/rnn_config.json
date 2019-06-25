@@ -28,5 +28,6 @@
     "multi": 1,
     "SIG": 0,
     "INC_win": 1,
-    "d_lr": 1e-7
+    "d_lr": 1e-7,
+    "mean_err": 1
 }

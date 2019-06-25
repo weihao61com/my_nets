@@ -347,8 +347,10 @@ if __name__ == '__main__':
         #if a<10:
         #    continue
         print a,
-        last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
-        # last_loss = tf.norm(tf.subtract(xy[a], output))
+        if cfg.mean_err==0:
+            last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        else:
+            last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
         if loss is None:
             loss = last_loss
         else:
@@ -397,19 +399,6 @@ if __name__ == '__main__':
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
                 if s==len(tr_loss)-1:
                     break
-
-            # tr_pre_data = tr0.prepare(multi=-1)
-            # tr_loss, tr_median = run_data(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
-            #
-            # te_pre_data = te.prepare(multi=-1)
-            # te_loss, te_median = run_data(te_pre_data, input_dic, sess, xy, 'te', cfg)
-            #
-            # s = -1
-            # while True:
-            #     s += len(tr_loss)/2
-            #     str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-            #     if s==len(tr_loss)-1:
-            #         break
 
             print str, str1
 
