@@ -17,16 +17,48 @@ HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
     HOME = '/Users/weihao/Projects/'
 
-class config:
-    def __init__(self, config_file="config_stack_3.json"):
-        js = Utils.load_json_file(config_file)
+
+class Config:
+    def __init__(self, config_file):
+        self.js = Utils.load_json_file(config_file)
+        self.net_type = 'fc'
+        self.af = 'af'
+        self.renetFile = None
+        self.att = None
+
+        for str in self.js:
+            setattr(self, str, self.js[str])
+
         self.tr_data = []
         self.te_data = []
-        for key in js:
+        self.nodes = []
+        for key in self.js:
             if key.startswith('tr'):
-                self.tr_data.append(HOME + js[key])
+                self.tr_data.append(HOME + self.js[key])
             if key.startswith('te'):
-                self.te_data.append(HOME + js['te'])
+                self.te_data.append(HOME + self.js[key])
+            if key.startswith('nodes'):
+                self.nodes.append(map(int, self.js[key].split(',')))
+
+        self.netFile = HOME + 'NNs/' + self.netFile + '/fc'
+        # self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
+        if self.renetFile is not None:
+            self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
+
+    def get_data(self, str, dv=None):
+        return self.js[str] if str in self.js else dv
+
+#
+# class config:
+#     def __init__(self, config_file="config_stack_3.json"):
+#         js = Utils.load_json_file(config_file)
+#         self.tr_data = []
+#         self.te_data = []
+#         for key in js:
+#             if key.startswith('tr'):
+#                 self.tr_data.append(HOME + js[key])
+#             if key.startswith('te'):
+#                 self.te_data.append(HOME + js['te'])
 
 class datasource(object):
 

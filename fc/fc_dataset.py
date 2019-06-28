@@ -13,38 +13,6 @@ from utils import Utils
 from o2_load import *
 from network import Network
 
-
-class Config:
-    def __init__(self, config_file):
-        self.js = Utils.load_json_file(config_file)
-        self.net_type = 'fc'
-        self.af = 'af'
-        self.renetFile = None
-        self.att = None
-
-        for str in self.js:
-            setattr(self, str, self.js[str])
-
-        self.tr_data = []
-        self.te_data = []
-        self.nodes = []
-        for key in self.js:
-            if key.startswith('tr'):
-                self.tr_data.append(HOME + self.js[key])
-            if key.startswith('te'):
-                self.te_data.append(HOME + self.js[key])
-            if key.startswith('nodes'):
-                self.nodes.append(map(int, self.js[key].split(',')))
-
-        self.netFile = fc_const.HOME + 'NNs/' + self.netFile + '/fc'
-        # self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
-        if self.renetFile is not None:
-            self.renetFile = HOME + 'NNs/' + self.renetFile + '/fc'
-
-    def get_data(self, str, dv=None):
-        return self.js[str] if str in self.js else dv
-
-
 class P1Net1(Network):
 
     def setup(self):
