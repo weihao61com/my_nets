@@ -43,6 +43,11 @@ class RAS_D:
 
         return self.sf.get_sift_feature(img)
 
+    def clear(self):
+        self.modify_features()
+        self.sf = None
+        self.matcher = None
+
     def modify_features(self):
         for seq in self.features:
             features = self.features[seq]
@@ -51,7 +56,6 @@ class RAS_D:
                 fs = features[img_id]
                 keypoints = []
                 for f in fs[0]:
-                    print f
                     keypoints.append(ModifiedKeyPoint(f))
                 A[img_id] = [keypoints, fs[1]]
             self.features[seq] = A
@@ -159,7 +163,7 @@ if __name__ == '__main__':
     rasd = RAS_D()
     rasd.set_poses(poses_dic, cam)
     rasd.process(range2)
-    rasd.modify_features()
+    rasd.clear()
 
     with open(filename, 'w') as fp:
         pickle.dump(rasd, fp)
