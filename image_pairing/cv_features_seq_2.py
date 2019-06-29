@@ -9,17 +9,17 @@ import datetime
 import pickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
-HOME = '{}/../../'.format(this_file_path)
+HOME = '{}/../..'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 3
+range2 = 1
 range3 = 0
-range1 = -range2
-key = "03"
-mode = "Test"
-# key = 'office'
-# mode = 'Test'
+range1 = 0 #-range2
+#key = "08"
+#mode = "Test"
+key = 'heads'
+mode = 'Test'
 #key = 'rgbd_dataset_freiburg3_long_office_household'
 #mode = 'Train'
 

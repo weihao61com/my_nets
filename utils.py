@@ -136,7 +136,7 @@ class Utils:
         return loss*loss/len(r), np.median(r)
 
     @staticmethod
-    def calculate_stack_loss_avg(v1, v2):
+    def calculate_stack_loss_avg(v1, v2, abs_err):
         if len(v2.shape)==1:
             v2 = v2.reshape((len(v2), 1))
         L = []
@@ -144,7 +144,10 @@ class Utils:
         for a in range(v1.shape[1]):
             diff = v1[:,a,:]- v2
             r = np.linalg.norm(diff, axis=1)
-            loss = np.mean(r*r)
+            if abs_err==0:
+                loss = np.mean(r*r)
+            else:
+                loss = np.mean(r)
             L.append(loss)
             M.append(np.median(r))
         return L, M
@@ -478,3 +481,21 @@ class Utils:
         M = np.concatenate((M, np.array([0,0,0,1]).reshape(1,4)))
         #M[:3, 3] = T
         return M
+
+    @  staticmethod
+    def create_M(A):
+        M = np.array(BlueNoteSensorRotation.rotation_matrix
+                     (A[0], A[1], A[2], sequence=RotationSequence.XZY))
+        return M
+
+    @staticmethod
+    def get_A(Q):
+        #A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
+        A = np.array(BlueNoteSensorRotation.
+                         get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
+        return A
+
+    @staticmethod
+    def reshuffle_b(bucket):
+        for data in bucket:
+            np.random.shuffle(data[0])

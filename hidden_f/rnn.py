@@ -3,6 +3,11 @@ import sys
 import tensorflow as tf
 import datetime
 from sortedcontainers import SortedDict
+import numpy as np
+import os
+from dataset import DataSet
+import cPickle
+import random
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -12,6 +17,7 @@ sys.path.append('{}/my_nets'.format(HOME))
 sys.path.append('{}/my_nets/fc'.format(HOME))
 
 from utils import Utils, Config
+from network import Network
 #from fc_dataset import DataSet
 
 
@@ -70,7 +76,7 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
 
 
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
@@ -138,7 +144,7 @@ def run_data(rst_dic, truth_dic, fname):
         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
 
 
 class rNet(Network):
@@ -242,12 +248,11 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
         print a, tr_loss[a], tr_median[a]
 
     exit(0)
-
 def get_avg_file(tr, avg_file):
     av = None
     st = None
     nt = 0
-    for d in tr.data[0]:
+    for d in tr.data:
         if nt == 0:
             av = np.sum(d[0], 0)
             st = np.sum(d[0]*d[0], 0)
@@ -263,7 +268,7 @@ def get_avg_file(tr, avg_file):
         print a, av[a], st[a]
 
     with open(avg_file, 'w') as fp:
-        pickle.dump((av,st), fp)
+        cPickle.dump((av,st), fp)
 
     return
 
@@ -275,7 +280,7 @@ def avg_file_name(p):
 
 if __name__ == '__main__':
 
-    config_file = "rnn_config.json"
+    config_file = "config.json"
 
     #if len(sys.argv)>1:
     #    config_file = sys.argv[1]

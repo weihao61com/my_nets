@@ -13,13 +13,13 @@ HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
     HOME = '/Users/weihao/Projects/'
 
-filename = '{}/p_files/office_Test_cv_s3_2.p'.format(HOME)
+filename = '{}/p_files/office_Test_cv_s6_2.p'.format(HOME)
 
 #filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
 if len(sys.argv)>1:
     filename = sys.argv[1]
 
-if 'kitty' in filename:
+if 'kitti' in filename:
     focal = 719  # 719
     cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
 else:
@@ -56,19 +56,22 @@ for d in data:
     d0[:, 3] = d0[:, 3] * h2 + h2
     px_new = d0[:, :2]
     px_last = d0[:, 2:4]
-    if d0.shape[1]>4:
-        d1 = d0[:,6]
-        d2 = d0[:,7]
+    #if d0.shape[1]>4:
+    #    d1 = d0[:,6]
+    #    d2 = d0[:,7]
     E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=cam.mx,
                                    method=cv2.RANSAC)
     mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
-    b = -Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+    b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
+    e = []
     for c in b:
         if c<-90:
             c = 180 + c
         if c>90:
             c = 180-c
+        e.append(c)
+    b = e
     a = d[1][:3]
     dr = a - b
     r0 = np.linalg.norm(dr)

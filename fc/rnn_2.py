@@ -11,7 +11,7 @@ if sys.platform=='darwin':
 sys.path.append('{}/my_nets'.format(HOME))
 sys.path.append('{}/my_nets/fc'.format(HOME))
 
-from utils import Utils
+from utils import Utils, Config
 from fc_dataset import DataSet
 
 
@@ -70,7 +70,7 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.abs_err)
 
 
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
@@ -119,6 +119,7 @@ def run_data(rst_dic, truth_dic, fname):
 
         if random.random() < 1.2:
             mm = result[-1]
+            nn = result[0]
             for a in range(len(t)):
                 if a>0:
                     fp.write(',')
@@ -138,13 +139,13 @@ def run_data(rst_dic, truth_dic, fname):
         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth))
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 1)
 
 
 class rNet(Network):
 
     def create_ws(self, n, ins, outs):
-        print n, ins, outs
+        print 'create_ws',  n, ins, outs
         w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
         b = self.make_var('biases_{}'.format(n), shape=[outs])
         return [w,b]
@@ -347,7 +348,7 @@ if __name__ == '__main__':
         #if a<10:
         #    continue
         print a,
-        if cfg.mean_err==0:
+        if cfg.abs_err==0:
             last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         else:
             last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
@@ -430,7 +431,10 @@ if __name__ == '__main__':
                                 o = o.reshape((len(o), 1))
                             feed[output] = o
 
+                            v1 = sess.run(net.ws[0])
                             ll3,_= sess.run([last_loss, opt],feed_dict=feed)
+                            v2 = sess.run(net.ws[0])
+                            v2 = (v2[0][1] - v1[0][1]) / lr
                             tl3 += ll3
                             nt += n0
                     tr_pre_data = tr.get_next(avg=avg_file)

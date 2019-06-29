@@ -1,15 +1,12 @@
 import sys
 import os
 import cv2
-import pickle
+import cPickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 HOME = '{}/../..'.format(this_file_path)
 sys.path.append('{}/my_nets'.format(HOME))
 
-from image_pairing.pose_ana import \
-    load_kitti_poses, load_indoor_7_poses, load_TUM_poses
-from image_pairing.cv_location import VisualOdometry2
 from image_pairing.imagery_utils import SiftFeature
 import datetime
 
@@ -17,6 +14,7 @@ import datetime
 def ModifiedKeyPoint(f):
     # pt, angle, size, response, class_id, octave
     return (f.pt[0], f.pt[1], f.angle, f.size, f.response, f.class_id, f.octave)
+
 
 class RAS_D:
     def __init__(self):
@@ -47,6 +45,9 @@ class RAS_D:
         self.modify_features()
         self.sf = None
         self.matcher = None
+        for id in self.features:
+            for img in self.features[id]:
+                self.features[id][img][1] = None
 
     def modify_features(self):
         for seq in self.features:
@@ -60,16 +61,17 @@ class RAS_D:
                 A[img_id] = [keypoints, fs[1]]
             self.features[seq] = A
 
-    def process(self, range2):
+    def process(self, range2, range1=None):
         range3 = 0
-        range1 = -range2
+        if range1 is None:
+            range1 = -range2
 
         length = 0
         nt = 0
         t0 = datetime.datetime.now()
 
         for seq in self.poses:
-            poses = poses_dic[seq]
+            poses = self.poses[seq]
             print seq, len(poses)
             self.features[seq] = {}
             self.matches[seq] = {}
@@ -123,49 +125,3 @@ class RAS_D:
                         self.matches[seq][(id1, id2)] = pts1
         print
         print nt, datetime.datetime.now() - t0, length/nt
-
-if __name__ == '__main__':
-    range2 = 2
-
-    key = 'heads'
-    mode = 'Test'
-    #key = 'rgbd_dataset_freiburg3_long_office_household'
-    #mode = 'Train'
-
-    if len(sys.argv)>1:
-        key = sys.argv[1]
-    if len(sys.argv)>2:
-        mode = sys.argv[2]
-
-    print key, mode
-
-        # location = '/home/weihao/Projects/cambridge/OldHospital'
-        # pose_file = 'dataset_train.txt'
-        # poses_dic, cam = load_cambridge_poses(location, pose_file)
-
-    if key.startswith('0'):
-        location = '{}/datasets/kitti'.format(HOME)
-        poses_dic, cam = load_kitti_poses(location, key + ".txt")
-        key = 'kitti_{}'.format(key)
-    elif key.startswith('rgbd'):
-        location = '{}/datasets/TUM'.format(HOME)
-        poses_dic, cam = load_TUM_poses(location, key)
-    else:
-        location = "{}/datasets/indoors/{}".format(HOME, key)  # office" #heads
-        poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
-
-    filename = '{}/p_files/{}_{}_ras_s{}_3.p'.format(HOME, key, mode, range2)
-    output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)
-    print location
-    print filename
-    print output_file
-
-    rasd = RAS_D()
-    rasd.set_poses(poses_dic, cam)
-    rasd.process(range2)
-    rasd.clear()
-
-    with open(filename, 'w') as fp:
-        pickle.dump(rasd, fp)
-
-
