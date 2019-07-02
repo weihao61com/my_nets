@@ -372,7 +372,7 @@ class DataSet:
             for a in range(0, len(input), self.nPar+self.nAdd):
                 it = input[a:a + self.nPar+self.nAdd]
                 #truth = d[1][:self.num_output]
-                truth = d[1][self.num_output1:self.num_output]
+                truth = d[1]# [self.num_output1:self.num_output]
                 Nout = self.num_output - self.num_output1
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
                           truth.reshape(Nout), self.id)
@@ -487,14 +487,16 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 1
-    range3 = 0
+    range2 = 3
+    range3 = -range2
 
 
     #key = 'office'
     #mode = 'Test'
-    key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
-    mode = 'Test'
+    # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
+    # mode = 'Test'
+    key = 'rgbd_dataset_freiburg3_long_office_household'
+    mode = 'Train'
 
     if len(sys.argv)>1:
         key = sys.argv[1]
@@ -531,7 +533,6 @@ if __name__ == '__main__':
     rasd.set_poses(poses_dic, cam)
     rasd.process(range2, range3)
     rasd.clear()
-    raise Exception()
     with open(filename, 'wb') as fp:
         cPickle.dump(rasd, fp, cPickle.HIGHEST_PROTOCOL)
 

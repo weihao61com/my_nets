@@ -248,18 +248,20 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
         print a, tr_loss[a], tr_median[a]
 
     exit(0)
+
 def get_avg_file(tr, avg_file):
     av = None
     st = None
     nt = 0
-    for d in tr.data:
-        if nt == 0:
-            av = np.sum(d[0], 0)
-            st = np.sum(d[0]*d[0], 0)
-        else:
-            av += np.sum(d[0], 0)
-            st += np.sum(d[0] * d[0], 0)
-        nt += d[0].shape[0]
+    for id in tr.data:
+        for d in tr.data[id]:
+            if nt == 0:
+                av = np.sum(d[0], 0)
+                st = np.sum(d[0]*d[0], 0)
+            else:
+                av += np.sum(d[0], 0)
+                st += np.sum(d[0] * d[0], 0)
+            nt += d[0].shape[0]
     av /= nt
     st /= nt
     st = np.sqrt(st - av*av)
