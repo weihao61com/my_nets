@@ -144,8 +144,9 @@ def run_data(rst_dic, truth_dic, fname):
         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
     fp.close()
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
-
+    v1 = np.array(results)
+    v1 = v1[:, -1, :]
+    return v1
 
 class rNet(Network):
 
@@ -242,12 +243,10 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
         tr_pre_data = te.prepare(multi=-1, rd = False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
+    rst = run_data(rst_dic, truth_dic, 'test')
+    return rst
 
-    for a in range(len(tr_loss)):
-        print a, tr_loss[a], tr_median[a]
 
-    exit(0)
 def get_avg_file(tr, avg_file):
     av = None
     st = None
@@ -292,31 +291,16 @@ if __name__ == '__main__':
     cfg = Config(config_file)
 
     avg_file = avg_file_name(cfg.netFile)
-    if test is None:
-        tr = DataSet(cfg.tr_data, cfg)
-        get_avg_file(tr, avg_file)
-        te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
-        cfg.att = te.sz[1]
-        tr.avg_correction(avg_file)
-        tr0.avg_correction(avg_file)
-
-    else:
-        if test == 'te':
-            te = DataSet([cfg.te_data[0]], cfg)
-        else:
-            te = DataSet([cfg.tr_data[0]], cfg)
-        cfg.att = te.sz[1]
-
+    tr = DataSet(cfg.tr_data, cfg)
+    te = DataSet(cfg.te_data, cfg)
+    cfg.att = te.sz[1]
+    tr.avg_correction(avg_file)
     te.avg_correction(avg_file)
-    iterations = 10000
-    loop = cfg.loop
+
     print "input attribute", cfg.att, "LR", cfg.lr, \
         'feature', cfg.feature_len, 'add', cfg.add_len
 
     inputs = {}
-    lr = cfg.lr
-    learning_rate = tf.placeholder(tf.float32, shape=[])
 
     Nout = cfg.num_output - cfg.num_output1
     setattr(cfg, 'Nout', Nout)
@@ -346,28 +330,6 @@ if __name__ == '__main__':
             xy[a] = net.layers['output_{}'.format(a)]
     print 'output', len(xy)
 
-    loss = None
-    last_loss = None
-    for a in xy:
-        #if a<10:
-        #    continue
-        print a,
-        if cfg.L1==0:
-            last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
-        else:
-            last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
-        if loss is None:
-            loss = last_loss
-        else:
-            loss = loss + last_loss
-    print
-
-    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
-                    beta2=0.999, epsilon=0.00000001,
-                    use_locking=False, name='Adam').\
-        minimize(loss)
-    # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
-
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     t00 = datetime.datetime.now()
@@ -375,75 +337,15 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         sess.run(init)
 
-        if test is not None:
-            mul = 1
-            if len(sys.argv) > 2:
-                mul = int(sys.argv[2])
-            saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg, mul)
+        mul = 1
+        if len(sys.argv) > 2:
+            mul = int(sys.argv[2])
+        saver.restore(sess, cfg.netFile)
+        rst_te = run_test(input_dic, sess, xy, te, cfg, mul)
+        rst_tr = run_test(input_dic, sess, xy, tr, cfg, mul)
 
-        if cfg.renetFile:
-            saver.restore(sess, cfg.renetFile)
+        te.set_A_T(rst_te)
+        tr.set_A_T(rst_tr)
 
-        str1 = ''
-        for a in range(iterations):
-
-            t1 = datetime.datetime.now()
-            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
-                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
-
-            tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
-
-            te_pre_data = te.prepare()
-            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
-
-            s = -1
-            while True:
-                s += len(tr_loss)/2
-                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-                if s==len(tr_loss)-1:
-                    break
-
-            print str, str1
-
-            if lr<1e-9:
-                break
-
-            tl3 = 0
-            #tl4 = 0
-            #tl5 = 0
-            nt = 0
-            att = cfg.att
-            for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=cfg.multi)
-
-                while tr_pre_data:
-                    for b in tr_pre_data:
-                        total_length = len(b[0])
-                        length = b[0].shape[1]/cfg.att
-                        for c in range(0, total_length, cfg.batch_size):
-                            feed = {learning_rate: lr}
-                            n0 = 0
-                            for a in range(length):
-                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
-                                feed[inputs[a + 1]] = x
-                                n0 = x.shape[0]
-                            feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
-                            o = b[1][c:c + cfg.batch_size]
-                            if len(o.shape) == 1:
-                                o = o.reshape((len(o), 1))
-                            feed[output] = o
-
-                            ll3,_= sess.run([last_loss, opt],feed_dict=feed)
-                            tl3 += ll3
-                            nt += n0
-                    tr_pre_data = tr.get_next(avg=avg_file)
-                N_total += 1
-                if N_total % cfg.INC_win == 0:
-                    lr -= cfg.d_lr
-
-            str1 = "{0:.3f} ".format(tl3/nt)
-            Utils.save_tf_data(saver, sess, cfg.netFile)
-
-
+        te.save_data_2(cfg.te2_data)
+        tr.save_data_2(cfg.tr2_data)

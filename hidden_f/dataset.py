@@ -86,11 +86,19 @@ class DataSet:
         self.num_output = cfg.num_output
         self.num_output1 = cfg.num_output1
         self.att = cfg.att
+        self.rst = None
+        self.rasd = None
 
         self.load_next_data(sub_sample)
-        self.sz = self.data[0][0].shape
+        self.sz = None
+        for id in self.data:
+            self.sz = self.data[id][0][0].shape
         self.id = None
         #self.att = self.sz[1]
+
+    def save_data_2(self, filename):
+
+        print filename
 
     def get_next(self, rd=True, avg=None):
         rt = self.load_next_data()
@@ -121,11 +129,12 @@ class DataSet:
             data = self.memories[self.index]
         else:
             rasd = load_data(self.dataset[self.index], self.verbose, sub_sample)
-            data = []
+            data = {}
             for id in rasd.matches:
                 matches = rasd.matches[id]
                 features = rasd.features[id]
                 poses = rasd.poses[id]
+                d_id = []
                 for ids in matches:
                     img_id1 = ids[0]
                     img_id2 = ids[1]
@@ -143,26 +152,20 @@ class DataSet:
                             f1 = ft1[m[0]]
                             f2 = ft2[m[1]]
                             f.append((f1[0],f1[1], f2[0], f2[1]))
-                        data.append((np.array(f), ar[self.num_output1:self.num_output]))
+                        d_id.append((np.array(f), ar[self.num_output1:self.num_output]))
                     elif self.att==9:
                         raise Exception()
                     else:
                         raise Exception()
-
+                data[id] = d_id
             rt = 2
 
+        self.rasd = rasd
         if self.cache:
             self.memories[self.index] = data
 
         self.data = data
-        # step = np.ceil(float(len(data))/self.batch_size)
-        # step = int(len(data)/step)
-        # # print 'Step', step, len(data)
-        # for a in range(0, len(data), step):
-        #     b = a + step
-        #     if b > len(data):
-        #         b = len(data)
-        #     self.data.append(data[a:b])
+
         return rt
 
     def prepare_cnn(self, rd=False):
@@ -256,24 +259,25 @@ class DataSet:
         if rdd:
             self.reshuffle_data()
         self.id = 0
-        d = self.data
-        data = self.create_bucket(d, multi)
-        if rd:
-            np.random.shuffle(data)
-        ins = []
-        outs = []
-        ids = []
-        for a in data:
-            if self.net_type == 'fc':
-                ins.append(a[0])
-            elif self.net_type == 'cnn':
-                ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
-            else:
-                raise Exception()
-            outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
-            ids.append(a[2])
-        dd = (np.array(ins), np.array(outs), ids)
-        pre_data.append(dd)
+        for id in self.data:
+            d = self.data[id]
+            data = self.create_bucket(d, multi)
+            if rd:
+                np.random.shuffle(data)
+            ins = []
+            outs = []
+            ids = []
+            for a in data:
+                if self.net_type == 'fc':
+                    ins.append(a[0])
+                elif self.net_type == 'cnn':
+                    ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
+                else:
+                    raise Exception()
+                outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
+                ids.append(a[2])
+            dd = (np.array(ins), np.array(outs), ids)
+            pre_data.append(dd)
 
         return pre_data
 
@@ -308,10 +312,12 @@ class DataSet:
             A = cPickle.load(fp)
         av = A[0]
         st = A[1]
-        for b in range(len(self.data)):
-            for a in range(self.data[b][0].shape[0]):
-                self.data[b][0][a, :] -= av
-                self.data[b][0][a, :] /= st
+        for id in self.data:
+            data = self.data[id]
+            for b in range(len(data)):
+                for a in range(data[b][0].shape[0]):
+                    self.data[id][b][0][a, :] -= av
+                    self.data[id][b][0][a, :] /= st
 
     def create_bucket_evt(self, data, multi):
 
@@ -347,8 +353,9 @@ class DataSet:
     def create_bucket(self, data, multi):
 
         outputs = []
-
-        sz_in = data[0][0].shape
+        for id in self.data:
+            sz_in = self.data[id][0][0].shape
+            break
 
         for d in data:
             bucket = []
@@ -448,6 +455,11 @@ class DataSet:
     def q_fun(self, id, rst_dict):
         rst_dict[id] = self.prepare()
 
+    def set_A_T(self, rst):
+        if len(self.data) != rst.shape[0]:
+            raise Exception('Wrong number')
+        self.rst = rst
+
     def prepare2(self, rd=True):
         data_gen = self.gen_data(rd)
         sz_in = self.data[0][0].shape
@@ -476,18 +488,23 @@ class DataSet:
 
 if __name__ == '__main__':
     range2 = 1
+    range3 = 0
 
-    key = 'office'
+
+    #key = 'office'
+    #mode = 'Test'
+    key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     mode = 'Test'
-    #key = 'rgbd_dataset_freiburg3_long_office_household'
-    #mode = 'Train'
 
     if len(sys.argv)>1:
         key = sys.argv[1]
     if len(sys.argv)>2:
         mode = sys.argv[2]
 
-    print key, mode
+    #if range2 == 1:
+    #    range3 == 0
+
+    print key, mode, range2, range3
 
         # location = '/home/weihao/Projects/cambridge/OldHospital'
         # pose_file = 'dataset_train.txt'
@@ -512,9 +529,9 @@ if __name__ == '__main__':
 
     rasd = RAS_D()
     rasd.set_poses(poses_dic, cam)
-    rasd.process(range2, 0)
+    rasd.process(range2, range3)
     rasd.clear()
-
+    raise Exception()
     with open(filename, 'wb') as fp:
         cPickle.dump(rasd, fp, cPickle.HIGHEST_PROTOCOL)
 

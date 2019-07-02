@@ -1,14 +1,18 @@
 {
     "batch_size": 100,
-    "te0": "p_files/office_Test_ras_s3_3.p",
-    "tr0": "p_files/office_Train_ras_s3_3.p",
+    "_te0": "p_files/heads_Test_ras_s1_3.p",
+    "_tr0": "p_files/heads_Train_ras_s1_3.p",
+    "_te2": "p_files/office_Test_ras_s3_3.p",
+    "_tr2": "p_files/office_Train_ras_s3_3.p",
     "_te1": "p_files/stairs_Test_ras_s2_3.p",
     "_tr1": "p_files/stairs_Train_ras_s2_3.p",
+    "te3": "p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_ras_s1_3.p",
+    "tr3": "p_files/rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p",
     "netFile": "t4",
     "_renetFile": "t4",
     "add_len": 0,
     "feature_len": 20,
-    "num_output": 3,
+    "num_output": 6,
     "num_output1": 0,
     "lr": 1e-4,
     "memory_size": 100000,
@@ -22,5 +26,9 @@
     "SIG": 0,
     "INC_win": 1,
     "d_lr": 1e-7,
-    "mean_err": 1
+    "L1": 1,
+    "fc_nodes_0": "256, 32",
+    "netFile_2": "t2",
+    "2tr0": "p_files/run2_tr.p",
+    "2te0": "p_files/run2_te.p"
 }

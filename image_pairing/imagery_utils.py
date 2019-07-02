@@ -5,6 +5,7 @@ import numpy as np
 from sortedcontainers import SortedDict
 import os
 import cv2
+import evo.core.transformations as tr
 
 
 class SiftFeature:
@@ -66,7 +67,7 @@ class Pose:
             # mx = np.array([[1,0,0], [0,1,0], [0,0,1]])
 
             self.filename = os.path.join(location, pose_file)
-            a = map(float, strs[1:])
+            a = location
             self.tran = a[:3]
             M = tr.quaternion_matrix(a[3:])
             M[:3, 3] = self.tran
@@ -88,6 +89,10 @@ class Pose:
             quat = np.roll(quat, 1, axis=0)
             self.tran = tran
             self.m3x3 = tr.quaternion_matrix(quat)[:3,:3]
+            Q4 = np.identity(4)
+            Q4[:3, :3] = self.m3x3
+            Q4[:3, 3] = self.tran
+            self.Q4 = Q4
 
     def get_direction(self, pose, cam):
         return np.linalg.inv(pose.m3x3).dot(self.m3x3)

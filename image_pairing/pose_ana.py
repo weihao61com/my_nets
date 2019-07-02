@@ -36,7 +36,9 @@ def load_TUM_poses(location, pose_file):
     id = 0
     poses = SortedDict()
     for t in rgb:
-        p = Pose(file_dir, interp_poses(ps, t), rgb[t], data=1)
+        p0 = interp_poses(ps, t)
+        p = Pose(file_dir, p0, rgb[t], data=3)
+
         poses[id] = p
         id += 1
 

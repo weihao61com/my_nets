@@ -31,12 +31,18 @@ class Config:
 
         self.tr_data = []
         self.te_data = []
+        self.tr2_data = []
+        self.te2_data = []
         self.nodes = []
         for key in self.js:
             if key.startswith('tr'):
                 self.tr_data.append(HOME + self.js[key])
             if key.startswith('te'):
                 self.te_data.append(HOME + self.js[key])
+            if key.startswith('2tr'):
+                self.tr2_data.append(HOME + self.js[key])
+            if key.startswith('2te'):
+                self.te2_data.append(HOME + self.js[key])
             if key.startswith('nodes'):
                 self.nodes.append(map(int, self.js[key].split(',')))
 
@@ -48,17 +54,6 @@ class Config:
     def get_data(self, str, dv=None):
         return self.js[str] if str in self.js else dv
 
-#
-# class config:
-#     def __init__(self, config_file="config_stack_3.json"):
-#         js = Utils.load_json_file(config_file)
-#         self.tr_data = []
-#         self.te_data = []
-#         for key in js:
-#             if key.startswith('tr'):
-#                 self.tr_data.append(HOME + js[key])
-#             if key.startswith('te'):
-#                 self.te_data.append(HOME + js['te'])
 
 class datasource(object):
 
