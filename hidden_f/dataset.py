@@ -100,7 +100,7 @@ class DataSet:
         for id in self.rasd.features:
             features = self.rasd.features[id]
             for image_id in features:
-                length = features[image_id][0].shape[0]
+                length = len(features[image_id][0])
                 seeds = np.random.random((length, dim)) - 0.5
                 self.rasd.features[id][image_id][1] = seeds
 
@@ -534,10 +534,10 @@ if __name__ == '__main__':
     range3 = -range2
 
 
-    key = 'heads'
+    #key = 'heads'
+    #mode = 'Test'
+    key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     mode = 'Test'
-    # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
-    # mode = 'Test'
     #key = 'rgbd_dataset_freiburg3_long_office_household'
     #mode = 'Train'
 
