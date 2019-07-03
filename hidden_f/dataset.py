@@ -92,13 +92,17 @@ class DataSet:
         self.load_next_data(sub_sample)
         self.sz = None
         for id in self.data:
-            self.sz = self.data[id][0][0].shape
+            self.sz = len(self.data[id][0][0])
         self.id = None
         #self.att = self.sz[1]
 
-    def save_data_2(self, filename):
-
-        print filename
+    def init_truth(self, dim):
+        for id in self.rasd.features:
+            features = self.rasd.features[id]
+            for image_id in features:
+                length = features[image_id][0].shape[0]
+                seeds = np.random.random((length, dim)) - 0.5
+                self.rasd.features[id][image_id][1] = seeds
 
     def get_next(self, rd=True, avg=None):
         rt = self.load_next_data()
@@ -151,8 +155,8 @@ class DataSet:
                         for m in match:
                             f1 = ft1[m[0]]
                             f2 = ft2[m[1]]
-                            f.append((f1[0],f1[1], f2[0], f2[1]))
-                        d_id.append((np.array(f), ar[self.num_output1:self.num_output]))
+                            f.append(np.array([f1[0],f1[1], f2[0], f2[1]]))
+                        d_id.append((f, ar[self.num_output1:self.num_output]))
                     elif self.att==9:
                         raise Exception()
                     else:
@@ -254,6 +258,33 @@ class DataSet:
 
         return pre_data
 
+    def prepare_ras(self, rd=True, multi=1, rdd=True):
+        pre_data = []
+        if rdd:
+            self.reshuffle_data()
+        self.id = 0
+        for id in self.data:
+            d = self.data[id]
+            data = self.create_bucket(d, multi)
+            if rd:
+                np.random.shuffle(data)
+            ins = []
+            outs = []
+            ids = []
+            for a in data:
+                if self.net_type == 'fc':
+                    ins.append(a[0])
+                elif self.net_type == 'cnn':
+                    ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
+                else:
+                    raise Exception()
+                outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
+                ids.append(a[2])
+            dd = (np.array(ins), np.array(outs), ids)
+            pre_data.append(dd)
+
+        return pre_data
+
     def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []
         if rdd:
@@ -315,9 +346,21 @@ class DataSet:
         for id in self.data:
             data = self.data[id]
             for b in range(len(data)):
-                for a in range(data[b][0].shape[0]):
-                    self.data[id][b][0][a, :] -= av
-                    self.data[id][b][0][a, :] /= st
+                for a in range(len(data[b][0])):
+                    self.data[id][b][0][a] -= av
+                    self.data[id][b][0][a] /= st
+
+    def avg_correction2(self, avg_file):
+        print 'Reading average file', avg_file
+        with open(avg_file, 'r') as fp:
+            A = cPickle.load(fp)
+        av = A[0]
+        st = A[1]
+        for id in self.rasd.features:
+            features = self.rasd.features[id]
+            for img_id in features:
+                features[img_id][0] -= av
+                features[img_id][0] /= st
 
     def create_bucket_evt(self, data, multi):
 
@@ -354,7 +397,7 @@ class DataSet:
 
         outputs = []
         for id in self.data:
-            sz_in = self.data[id][0][0].shape
+            sz_in = len(self.data[id][0][0][0])
             break
 
         for d in data:
@@ -370,11 +413,11 @@ class DataSet:
                 input = np.concatenate((input, input))
             input = input[:length]
             for a in range(0, len(input), self.nPar+self.nAdd):
-                it = input[a:a + self.nPar+self.nAdd]
+                it = np.array(input[a:a + self.nPar+self.nAdd])
                 #truth = d[1][:self.num_output]
                 truth = d[1]# [self.num_output1:self.num_output]
                 Nout = self.num_output - self.num_output1
-                output = (it.reshape((self.nPar+self.nAdd) * sz_in[1]),
+                output = (it.reshape((self.nPar+self.nAdd) * sz_in),
                           truth.reshape(Nout), self.id)
                 outputs.append(output)
             self.id += 1
@@ -491,12 +534,12 @@ if __name__ == '__main__':
     range3 = -range2
 
 
-    #key = 'office'
-    #mode = 'Test'
+    key = 'heads'
+    mode = 'Test'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'
-    key = 'rgbd_dataset_freiburg3_long_office_household'
-    mode = 'Train'
+    #key = 'rgbd_dataset_freiburg3_long_office_household'
+    #mode = 'Train'
 
     if len(sys.argv)>1:
         key = sys.argv[1]

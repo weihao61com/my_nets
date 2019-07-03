@@ -184,7 +184,7 @@ class rNet(Network):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
 
-        Nout = cfg.num_output - cfg.num_output1
+        Nout = cfg.fc_Nout * 2
         ws.append(self.create_ws('out', ins, Nout))
         self.ws.append(ws)
 
@@ -253,22 +253,24 @@ def get_avg_file(tr, avg_file):
     av = None
     st = None
     nt = 0
-    for id in tr.data:
-        for ds in tr.data[id]:
-            for d in ds[0]:
-                if nt == 0:
-                    av = d
-                    st = d*d
-                else:
-                    av += d
-                    st += d*d
-                nt += 1
+    for id in tr.rasd.features:
+        features = tr.rasd.features[id]
+        for img_id in features:
+            feature = np.array(features[img_id][0])
+            if nt == 0:
+                av = np.mean(np.array(feature), 0)
+                st = np.std(np.array(feature), 0)
+            else:
+                av += np.mean(np.array(feature), 0)
+                st += np.std(np.array(feature), 0)
+            nt += 1
     av /= nt
     st /= nt
-    st = np.sqrt(st - av*av)
     print "Saving averages:", avg_file
     for a in range(len(av)):
         print a, av[a], st[a]
+        if st[a]<1e-9:
+            st[a] = 1
 
     with open(avg_file, 'w') as fp:
         cPickle.dump((av,st), fp)
@@ -298,19 +300,14 @@ if __name__ == '__main__':
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
-        te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
-        tr.avg_correction(avg_file)
-        tr0.avg_correction(avg_file)
-
+        tr.init_truth(cfg.fc_Nout)
     else:
         if test == 'te':
-            te = DataSet([cfg.te_data[0]], cfg)
+            tr = DataSet([cfg.te_data[0]], cfg)
         else:
-            te = DataSet([cfg.tr_data[0]], cfg)
-        cfg.att = te.sz[1]
+            tr = DataSet([cfg.tr_data[0]], cfg)
 
-    te.avg_correction(avg_file)
+    tr.avg_correction2(avg_file)
     iterations = 10000
     loop = cfg.loop
     print "input attribute", cfg.att, "LR", cfg.lr, \
@@ -320,13 +317,12 @@ if __name__ == '__main__':
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    Nout = cfg.num_output - cfg.num_output1
-    setattr(cfg, 'Nout', Nout)
+    Nout = cfg.fc_Nout*2
 
     # output = tf.placeholder(tf.float32, [None, cfg.num_output])
     output = tf.placeholder(tf.float32, [None, Nout])
 
-    cfg.ref_node = cfg.nodes[0][-1]
+    cfg.ref_node = cfg.fc_nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
     inputs[0] = tf.placeholder(tf.float32, [None, cfg.ref_node])
@@ -394,18 +390,18 @@ if __name__ == '__main__':
             str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
                 format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
 
-            tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
-
-            te_pre_data = te.prepare()
-            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
-
-            s = -1
-            while True:
-                s += len(tr_loss)/2
-                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-                if s==len(tr_loss)-1:
-                    break
+            # tr_pre_data = tr0.prepare()
+            # tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
+            #
+            # te_pre_data = te.prepare()
+            # te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
+            #
+            # s = -1
+            # while True:
+            #     s += len(tr_loss)/2
+            #     str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+            #     if s==len(tr_loss)-1:
+            #         break
 
             print str, str1
 
@@ -418,7 +414,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=cfg.multi)
+                tr_pre_data = tr.prepare_ras(multi=cfg.multi)
 
                 while tr_pre_data:
                     for b in tr_pre_data:

@@ -34,6 +34,7 @@ class Config:
         self.tr2_data = []
         self.te2_data = []
         self.nodes = []
+        self.fc_nodes = []
         for key in self.js:
             if key.startswith('tr'):
                 self.tr_data.append(HOME + self.js[key])
@@ -45,6 +46,8 @@ class Config:
                 self.te2_data.append(HOME + self.js[key])
             if key.startswith('nodes'):
                 self.nodes.append(map(int, self.js[key].split(',')))
+            if key.startswith('fc_nodes'):
+                self.fc_nodes.append(map(int, self.js[key].split(',')))
 
         self.netFile = HOME + 'NNs/' + self.netFile + '/fc'
         # self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
@@ -492,5 +495,6 @@ class Utils:
 
     @staticmethod
     def reshuffle_b(bucket):
-        for data in bucket:
-            np.random.shuffle(data[0])
+        for id in bucket:
+            for b in bucket[id]:
+                np.random.shuffle(b[0])
