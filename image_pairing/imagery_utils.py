@@ -5,8 +5,22 @@ import numpy as np
 from sortedcontainers import SortedDict
 import os
 import cv2
-import evo.core.transformations as tr
+import math
 
+def quaternion_matrix(quaternion):
+    _EPS = np.finfo(float).eps * 4.0
+
+    q = np.array(quaternion, dtype=np.float64, copy=True)
+    n = np.dot(q, q)
+    if n < _EPS:
+        return np.identity(4)
+    q *= math.sqrt(2.0 / n)
+    q = np.outer(q, q)
+    return np.array([
+        [1.0-q[2, 2]-q[3, 3],     q[1, 2]-q[3, 0],     q[1, 3]+q[2, 0], 0.0],
+        [    q[1, 2]+q[3, 0], 1.0-q[1, 1]-q[3, 3],     q[2, 3]-q[1, 0], 0.0],
+        [    q[1, 3]-q[2, 0],     q[2, 3]+q[1, 0], 1.0-q[1, 1]-q[2, 2], 0.0],
+        [                0.0,                 0.0,                 0.0, 1.0]])
 
 class SiftFeature:
     def __init__(self, target=2000):

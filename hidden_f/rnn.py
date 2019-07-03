@@ -308,7 +308,6 @@ if __name__ == '__main__':
             te = DataSet([cfg.te_data[0]], cfg)
         else:
             te = DataSet([cfg.tr_data[0]], cfg)
-        cfg.att = te.sz[1]
 
     te.avg_correction(avg_file)
     iterations = 10000

@@ -546,9 +546,6 @@ if __name__ == '__main__':
     if len(sys.argv)>2:
         mode = sys.argv[2]
 
-    #if range2 == 1:
-    #    range3 == 0
-
     print key, mode, range2, range3
 
         # location = '/home/weihao/Projects/cambridge/OldHospital'

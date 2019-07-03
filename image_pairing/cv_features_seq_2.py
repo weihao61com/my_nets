@@ -15,7 +15,7 @@ HOME = '{}/../..'.format(this_file_path)
 
 range2 = 1
 range3 = 0
-range1 = 0 #-range2
+range1 = -range2
 #key = "08"
 #mode = "Test"
 key = 'heads'
