@@ -79,28 +79,58 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.L1)
 
 
-def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
-    att = cfg.att
-    for b in data:
-        length = b[0].shape[1]/att
-        feed = {}
-        b_sz = b[0].shape[0]
+def calculate_rst(rs):
+    s = []
+    for r in rs:
+        s.append(r[0])
+    s = np.array(s)
+    return rs[0][1], np.mean(s)
 
-        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
-        for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
-        result = []
+def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
+
+    sz = data[0].shape
+    rst_dic = {}
+    for a in xy:
+        rst_dic[a] = {}
+
+    for x in range(0, sz[0], cfg.batch_size):
+        feed = {learning_rate: lr}
+        b = data[0][x:x + cfg.batch_size]
+        t = data[1][x:x + cfg.batch_size]
+        i = data[2][x:x + cfg.batch_size]
+
+        for y in range(sz[1]):
+            feed[inputs['input_{}'.format(y + 1)]] = b[:, y, :]
+
+        n0 = b.shape[0]
+        feed[inputs['input_0']] = np.repeat(cfg.refs, n0, axis=0)
+
+        results = {}
         for a in xy:
             r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
+            for b in range(len(i)):
+                tr = t[b][a]
+                id = i[b][a][0]
+                rs = r[b]
+                if id not in rst_dic[a]:
+                    rst_dic[a][id] = []
+                rst_dic[a][id].append((rs, tr))
 
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
+    M = []
+    L = []
+    for a in xy:
+        results = []
+        truth = []
+        for id in rst_dic[a]:
+            rt = rst_dic[a][id]
+            t, r = calculate_rst(rt)
+            results.append(r)
+            truth.append(t)
+            m, l = Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
+            M.append(M)
+            L.append(L)
 
+    return M, L
 
 def run_data(rst_dic, truth_dic, fname):
 
@@ -184,7 +214,7 @@ class rNet(Network):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
 
-        Nout = cfg.fc_Nout * 2
+        Nout = cfg.Nout
         ws.append(self.create_ws('out', ins, Nout))
         self.ws.append(ws)
 
@@ -215,7 +245,7 @@ class rNet(Network):
                     self.fc_w2(ws=self.ws[1][b], name=n)
                 ref_out = n
 
-            if a < cfg.feature_len/2:
+            if a < cfg.out_offset:
                 continue
 
             self.feed(ref_out)
@@ -239,7 +269,7 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
     rst_dic = {}
     truth_dic = {}
     for a in range(mul):
-        tr_pre_data = te.prepare(multi=-1, rd = False)
+        tr_pre_data = te.prepare_ras(multi=-1)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
     tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
@@ -314,16 +344,17 @@ if __name__ == '__main__':
         'feature', cfg.feature_len, 'add', cfg.add_len
 
     inputs = {}
+    output = {}
     lr = cfg.lr
     learning_rate = tf.placeholder(tf.float32, shape=[])
 
-    Nout = cfg.fc_Nout*2
-
-    # output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    output = tf.placeholder(tf.float32, [None, Nout])
+    cfg.Nout = cfg.fc_Nout*2
+    cfg.Nout = 3
+    for a in range(cfg.feature_len):
+        output[a] = tf.placeholder(tf.float32, [None, cfg.Nout])
 
     cfg.ref_node = cfg.fc_nodes[0][-1]
-    cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
+    cfg.refs = np.ones(cfg.ref_node)
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
     inputs[0] = tf.placeholder(tf.float32, [None, cfg.ref_node])
 
@@ -347,13 +378,11 @@ if __name__ == '__main__':
     loss = None
     last_loss = None
     for a in xy:
-        #if a<10:
-        #    continue
         print a,
         if cfg.L1==0:
-            last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+            last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output[a])))
         else:
-            last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
+            last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output[a])))
         if loss is None:
             loss = last_loss
         else:
@@ -378,7 +407,7 @@ if __name__ == '__main__':
             if len(sys.argv) > 2:
                 mul = int(sys.argv[2])
             saver.restore(sess, cfg.netFile)
-            run_test(input_dic, sess, xy, te, cfg, mul)
+            run_test(input_dic, sess, xy, tr, cfg, mul)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)
@@ -390,58 +419,56 @@ if __name__ == '__main__':
             str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
                 format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
 
-            # tr_pre_data = tr0.prepare()
-            # tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
-            #
-            # te_pre_data = te.prepare()
-            # te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
-            #
-            # s = -1
-            # while True:
-            #     s += len(tr_loss)/2
-            #     str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
-            #     if s==len(tr_loss)-1:
-            #         break
-
             print str, str1
 
             if lr<1e-9:
                 break
 
             tl3 = 0
-            #tl4 = 0
-            #tl5 = 0
+            to3 = 0
+            r3 = 0
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare_ras(multi=cfg.multi)
-
+                tr_pre_data = tr.prepare_ras()
                 while tr_pre_data:
-                    for b in tr_pre_data:
-                        total_length = len(b[0])
-                        length = b[0].shape[1]/cfg.att
-                        for c in range(0, total_length, cfg.batch_size):
-                            feed = {learning_rate: lr}
-                            n0 = 0
-                            for a in range(length):
-                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
-                                feed[inputs[a + 1]] = x
-                                n0 = x.shape[0]
-                            feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
-                            o = b[1][c:c + cfg.batch_size]
-                            if len(o.shape) == 1:
-                                o = o.reshape((len(o), 1))
-                            feed[output] = o
+                    sz = tr_pre_data[0].shape
+                    length = sz[1]
 
-                            ll3,_= sess.run([last_loss, opt],feed_dict=feed)
-                            tl3 += ll3
-                            nt += n0
+                    for x in range(0, sz[0], cfg.batch_size):
+                        feed = {learning_rate: lr}
+                        b = tr_pre_data[0][x:x+cfg.batch_size]
+                        o = tr_pre_data[1][x:x+cfg.batch_size]
+                        ids = tr_pre_data[2][x:x+cfg.batch_size]
+
+                        n0 = b.shape[0]
+                        for y in range(length):
+                            feed[inputs[y + 1]] = b[:, y, :]
+                            feed[output[y]] = o[:, y, :]
+                        feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
+
+                        ll3, opt_out, __= sess.run([loss, output, opt], feed_dict=feed)
+                        opt_out = np.array(opt_out.values())
+                        dd = []
+                        for a in range(o.shape[0]):
+                            dd.append(o[a]-opt_out[:,a])
+                        do = (1-lr*100)*o + lr * 100 * np.array(dd)
+                        n1 = np.linalg.norm(o)
+                        n2 = np.linalg.norm(do)
+                        n3 = np.linalg.norm(dd)
+                        do *= n1/n2
+                        # tr.updates(do, ids)
+                        to3 += n2*n0
+                        tl3 += ll3
+                        r3 += n3*n0*1e7
+                        nt += n0
                     tr_pre_data = tr.get_next(avg=avg_file)
                 N_total += 1
                 if N_total % cfg.INC_win == 0:
                     lr -= cfg.d_lr
 
-            str1 = "{0:.3f} ".format(tl3/nt)
+            tl3 /= nt
+            to3 /= nt
+            r3 /= nt
+            str1 = "{0:.3f} {1:.2f}  {2:.2f}".format(tl3, to3, r3*1000)
             Utils.save_tf_data(saver, sess, cfg.netFile)
-
-

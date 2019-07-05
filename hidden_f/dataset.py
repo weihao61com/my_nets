@@ -88,12 +88,17 @@ class DataSet:
         self.att = cfg.att
         self.rst = None
         self.rasd = None
+        self.out_offset = cfg.out_offset
 
         self.load_next_data(sub_sample)
         self.sz = None
         for id in self.data:
             self.sz = len(self.data[id][0][0])
         self.id = None
+        features = self.rasd.features.values()[0]
+        print "features", len(features)
+        matches = self.rasd.matches.values()[0]
+        print "matches", len(matches)
         #self.att = self.sz[1]
 
     def init_truth(self, dim):
@@ -258,32 +263,39 @@ class DataSet:
 
         return pre_data
 
-    def prepare_ras(self, rd=True, multi=1, rdd=True):
-        pre_data = []
-        if rdd:
-            self.reshuffle_data()
-        self.id = 0
-        for id in self.data:
-            d = self.data[id]
-            data = self.create_bucket(d, multi)
-            if rd:
-                np.random.shuffle(data)
-            ins = []
-            outs = []
-            ids = []
-            for a in data:
-                if self.net_type == 'fc':
-                    ins.append(a[0])
-                elif self.net_type == 'cnn':
-                    ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
-                else:
-                    raise Exception()
-                outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
-                ids.append(a[2])
-            dd = (np.array(ins), np.array(outs), ids)
-            pre_data.append(dd)
+    def updates(self, truth, ids):
+        sz = ids.shape
+        key = self.rasd.features.keys()[0]
+        for a in range(sz[0]):
+            ii = ids[a]
+            for b in range(self.out_offset, sz[1]):
+                tr =truth[a, b]
+                id = ii[b]
+                im1 = id[0]
+                im2 = id[1]
+                ip1 = id[2]
+                ip2 = id[3]
+                self.rasd.features[key][im1][1][ip1] = tr[:2]
+                self.rasd.features[key][im2][1][ip2] = tr[2:]
 
-        return pre_data
+    def prepare_ras(self, multi=1):
+        pre_data = []
+        self.id = 0
+        for id in self.rasd.matches:
+            pre_data += self.create_ras_bucket(id, multi)
+        np.random.shuffle(pre_data)
+        f = []
+        t = []
+        id = []
+        for b in pre_data:
+            f.append(b[0])
+            t.append(b[1])
+            id.append(b[2])
+
+            if len(f)>10000:
+                break
+
+        return np.array(f), np.array(t), id
 
     def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []
@@ -351,6 +363,7 @@ class DataSet:
                     self.data[id][b][0][a] /= st
 
     def avg_correction2(self, avg_file):
+        self.data = None
         print 'Reading average file', avg_file
         with open(avg_file, 'r') as fp:
             A = cPickle.load(fp)
@@ -392,6 +405,63 @@ class DataSet:
             self.id += 1
 
         return outputs
+
+    def create_ras_bucket(self, id, multi=-1):
+        output = []
+        nm = 0
+        matches = self.rasd.matches[id]
+        features = self.rasd.features[id]
+        poses = self.rasd.poses[id]
+        for ids in matches:
+
+            im1 = ids[0]
+            im2 = ids[1]
+
+            p1 = poses[im1]
+            p2 = poses[im2]
+
+            Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
+
+            A = Utils.rotationMatrixToEulerAngles(Q4[:3, :3])*180/np.pi
+            ms = matches[ids]
+            random.shuffle(ms)
+            nm += len(ms)
+
+            if multi > 0:
+                num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
+            else:
+                num = int(np.ceil(len(ms) / float(self.nPar + self.nAdd))*abs(multi))
+            length = num * (self.nPar + self.nAdd)
+
+            while len(ms) < length:
+                ms += ms
+            ms = ms[:length]
+
+            for a in range(0, len(ms), self.nPar+self.nAdd):
+                it = ms[a:a + self.nPar+self.nAdd]
+
+                ins = []
+                trs = []
+                id_list = []
+                for m in it:
+                    p1 = m[0]
+                    p2 = m[1]
+                    # print im1,im2,p1,p2
+                    f1 = features[im1][0][p1]
+                    f2 = features[im2][0][p2]
+                    if features[im1][1] is None:
+                        t1 = None
+                        t2 = None
+                    else:
+                        t1 = features[im1][1][p1]
+                        t2 = features[im2][1][p2]
+                    ins.append(np.concatenate((f1[:2],f2[:2])))
+                    # trs.append(np.concatenate((t1,t2)))
+                    trs.append(A)
+                    id_list.append((ids, p1, p2))
+                output.append((ins, trs, id_list))
+        # print nm
+        return output
 
     def create_bucket(self, data, multi):
 
@@ -575,4 +645,3 @@ if __name__ == '__main__':
     rasd.clear()
     with open(filename, 'wb') as fp:
         cPickle.dump(rasd, fp, cPickle.HIGHEST_PROTOCOL)
-
