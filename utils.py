@@ -134,16 +134,27 @@ class Utils:
         return loss*loss/len(r), np.median(r)
 
     @staticmethod
+    def calculate_stack_loss_ras(v1, v2, abs_err):
+        diff = v1- v2
+        r = np.linalg.norm(diff, axis=1)
+        if abs_err==0:
+            loss = np.mean(r*r)
+        else:
+            loss = np.mean(r)
+
+        return loss, np.median(r)
+
+    @staticmethod
     def calculate_stack_loss_avg(v1, v2, abs_err):
-        if len(v2.shape)==1:
+        if len(v2.shape) == 1:
             v2 = v2.reshape((len(v2), 1))
         L = []
         M = []
         for a in range(v1.shape[1]):
-            diff = v1[:,a,:]- v2
+            diff = v1[:, a, :] - v2
             r = np.linalg.norm(diff, axis=1)
-            if abs_err==0:
-                loss = np.mean(r*r)
+            if abs_err == 0:
+                loss = np.mean(r * r)
             else:
                 loss = np.mean(r)
             L.append(loss)

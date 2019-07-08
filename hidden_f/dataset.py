@@ -278,12 +278,13 @@ class DataSet:
                 self.rasd.features[key][im1][1][ip1] = tr[:2]
                 self.rasd.features[key][im2][1][ip2] = tr[2:]
 
-    def prepare_ras(self, multi=1):
+    def prepare_ras(self, multi=1, rd=True):
         pre_data = []
         self.id = 0
         for id in self.rasd.matches:
             pre_data += self.create_ras_bucket(id, multi)
-        np.random.shuffle(pre_data)
+        if rd:
+            np.random.shuffle(pre_data)
         f = []
         t = []
         id = []
@@ -292,8 +293,8 @@ class DataSet:
             t.append(b[1])
             id.append(b[2])
 
-            if len(f)>10000:
-                break
+            #if len(f)>10000:
+            #    break
 
         return np.array(f), np.array(t), id
 
@@ -423,6 +424,7 @@ class DataSet:
             Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
 
             A = Utils.rotationMatrixToEulerAngles(Q4[:3, :3])*180/np.pi
+            A = A * self.t_scale[:3]
             ms = matches[ids]
             random.shuffle(ms)
             nm += len(ms)

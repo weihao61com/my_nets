@@ -84,97 +84,138 @@ def calculate_rst(rs):
     for r in rs:
         s.append(r[0])
     s = np.array(s)
-    return rs[0][1], np.mean(s)
+    return rs[0][1], np.mean(s, 0)
 
-def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
+def run_data_1(data, inputs, sess, xy, cfg, rst_dic):
 
     sz = data[0].shape
-    rst_dic = {}
     for a in xy:
-        rst_dic[a] = {}
+        if a not in rst_dic:
+            rst_dic[a] = {}
 
     for x in range(0, sz[0], cfg.batch_size):
         feed = {learning_rate: lr}
         b = data[0][x:x + cfg.batch_size]
         t = data[1][x:x + cfg.batch_size]
         i = data[2][x:x + cfg.batch_size]
-
         for y in range(sz[1]):
             feed[inputs['input_{}'.format(y + 1)]] = b[:, y, :]
 
         n0 = b.shape[0]
         feed[inputs['input_0']] = np.repeat(cfg.refs, n0, axis=0)
 
-        results = {}
-        for a in xy:
-            r = sess.run(xy[a], feed_dict=feed)
+        r = sess.run(xy, feed_dict=feed)
+        r = np.array(r.values())
+
+        #for a in range(o.shape[0]):
+        #    dd.append(t[a, cfg.out_offset:] - opt_out[:, a])
+
+        for a in rst_dic:
             for b in range(len(i)):
-                tr = t[b][a]
-                id = i[b][a][0]
-                rs = r[b]
+                tr = t[b, a, :]
+                id = i[b][a-cfg.out_offset][0]
+                id = id[0]*10000 + id[1]
+                if id == 1 and a==10:
+                    print a, b, i[b][a-cfg.out_offset]
+                rs = r[a-cfg.out_offset, b, :]
                 if id not in rst_dic[a]:
                     rst_dic[a][id] = []
                 rst_dic[a][id].append((rs, tr))
+        #
+    # M = []
+    # L = []
+    # for a in xy:
+    #     results = []
+    #     truth = []
+    #     rst = rst_dic[a]
+    #     for id in rst:
+    #         rt = rst_dic[a][id]
+    #         t, r = calculate_rst(rt)
+    #         results.append(r)
+    #         truth.append(t)
+    #     m, l = Utils.calculate_stack_loss_ras(np.array(results), np.array(truth), 0)
+    #     M.append(m)
+    #     L.append(l)
+    #     print a, m, l
+    #
+    # return M, L
+
+
+def run_data(rst_dic, fname):
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    a_last = rst_dic.keys()[-1]
 
     M = []
     L = []
-    for a in xy:
+    for a in rst_dic:
         results = []
         truth = []
-        for id in rst_dic[a]:
+        rst = rst_dic[a]
+        fp = None
+        if a==a_last:
+            fp = open(filename, 'w')
+
+        for id in rst:
             rt = rst_dic[a][id]
             t, r = calculate_rst(rt)
             results.append(r)
             truth.append(t)
-            m, l = Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
-            M.append(M)
-            L.append(L)
+            r0 = np.linalg.norm(r-t)
+            if fp is not None:
+                fp.write('{},{},{},{},{},{},{}\n'.
+                         format(r[0], t[0], r[1], t[1], r[2], t[2], r0))
+
+        m, l = Utils.calculate_stack_loss_ras\
+            (np.array(results), np.array(truth), 0)
+        M.append(m)
+        L.append(l)
 
     return M, L
-
-def run_data(rst_dic, truth_dic, fname):
-
-    results = []
-    truth = []
-
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    rs = []
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        # result = np.mean(dst, axis=0)
-        results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        dr = t - result[-1]
-        r = np.linalg.norm(dr)
-        rs.append(r*r)
-
-        if random.random() < 1.2:
-            mm = result[-1]
-            for a in range(len(t)):
-                if a>0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
-            # if len(mm)==3:
-            #     fp.write('{},{},{},{},{},{},{}\n'.
-            #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            # else:
-            #     fp.write('{},{},{}\n'.
-            #              format(t, mm[0], r))
-    fp.close()
-    rs = sorted(rs)
-    length = len(rs)
-    fp = open(filename+'.csv', 'w')
-    for a in range(length):
-        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-    fp.close()
-
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
+    #     rst_dic = rst_dic0[a]
+    #
+    #     results = []
+    #     truth = []
+    #
+    #
+    #
+    #
+    #
+    # rs = []
+    # for id in rst_dic:
+    #     dst = np.array(rst_dic[id])
+    #     result = np.median(dst, axis=0)
+    #     # result = np.mean(dst, axis=0)
+    #     results.append(result)
+    #     truth.append(truth_dic[id])
+    #     t = truth_dic[id]
+    #     dr = t - result[-1]
+    #     r = np.linalg.norm(dr)
+    #     rs.append(r*r)
+    #
+    #     if random.random() < 1.2:
+    #         mm = result[-1]
+    #         for a in range(len(t)):
+    #             if a>0:
+    #                 fp.write(',')
+    #             fp.write('{},{}'.format(t[a], mm[a]))
+    #         fp.write(',{}\n'.format(r))
+    #         # if len(mm)==3:
+    #         #     fp.write('{},{},{},{},{},{},{}\n'.
+    #         #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+    #         # else:
+    #         #     fp.write('{},{},{}\n'.
+    #         #              format(t, mm[0], r))
+    # fp.close()
+    # rs = sorted(rs)
+    # length = len(rs)
+    # fp = open(filename+'.csv', 'w')
+    # for a in range(length):
+    #     fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+    # fp.close()
+    #
+    # return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
 
 
 class rNet(Network):
@@ -267,12 +308,11 @@ class rNet(Network):
 def run_test(input_dic, sess, xy, te, cfg, mul=1):
 
     rst_dic = {}
-    truth_dic = {}
     for a in range(mul):
-        tr_pre_data = te.prepare_ras(multi=-1)
-        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+        tr_pre_data = te.prepare_ras(multi=1, rd=False)
+        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic)
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
+    tr_loss, tr_median = run_data(rst_dic, 'test')
 
     for a in range(len(tr_loss)):
         print a, tr_loss[a], tr_median[a]
@@ -350,8 +390,6 @@ if __name__ == '__main__':
 
     cfg.Nout = cfg.fc_Nout*2
     cfg.Nout = 3
-    for a in range(cfg.feature_len):
-        output[a] = tf.placeholder(tf.float32, [None, cfg.Nout])
 
     cfg.ref_node = cfg.fc_nodes[0][-1]
     cfg.refs = np.ones(cfg.ref_node)
@@ -369,11 +407,13 @@ if __name__ == '__main__':
     net.real_setup(cfg, SIG=(cfg.SIG==1))
 
     xy = SortedDict()
+
     for a in range(cfg.feature_len):
         n = 'output_{}'.format(a)
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
-    print 'output', len(xy)
+            output[a] = tf.placeholder(tf.float32, [None, cfg.Nout])
+    print 'output count:', len(xy)
 
     loss = None
     last_loss = None
@@ -430,7 +470,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare_ras()
+                tr_pre_data = tr.prepare_ras(multi=cfg.multi, rd=False)
                 while tr_pre_data:
                     sz = tr_pre_data[0].shape
                     length = sz[1]
@@ -444,31 +484,36 @@ if __name__ == '__main__':
                         n0 = b.shape[0]
                         for y in range(length):
                             feed[inputs[y + 1]] = b[:, y, :]
-                            feed[output[y]] = o[:, y, :]
+                            if y in output:
+                                feed[output[y]] = o[:, y, :]
                         feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
 
-                        ll3, opt_out, __= sess.run([loss, output, opt], feed_dict=feed)
+                        opt_out = sess.run(xy, feed_dict=feed)
+                        ll3, _, __= sess.run([loss, xy, opt], feed_dict=feed)
                         opt_out = np.array(opt_out.values())
                         dd = []
                         for a in range(o.shape[0]):
-                            dd.append(o[a]-opt_out[:,a])
-                        do = (1-lr*100)*o + lr * 100 * np.array(dd)
+                            dd.append(o[a, cfg.out_offset:]-opt_out[:,a])
+                        # do = (1-lr*100)*o + lr * 100 * np.array(dd)
                         n1 = np.linalg.norm(o)
-                        n2 = np.linalg.norm(do)
-                        n3 = np.linalg.norm(dd)
-                        do *= n1/n2
+                        n2 = 0 #np.linalg.norm(do)
+                        dd = np.array(dd)
+                        dd = dd*dd
+                        dd = dd[:, -1, :].sum()
+                        # dd = dd.sum()/len(xy)
+                        # do *= n1/n2
                         # tr.updates(do, ids)
                         to3 += n2*n0
                         tl3 += ll3
-                        r3 += n3*n0*1e7
+                        r3 += dd
                         nt += n0
                     tr_pre_data = tr.get_next(avg=avg_file)
-                N_total += 1
-                if N_total % cfg.INC_win == 0:
-                    lr -= cfg.d_lr
+            N_total += 1
+            if N_total % cfg.INC_win == 0:
+                lr -= cfg.d_lr
 
             tl3 /= nt
             to3 /= nt
             r3 /= nt
-            str1 = "{0:.3f} {1:.2f}  {2:.2f}".format(tl3, to3, r3*1000)
+            str1 = "{0:.3f} {1:.2f}  {2:.2f}".format(tl3, to3, r3)
             Utils.save_tf_data(saver, sess, cfg.netFile)
