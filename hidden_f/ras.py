@@ -114,9 +114,6 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic):
             for b in range(len(i)):
                 tr = t[b, a, :]
                 id = i[b][a-cfg.out_offset][0]
-                id = id[0]*10000 + id[1]
-                if id == 1 and a==10:
-                    print a, b, i[b][a-cfg.out_offset]
                 rs = r[a-cfg.out_offset, b, :]
                 if id not in rst_dic[a]:
                     rst_dic[a][id] = []
@@ -309,7 +306,7 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
 
     rst_dic = {}
     for a in range(mul):
-        tr_pre_data = te.prepare_ras(multi=1, rd=False)
+        tr_pre_data = te.prepare_ras(multi=-1, rd=False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic)
 
     tr_loss, tr_median = run_data(rst_dic, 'test')

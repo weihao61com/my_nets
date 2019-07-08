@@ -460,7 +460,7 @@ class DataSet:
                     ins.append(np.concatenate((f1[:2],f2[:2])))
                     # trs.append(np.concatenate((t1,t2)))
                     trs.append(A)
-                    id_list.append((ids, p1, p2))
+                    id_list.append(((ids[0], ids[1], id), p1, p2))
                 output.append((ins, trs, id_list))
         # print nm
         return output
