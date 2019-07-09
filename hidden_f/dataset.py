@@ -265,17 +265,20 @@ class DataSet:
         return pre_data
 
     def updates(self, truth, ids):
-        sz = ids.shape
-        key = self.rasd.features.keys()[0]
-        for a in range(sz[0]):
+        l1 = len(ids)
+        l2 = len(ids[0])
+        # sz = ids[0].shape
+        # key = self.rasd.features.keys()[0]
+        for a in range(l1):
             ii = ids[a]
-            for b in range(self.out_offset, sz[1]):
+            for b in range(l2-self.out_offset):
                 tr =truth[a, b]
-                id = ii[b]
-                im1 = id[0]
-                im2 = id[1]
-                ip1 = id[2]
-                ip2 = id[3]
+                id = ii[b+self.out_offset]
+                im1 = id[0][0]
+                im2 = id[0][1]
+                key = id[0][2]
+                ip1 = id[1]
+                ip2 = id[2]
                 self.rasd.features[key][im1][1][ip1] = tr[:2]
                 self.rasd.features[key][im2][1][ip2] = tr[2:]
 

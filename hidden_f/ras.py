@@ -408,11 +408,14 @@ if __name__ == '__main__':
 
     xy = SortedDict()
 
+    Nout = cfg.Nout
+    if cfg.fc_Nout>0:
+        Nout = cfg.fc_Nout*2
     for a in range(cfg.feature_len):
         n = 'output_{}'.format(a)
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
-            output[a] = tf.placeholder(tf.float32, [None, cfg.Nout])
+            output[a] = tf.placeholder(tf.float32, [None, Nout])
     print 'output count:', len(xy)
 
     loss = None
@@ -489,22 +492,25 @@ if __name__ == '__main__':
                         feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
 
                         # opt_out = sess.run(xy, feed_dict=feed)
-                        ll3, opt_out, __= sess.run([loss, xy, opt], feed_dict=feed)
+                        ll3, opt_out, _ = sess.run([loss, xy, opt], feed_dict=feed)
                         opt_out = np.array(opt_out.values())
                         dd = []
+                        o = o[:, cfg.out_offset:, :]
                         for a in range(o.shape[0]):
-                            dd.append(o[a, cfg.out_offset:]-opt_out[:,a])
+                            dd.append(o[a]-opt_out[:,a])
                         n1 = np.linalg.norm(o)
                         n2 = 0
+                        lr0 = lr*100
                         if cfg.fc_Nout>0:
-                            do = (1-lr)*o + lr * np.array(dd)
+                            do = o - lr0 * np.array(dd)
                             n2 = np.linalg.norm(do)
+                            do *= n1/n2
                         dd = np.array(dd)
                         dd = dd*dd
                         dd = dd[:, -1, :].sum()
                         # dd = dd.sum()/len(xy)
-                        # do *= n1/n2
-                        # tr.updates(do, ids)
+                        if cfg.fc_Nout > 0:
+                            tr.updates(do, ids)
                         to3 += n2*n0
                         tl3 += ll3
                         r3 += dd
@@ -517,5 +523,5 @@ if __name__ == '__main__':
             tl3 /= nt
             to3 /= nt
             r3 /= nt
-            str1 = "{0:.3f} {1:.2f}  {2:.2f}".format(tl3, to3, r3)
+            str1 = "{0:.3f} {1:.3f}  {2:.3f}".format(tl3, to3, r3)
             Utils.save_tf_data(saver, sess, cfg.netFile)
