@@ -459,7 +459,7 @@ class DataSet:
                         t1 = features[im1][1][p1]
                         t2 = features[im2][1][p2]
                     ins.append(np.concatenate((f1[:2],f2[:2])))
-                    self.fc_Nout>0:
+                    if self.fc_Nout>0:
                         trs.append(np.concatenate((t1,t2)))
                     else:
                         trs.append(A)

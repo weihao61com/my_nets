@@ -494,9 +494,11 @@ if __name__ == '__main__':
                         dd = []
                         for a in range(o.shape[0]):
                             dd.append(o[a, cfg.out_offset:]-opt_out[:,a])
-                        do = (1-lr)*o + lr * np.array(dd)
                         n1 = np.linalg.norm(o)
-                        n2 = 0 #np.linalg.norm(do)
+                        n2 = 0
+                        if cfg.fc_Nout>0:
+                            do = (1-lr)*o + lr * np.array(dd)
+                            n2 = np.linalg.norm(do)
                         dd = np.array(dd)
                         dd = dd*dd
                         dd = dd[:, -1, :].sum()
