@@ -253,6 +253,8 @@ class rNet(Network):
             ins = nodes[a]
 
         Nout = cfg.Nout
+        if cfg.fc_Nout>0:
+            Nout = cfg.fc_Nout*2
         ws.append(self.create_ws('out', ins, Nout))
         self.ws.append(ws)
 
@@ -367,7 +369,8 @@ if __name__ == '__main__':
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
-        tr.init_truth(cfg.fc_Nout)
+        if cfg.fc_Nout>0:
+            tr.init_truth(cfg.fc_Nout)
     else:
         if test == 'te':
             tr = DataSet([cfg.te_data[0]], cfg)
@@ -485,13 +488,13 @@ if __name__ == '__main__':
                                 feed[output[y]] = o[:, y, :]
                         feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
 
-                        opt_out = sess.run(xy, feed_dict=feed)
-                        ll3, _, __= sess.run([loss, xy, opt], feed_dict=feed)
+                        # opt_out = sess.run(xy, feed_dict=feed)
+                        ll3, opt_out, __= sess.run([loss, xy, opt], feed_dict=feed)
                         opt_out = np.array(opt_out.values())
                         dd = []
                         for a in range(o.shape[0]):
                             dd.append(o[a, cfg.out_offset:]-opt_out[:,a])
-                        # do = (1-lr*100)*o + lr * 100 * np.array(dd)
+                        do = (1-lr)*o + lr * np.array(dd)
                         n1 = np.linalg.norm(o)
                         n2 = 0 #np.linalg.norm(do)
                         dd = np.array(dd)
