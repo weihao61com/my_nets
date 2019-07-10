@@ -279,8 +279,8 @@ class DataSet:
                 key = id[0][2]
                 ip1 = id[1]
                 ip2 = id[2]
-                self.rasd.features[key][im1][1][ip1] = tr[:2]
-                self.rasd.features[key][im2][1][ip2] = tr[2:]
+                self.rasd.features[key][im1][1][ip1] = tr[:self.fc_Nout]
+                self.rasd.features[key][im2][1][ip2] = tr[self.fc_Nout:]
 
     def prepare_ras(self, multi=1, rd=True):
         pre_data = []

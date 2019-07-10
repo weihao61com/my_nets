@@ -347,10 +347,10 @@ def get_avg_file(tr, avg_file):
     return
 
 
-def avg_file_name(p):
+def avg_file_name(p, tag ='avg'):
     basename = os.path.basename(p)
     pathname = os.path.dirname(p)
-    return pathname + '_' + basename+'_avg.p'
+    return pathname + '_' + basename+'_{}.p'.format(tag)
 
 if __name__ == '__main__':
 
@@ -500,7 +500,7 @@ if __name__ == '__main__':
                             dd.append(o[a]-opt_out[:,a])
                         n1 = np.linalg.norm(o)
                         n2 = 0
-                        lr0 = lr*100
+                        lr0 = lr*6000
                         if cfg.fc_Nout>0:
                             do = o - lr0 * np.array(dd)
                             n2 = np.linalg.norm(do)
@@ -523,5 +523,7 @@ if __name__ == '__main__':
             tl3 /= nt
             to3 /= nt
             r3 /= nt
-            str1 = "{0:.3f} {1:.3f}  {2:.3f}".format(tl3, to3, r3)
+            str1 = "{0:.4f} {1:.4f}  {2:.5f} {3:.5f}".format(tl3, to3, r3, n1/n2)
             Utils.save_tf_data(saver, sess, cfg.netFile)
+
+

@@ -31,7 +31,7 @@
     "fc_nodes_0": "256, 32",
     "fc_nodes_1_out": "16",
     "fc_nodes_2_feature": "16",
-    "fc_Nout": 2,
+    "fc_Nout": 1,
     "2tr0": "p_files/run2_tr.p",
     "2te0": "p_files/run2_te.p"
 }
