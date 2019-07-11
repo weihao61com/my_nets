@@ -352,6 +352,7 @@ def avg_file_name(p, tag ='avg'):
     pathname = os.path.dirname(p)
     return pathname + '_' + basename+'_{}.p'.format(tag)
 
+
 if __name__ == '__main__':
 
     config_file = "config.json"
@@ -500,17 +501,16 @@ if __name__ == '__main__':
                             dd.append(o[a]-opt_out[:,a])
                         n1 = np.linalg.norm(o)
                         n2 = 0
-                        lr0 = lr*6000
+                        lr0 = lr*1000
+                        n1 = 10
                         if cfg.fc_Nout>0:
                             do = o - lr0 * np.array(dd)
                             n2 = np.linalg.norm(do)
                             do *= n1/n2
+                            tr.updates(do, ids)
                         dd = np.array(dd)
                         dd = dd*dd
                         dd = dd[:, -1, :].sum()
-                        # dd = dd.sum()/len(xy)
-                        if cfg.fc_Nout > 0:
-                            tr.updates(do, ids)
                         to3 += n2*n0
                         tl3 += ll3
                         r3 += dd

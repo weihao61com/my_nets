@@ -281,6 +281,10 @@ class DataSet:
                 ip2 = id[2]
                 self.rasd.features[key][im1][1][ip1] = tr[:self.fc_Nout]
                 self.rasd.features[key][im2][1][ip2] = tr[self.fc_Nout:]
+                if key == 1 and im1 == 100 and ip1<3:
+                    print 'update', ip1, tr[:self.fc_Nout][0]
+                if key == 1 and im2 == 100 and ip2<3:
+                    print 'update', ip2, tr[self.fc_Nout:][0]
 
     def prepare_ras(self, multi=1, rd=True):
         pre_data = []

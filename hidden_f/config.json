@@ -9,7 +9,7 @@
     "_te3": "p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_ras_s3_3.p",
     "_tr3": "p_files/rgbd_dataset_freiburg3_long_office_household_Train_ras_s3_3.p",
     "netFile": "t",
-    "_renetFile": "t",
+    "renetFile": "t",
     "add_len": 0,
     "feature_len": 20,
     "out_offset": 10,
