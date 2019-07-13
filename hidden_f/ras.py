@@ -474,7 +474,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare_ras(multi=cfg.multi, rd=False)
+                tr_pre_data = tr.prepare_ras(multi=cfg.multi)
                 while tr_pre_data:
                     sz = tr_pre_data[0].shape
                     length = sz[1]
@@ -500,7 +500,7 @@ if __name__ == '__main__':
                         for a in range(o.shape[0]):
                             dd.append(o[a]-opt_out[:,a])
                         n1 = np.linalg.norm(o)
-                        n2 = 0
+                        n2 = 1
                         lr0 = lr*1000
                         n1 = 10
                         if cfg.fc_Nout>0:

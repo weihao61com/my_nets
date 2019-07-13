@@ -281,19 +281,12 @@ if __name__ == '__main__':
 
     config_file = "config.json"
 
-    #if len(sys.argv)>1:
-    #    config_file = sys.argv[1]
-
-    test = None
-    if len(sys.argv)>1:
-        test = sys.argv[1]
-
     cfg = Config(config_file)
 
     avg_file = avg_file_name(cfg.netFile)
     tr = DataSet(cfg.tr_data, cfg)
     te = DataSet(cfg.te_data, cfg)
-    cfg.att = te.sz[1]
+    cfg.att = te.att
     tr.avg_correction(avg_file)
     te.avg_correction(avg_file)
 
@@ -347,5 +340,5 @@ if __name__ == '__main__':
         te.set_A_T(rst_te)
         tr.set_A_T(rst_tr)
 
-        te.save_data_2(cfg.te2_data)
-        tr.save_data_2(cfg.tr2_data)
+        te.save_data_2('te')
+        tr.save_data_2('tr')

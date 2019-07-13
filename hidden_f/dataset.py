@@ -19,7 +19,6 @@ def load_data(filename, verbose = True, sub_sample=-1):
     t0 = datetime.datetime.now()
     if type(filename) is unicode:
         avg_param = 0
-        nr = 0
         nt = 0
 
         with open(filename, 'rb') as fp:
@@ -30,7 +29,6 @@ def load_data(filename, verbose = True, sub_sample=-1):
                 for img in features:
                     d = features[img]
                     avg_param += len(d[0])
-                    # nr += (d[1]*d[1]).sum()
                     nt += 1
             #length = len(data)
             avg_param /= nt
@@ -50,8 +48,8 @@ def load_data(filename, verbose = True, sub_sample=-1):
                             n_match[img] = ms
                     data.matches[id] = n_match
         if verbose:
-            print "loading", filename, '\n \t\t', datetime.datetime.now()-t0, \
-                length, avg_param, nr/nt
+            print "loading (match,feature)", filename, '\n \t\t', datetime.datetime.now()-t0, \
+                length, avg_param
         return data
 
     data_out = None
@@ -483,7 +481,6 @@ class DataSet:
             break
 
         for d in data:
-            bucket = []
             input = d[0]
             if multi > 0:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
@@ -581,9 +578,13 @@ class DataSet:
         rst_dict[id] = self.prepare()
 
     def set_A_T(self, rst):
-        if len(self.data) != rst.shape[0]:
-            raise Exception('Wrong number')
+        #if len(self.data) != rst.shape[0]:
+        #    raise Exception('Wrong number')
         self.rst = rst
+
+    def save_data_2(self, name):
+        for id in self.data:
+            data = self.data[id]
 
     def prepare2(self, rd=True):
         data_gen = self.gen_data(rd)
@@ -612,14 +613,14 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 3
+    range2 = 1
     range3 = -range2
 
 
-    #key = 'heads'
-    #mode = 'Test'
-    key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
+    key = 'office'
     mode = 'Test'
+    # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
+    # mode = 'Test'
     #key = 'rgbd_dataset_freiburg3_long_office_household'
     #mode = 'Train'
 

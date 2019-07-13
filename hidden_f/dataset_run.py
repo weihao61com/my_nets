@@ -17,7 +17,8 @@ if sys.platform=='darwin':
 sys.path.append('{}/my_nets'.format(HOME))
 from utils import PinholeCamera, Utils
 
-p_file = 'rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p' #'heads_Test_ras_s3_3.p'
+p_file = 'rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p'
+p_file = 'office_Train_ras_s1_3.p'
 filename = '{}/p_files/{}'.format(HOME, p_file)
 
 #filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
