@@ -170,50 +170,6 @@ def run_data(rst_dic, fname):
         L.append(l)
 
     return M, L
-    #     rst_dic = rst_dic0[a]
-    #
-    #     results = []
-    #     truth = []
-    #
-    #
-    #
-    #
-    #
-    # rs = []
-    # for id in rst_dic:
-    #     dst = np.array(rst_dic[id])
-    #     result = np.median(dst, axis=0)
-    #     # result = np.mean(dst, axis=0)
-    #     results.append(result)
-    #     truth.append(truth_dic[id])
-    #     t = truth_dic[id]
-    #     dr = t - result[-1]
-    #     r = np.linalg.norm(dr)
-    #     rs.append(r*r)
-    #
-    #     if random.random() < 1.2:
-    #         mm = result[-1]
-    #         for a in range(len(t)):
-    #             if a>0:
-    #                 fp.write(',')
-    #             fp.write('{},{}'.format(t[a], mm[a]))
-    #         fp.write(',{}\n'.format(r))
-    #         # if len(mm)==3:
-    #         #     fp.write('{},{},{},{},{},{},{}\n'.
-    #         #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-    #         # else:
-    #         #     fp.write('{},{},{}\n'.
-    #         #              format(t, mm[0], r))
-    # fp.close()
-    # rs = sorted(rs)
-    # length = len(rs)
-    # fp = open(filename+'.csv', 'w')
-    # for a in range(length):
-    #     fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-    # fp.close()
-    #
-    # return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
-
 
 class rNet(Network):
 
