@@ -5,7 +5,7 @@ import datetime
 from sortedcontainers import SortedDict
 import numpy as np
 import os
-from dataset import DataSet
+from dataset import DataSet, reverse
 import cPickle
 import random
 
@@ -99,10 +99,10 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
             if not b[2][a] in rst_dic:
                 rst_dic[b[2][a]] = []
             rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
+            truth_dic[b[2][a]] = b[1][a], b[3][a]
 
 
-def run_data(rst_dic, truth_dic, fname):
+def run_data(rst_dic, truth_dic, fname, cfg):
 
     results = []
     truth = []
@@ -112,30 +112,43 @@ def run_data(rst_dic, truth_dic, fname):
         filename = '/Users/weihao/tmp/{}.csv'.format(fname)
     fp = open(filename, 'w')
     rs = []
+    list_dic = {}
+    t_scale = np.array(map(float, cfg.t_scale.split(",")))
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
         # result = np.mean(dst, axis=0)
         results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        dr = t - result[-1]
+        truth.append(truth_dic[id][0])
+        t = truth_dic[id][0]
+        imgs = truth_dic[id][1]
+        result = result[-1]
+
+        if len(t)==6 and imgs[0]>imgs[1]:
+            t = reverse(t/t_scale)*t_scale
+            result = reverse(result/t_scale)*t_scale
+
+        dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
 
         if random.random() < 1.2:
-            mm = result[-1]
+            mm = result
             for a in range(len(t)):
+                if a not in list_dic:
+                    list_dic[a] = []
+                list_dic[a].append(t[a]-mm[a])
                 if a>0:
                     fp.write(',')
                 fp.write('{},{}'.format(t[a], mm[a]))
             fp.write(',{}\n'.format(r))
-            # if len(mm)==3:
-            #     fp.write('{},{},{},{},{},{},{}\n'.
-            #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            # else:
-            #     fp.write('{},{},{}\n'.
-            #              format(t, mm[0], r))
+
+    for a in list_dic:
+        vals = np.array(list_dic[a])
+        md = np.median(abs(vals))
+        avg = np.sqrt(np.mean(vals*vals))
+        print '\t', a, md, avg
+
     fp.close()
     rs = sorted(rs)
     length = len(rs)
@@ -242,7 +255,7 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
         tr_pre_data = te.prepare(multi=-1, rd = False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test')
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg)
 
     for a in range(len(tr_loss)):
         print a, tr_loss[a], tr_median[a]

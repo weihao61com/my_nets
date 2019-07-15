@@ -15,6 +15,12 @@ sys.path.append('{}/my_nets'.format(HOME))
 from utils import Utils
 
 
+def reverse(v):
+    Q = Utils.create_Q(v[:3], v[3:])
+    Q = np.linalg.inv(Q)
+    A, T = Utils.get_A_T(Q)
+    return A + T
+
 def load_data(filename, verbose = True, sub_sample=-1):
     t0 = datetime.datetime.now()
     if type(filename) is unicode:
@@ -160,7 +166,7 @@ class DataSet:
                             f1 = ft1[m[0]]
                             f2 = ft2[m[1]]
                             f.append(np.array([f1[0],f1[1], f2[0], f2[1]]))
-                        d_id.append((f, ar[self.num_output1:self.num_output]))
+                        d_id.append((f, ar[self.num_output1:self.num_output], ids))
                     elif self.att==9:
                         raise Exception()
                     else:
@@ -317,6 +323,7 @@ class DataSet:
             ins = []
             outs = []
             ids = []
+            imgs = []
             for a in data:
                 if self.net_type == 'fc':
                     ins.append(a[0])
@@ -326,7 +333,8 @@ class DataSet:
                     raise Exception()
                 outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
                 ids.append(a[2])
-            dd = (np.array(ins), np.array(outs), ids)
+                imgs.append(a[3])
+            dd = (np.array(ins), np.array(outs), ids, imgs)
             pre_data.append(dd)
 
         return pre_data
@@ -497,7 +505,7 @@ class DataSet:
                 truth = d[1]# [self.num_output1:self.num_output]
                 Nout = self.num_output - self.num_output1
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in),
-                          truth.reshape(Nout), self.id)
+                          truth.reshape(Nout), self.id, d[2])
                 outputs.append(output)
             self.id += 1
 
