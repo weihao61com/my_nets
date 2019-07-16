@@ -133,15 +133,17 @@ def run_data(rst_dic, truth_dic, fname, cfg):
         rs.append(r*r)
 
         if random.random() < 1.2:
-            mm = result
-            for a in range(len(t)):
-                if a not in list_dic:
-                    list_dic[a] = []
-                list_dic[a].append(t[a]-mm[a])
-                if a>0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
+            if len(t) == 6 or imgs[0] < imgs[1]:
+
+                mm = result
+                for a in range(len(t)):
+                    if a not in list_dic:
+                        list_dic[a] = []
+                    list_dic[a].append(t[a]-mm[a])
+                    if a>0:
+                        fp.write(',')
+                    fp.write('{},{}'.format(t[a], mm[a]))
+                fp.write(',{}\n'.format(r))
 
     for a in list_dic:
         vals = np.array(list_dic[a])
@@ -293,6 +295,7 @@ def avg_file_name(p):
     basename = os.path.basename(p)
     pathname = os.path.dirname(p)
     return pathname + '_' + basename+'_avg.p'
+
 
 if __name__ == '__main__':
 
@@ -449,7 +452,7 @@ if __name__ == '__main__':
                                 o = o.reshape((len(o), 1))
                             feed[output] = o
 
-                            ll3,_= sess.run([last_loss, opt],feed_dict=feed)
+                            ll3,_= sess.run([loss, opt],feed_dict=feed)
                             tl3 += ll3
                             nt += n0
                     tr_pre_data = tr.get_next(avg=avg_file)
