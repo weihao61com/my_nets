@@ -8,9 +8,9 @@ import sys
 import pickle
 import shutil
 import csv
-#import evo.core.transformations as tr
-from bluenotelib.common.bluenote_sensor_rotation \
-    import BlueNoteSensorRotation, RotationSequence
+import evo.core.transformations as tr
+# from bluenotelib.common.bluenote_sensor_rotation \
+#    import BlueNoteSensorRotation, RotationSequence
 
 
 HOME = '/home/weihao/Projects/'
@@ -45,7 +45,8 @@ class Config:
             if key.startswith('2te'):
                 self.te2_data.append(HOME + self.js[key])
             if key.startswith('nodes'):
-                self.nodes.append(map(int, self.js[key].split(',')))
+                print(key, self.js[key])
+                self.nodes.append(list(map(int, self.js[key].split(','))))
             if key.startswith('fc_nodes'):
                 self.fc_nodes.append(map(int, self.js[key].split(',')))
 
@@ -90,7 +91,7 @@ class Utils:
             csv_reader = csv.reader(fp, delimiter=delimiter)
             for row in csv_reader:
                 if 'latitude' in row:
-                    print '\t\t\t', row
+                    print('\t\t\t', row)
                 else:
                     data.append(row)
         # print 'Total csv data', len(data)
@@ -470,9 +471,9 @@ class Utils:
 
     @staticmethod
     def get_A_T(Q):
-        #A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
-        A = np.array(BlueNoteSensorRotation.
-                         get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
+        A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
+        # A = np.array(BlueNoteSensorRotation.
+        #                 get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
         T = Q[:3, 3]
         return A, T
 

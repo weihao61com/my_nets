@@ -6,7 +6,7 @@ from sortedcontainers import SortedDict
 import numpy as np
 import os
 from dataset import DataSet, reverse
-import cPickle
+import pickle
 import random
 
 HOME = '/home/weihao/Projects/'
@@ -26,7 +26,7 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
     rst_dic = {}
     truth_dic = {}
     for b in data:
-        length = b[0].shape[1]/att
+        length = int(b[0].shape[1]/att)
         feed = {}
         b_sz = b[0].shape[0]
 
@@ -82,7 +82,7 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
     att = cfg.att
     for b in data:
-        length = b[0].shape[1]/att
+        length = int(b[0].shape[1]/att)
         feed = {}
         b_sz = b[0].shape[0]
 
@@ -149,7 +149,7 @@ def run_data(rst_dic, truth_dic, fname, cfg):
         vals = np.array(list_dic[a])
         md = np.median(abs(vals))
         avg = np.sqrt(np.mean(vals*vals))
-        print '\t', a, md, avg
+        print('\t', a, md, avg)
 
     fp.close()
     rs = sorted(rs)
@@ -165,7 +165,7 @@ def run_data(rst_dic, truth_dic, fname, cfg):
 class rNet(Network):
 
     def create_ws(self, n, ins, outs):
-        print n, ins, outs
+        print(n, ins, outs)
         w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
         b = self.make_var('biases_{}'.format(n), shape=[outs])
         return [w,b]
@@ -177,7 +177,7 @@ class rNet(Network):
         # feature
         ws = []
         ins = cfg.att
-        nodes = cfg.nodes[2]
+        nodes = list(cfg.nodes[2])
         for a in range(len(nodes)):
             ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
@@ -186,7 +186,7 @@ class rNet(Network):
         # base
         ws = []
         ins += cfg.ref_node
-        nodes_in = cfg.nodes[0]
+        nodes_in = list(cfg.nodes[0])
         for a in range(len(nodes_in)):
             ws.append(self.create_ws('base_{}'.format(a), ins, nodes_in[a]))
             ins = nodes_in[a]
@@ -194,7 +194,7 @@ class rNet(Network):
 
         # out
         ws = []
-        nodes = cfg.nodes[1]
+        nodes = list(cfg.nodes[1])
         for a in range(len(nodes)):
             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
             ins = nodes[a]
@@ -260,7 +260,7 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
     tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg)
 
     for a in range(len(tr_loss)):
-        print a, tr_loss[a], tr_median[a]
+        print(a, tr_loss[a], tr_median[a])
 
     exit(0)
 
@@ -281,12 +281,14 @@ def get_avg_file(tr, avg_file):
     av /= nt
     st /= nt
     st = np.sqrt(st - av*av)
-    print "Saving averages:", avg_file
+    print("Saving averages:", avg_file)
     for a in range(len(av)):
-        print a, av[a], st[a]
+        print(a, av[a], st[a])
 
-    with open(avg_file, 'w') as fp:
-        cPickle.dump((av,st), fp)
+    print(avg_file)
+    with open(avg_file, 'wb') as fp:
+        v = (av, st)
+        pickle.dump(v, fp)
 
     return
 
@@ -328,26 +330,26 @@ if __name__ == '__main__':
     te.avg_correction(avg_file)
     iterations = 10000
     loop = cfg.loop
-    print "input attribute", cfg.att, "LR", cfg.lr, \
-        'feature', cfg.feature_len, 'add', cfg.add_len
+    print("input attribute", cfg.att, "LR", cfg.lr,
+          'feature', cfg.feature_len, 'add', cfg.add_len)
 
     inputs = {}
     lr = cfg.lr
-    learning_rate = tf.placeholder(tf.float32, shape=[])
+    learning_rate =  tf.compat.v1.placeholder(tf.float32, shape=[])
 
     Nout = cfg.num_output - cfg.num_output1
     setattr(cfg, 'Nout', Nout)
 
     # output = tf.placeholder(tf.float32, [None, cfg.num_output])
-    output = tf.placeholder(tf.float32, [None, Nout])
+    output = tf.compat.v1.placeholder(tf.float32, [None, Nout])
 
-    cfg.ref_node = cfg.nodes[0][-1]
+    cfg.ref_node = list(cfg.nodes[0])[-1]
     cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
     cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
-    inputs[0] = tf.placeholder(tf.float32, [None, cfg.ref_node])
+    inputs[0] = tf.compat.v1.placeholder(tf.float32, [None, cfg.ref_node])
 
     for a in range(cfg.feature_len):
-        inputs[a+1] = tf.placeholder(tf.float32, [None, cfg.att])
+        inputs[a+1] = tf.compat.v1.placeholder(tf.float32, [None, cfg.att])
 
     input_dic = {}
     for a in range(cfg.feature_len+1):
@@ -361,14 +363,14 @@ if __name__ == '__main__':
         n = 'output_{}'.format(a)
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
-    print 'output', len(xy)
+    print('output', len(xy))
 
     loss = None
     last_loss = None
     for a in xy:
         #if a<10:
         #    continue
-        print a,
+        print(a),
         if cfg.L1==0:
             last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         else:
@@ -417,12 +419,12 @@ if __name__ == '__main__':
 
             s = -1
             while True:
-                s += len(tr_loss)/2
+                s += int(len(tr_loss)/2)
                 str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
                 if s==len(tr_loss)-1:
                     break
 
-            print str, str1
+            print(str, str1)
 
             if lr<1e-9:
                 break
@@ -438,7 +440,7 @@ if __name__ == '__main__':
                 while tr_pre_data:
                     for b in tr_pre_data:
                         total_length = len(b[0])
-                        length = b[0].shape[1]/cfg.att
+                        length = int(b[0].shape[1]/cfg.att)
                         for c in range(0, total_length, cfg.batch_size):
                             feed = {learning_rate: lr}
                             n0 = 0

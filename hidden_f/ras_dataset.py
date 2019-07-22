@@ -1,7 +1,7 @@
 import sys
 import os
 import cv2
-import cPickle
+import pickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 HOME = '{}/../..'.format(this_file_path)
@@ -72,16 +72,16 @@ class RAS_D:
 
         for seq in self.poses:
             poses = self.poses[seq]
-            print seq, len(poses)
+            print(seq, len(poses))
             self.features[seq] = {}
             self.matches[seq] = {}
             for id in poses:
                 self.features[seq][id] = self.get_feature(poses[id])
                 if len(self.features[seq])%200==0:
-                    print seq, len(self.features[seq]), datetime.datetime.now()-t0
+                    print(seq, len(self.features[seq]), datetime.datetime.now()-t0)
 
             features = self.features[seq]
-            print 'matching', datetime.datetime.now()-t0
+            print('matching', datetime.datetime.now()-t0)
             t0 = datetime.datetime.now()
 
             for id1 in poses:
@@ -120,8 +120,8 @@ class RAS_D:
                         nt += 1
 
                         if nt % 1000 == 0:
-                            print nt, id1, datetime.datetime.now() - t0, length/nt, length
+                            print(nt, id1, datetime.datetime.now() - t0, length/nt, length)
                             t0 = datetime.datetime.now()
                         self.matches[seq][(id1, id2)] = pts1
         print
-        print nt, datetime.datetime.now() - t0, length/nt
+        print(nt, datetime.datetime.now() - t0, length/nt)

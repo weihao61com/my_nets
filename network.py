@@ -41,7 +41,7 @@ class Network(object):
         # If true, the resulting variables are set as trainable
         self.trainable = trainable
         # Switch variable for dropout
-        self.use_dropout = tf.placeholder_with_default(tf.constant(1.0),
+        self.use_dropout = tf.compat.v1.placeholder_with_default(tf.constant(1.0),
                                                        shape=[],
                                                        name='use_dropout')
         self.setup()
@@ -77,7 +77,7 @@ class Network(object):
         assert len(args) != 0
         self.terminals = []
         for fed_layer in args:
-            if isinstance(fed_layer, basestring):
+            if isinstance(fed_layer, str):
                 try:
                     fed_layer = self.layers[fed_layer]
                 except KeyError:
@@ -98,7 +98,7 @@ class Network(object):
 
     def make_var(self, name, shape):
         '''Creates a new TensorFlow variable.'''
-        return tf.get_variable(name, shape, trainable=self.trainable)
+        return tf.compat.v1.get_variable(name, shape, trainable=self.trainable)
 
     def validate_padding(self, padding):
         '''Verifies that the padding is one of the supported ones.'''
@@ -247,8 +247,8 @@ class Network(object):
     @layer
     def fc_w2(self, input, ws, name, relu=True):
         #print 'fc_w2', name, input.get_shape(), ws[0].get_shape()
-        with tf.variable_scope(name) as scope:
-            op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
+        with tf.compat.v1.variable_scope(name) as scope:
+            op = tf.compat.v1.nn.relu_layer if relu else tf.nn.xw_plus_b
             fc = op(input, ws[0], ws[1], name=scope.name)
             return fc
 

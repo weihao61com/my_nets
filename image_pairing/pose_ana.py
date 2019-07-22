@@ -1,6 +1,6 @@
 from sortedcontainers import SortedDict
 import numpy as np
-from imagery_utils import Pose
+from .imagery_utils import Pose
 import os
 import sys
 
@@ -55,9 +55,9 @@ def load_indoor_7_poses(location, pose_file):
     id = 0
     with open(filename) as f:
         for line in f.readlines():
-            print line[:-2], len(line)
+            print(line[:-1], len(line))
             if len(line)>8:
-                folder_id = int(line[8:-2])
+                folder_id = int(line[8:-1])
             else:
                 folder_id = int(line[4:-2])
             if not folder_id in poses:
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     with open('/home/weihao/tmp/p_ana.csv', 'w') as fp:
         for id in poses:
             ps = poses[id]
-            print id, len(ps)
+            print(id, len(ps))
             pre_pose = None
             pre_pose2 = None
             for p_id in ps:
@@ -199,15 +199,15 @@ if __name__ == '__main__':
                              format(A[0], A[1], A[2], T[0], T[1], T[2]))
                 else:
                     A, T = Utils.get_A_T(p.Q4)
-                    print p.Q4
+                    print(p.Q4)
                     for a in range(3):
-                        print A[a], T[a]
+                        print(A[a], T[a])
                     # Q = Utils.create_Q(A, T)
                     Q = np.linalg.inv(p.Q4)
-                    print Q
+                    print(Q)
                     A, T = Utils.get_A_T(Q)
                     for a in range(3):
-                        print A[a], T[a]
+                        print(A[a], T[a])
 
                 if pre_pose2 is not None:
                     A1, T1 = Utils.get_relative_A_T(pre_pose2.Q4, pre_pose.Q4)
@@ -215,7 +215,7 @@ if __name__ == '__main__':
                     A = np.linalg.norm(A1-A2)
                     T = np.linalg.norm(T1-T2)
                     if A<0.2 and T<0.2:
-                        print p_id, A ,T
+                        print(p_id, A ,T)
                 pre_pose = p
                 pre_pose2 = pre_pose
             #break

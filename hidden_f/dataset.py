@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import numpy as np
 import datetime
 import random
@@ -23,12 +23,12 @@ def reverse(v):
 
 def load_data(filename, verbose = True, sub_sample=-1):
     t0 = datetime.datetime.now()
-    if type(filename) is unicode:
+    if type(filename) is str: #unicode:
         avg_param = 0
         nt = 0
 
         with open(filename, 'rb') as fp:
-            data = cPickle.load(fp)
+            data = pickle.load(fp)
             length = 0
             for id in data.features:
                 features = data.features[id]
@@ -54,8 +54,8 @@ def load_data(filename, verbose = True, sub_sample=-1):
                             n_match[img] = ms
                     data.matches[id] = n_match
         if verbose:
-            print "loading (match,feature)", filename, '\n \t\t', datetime.datetime.now()-t0, \
-                length, avg_param
+            print("loading (match,feature)", filename, '\n \t\t', datetime.datetime.now()-t0, \
+                length, avg_param)
         return data
 
     data_out = None
@@ -69,7 +69,7 @@ def load_data(filename, verbose = True, sub_sample=-1):
     lenght = len(data_out)
     if lenght > max_len:
         data_out = data_out[:max_len]
-    print "Total data", datetime.datetime.now() - t0, lenght, len(data_out)
+    print("Total data", datetime.datetime.now() - t0, lenght, len(data_out))
     return data_out
 
 
@@ -85,7 +85,7 @@ class DataSet:
         self.verbose = True
         self.cache = cache
         self.memories = {}
-        self.t_scale = map(float, cfg.t_scale.split(','))
+        self.t_scale = list(map(float, cfg.t_scale.split(',')))
         self.net_type = cfg.net_type
         self.num_output = cfg.num_output
         self.num_output1 = cfg.num_output1
@@ -100,10 +100,10 @@ class DataSet:
         for id in self.data:
             self.sz = len(self.data[id][0][0])
         self.id = None
-        features = self.rasd.features.values()[0]
-        print "features", len(features)
-        matches = self.rasd.matches.values()[0]
-        print "matches", len(matches)
+        features = list(self.rasd.features.values())[0]
+        print("features", len(features))
+        matches = list(self.rasd.matches.values())[0]
+        print("matches", len(matches))
         #self.att = self.sz[1]
 
     def init_truth(self, dim):
@@ -286,9 +286,9 @@ class DataSet:
                 self.rasd.features[key][im1][1][ip1] = tr[:self.fc_Nout]
                 self.rasd.features[key][im2][1][ip2] = tr[self.fc_Nout:]
                 if key == 1 and im1 == 100 and ip1<3:
-                    print 'update', ip1, tr[:self.fc_Nout][0]
+                    print('update', ip1, tr[:self.fc_Nout][0])
                 if key == 1 and im2 == 100 and ip2<3:
-                    print 'update', ip2, tr[self.fc_Nout:][0]
+                    print('update', ip2, tr[self.fc_Nout:][0])
 
     def prepare_ras(self, multi=1, rd=True):
         pre_data = []
@@ -365,9 +365,9 @@ class DataSet:
         return outputs
 
     def avg_correction(self, avg_file):
-        print 'Reading average file', avg_file
-        with open(avg_file, 'r') as fp:
-            A = cPickle.load(fp)
+        print('Reading average file', avg_file)
+        with open(avg_file, 'rb') as fp:
+            A = pickle.load(fp)
         av = A[0]
         st = A[1]
         for id in self.data:
@@ -379,7 +379,7 @@ class DataSet:
 
     def avg_correction2(self, avg_file):
         self.data = None
-        print 'Reading average file', avg_file
+        print('Reading average file', avg_file)
         with open(avg_file, 'r') as fp:
             A = cPickle.load(fp)
         av = A[0]
@@ -637,7 +637,7 @@ if __name__ == '__main__':
     if len(sys.argv)>2:
         mode = sys.argv[2]
 
-    print key, mode, range2, range3
+    print(key, mode, range2, range3)
 
         # location = '/home/weihao/Projects/cambridge/OldHospital'
         # pose_file = 'dataset_train.txt'
@@ -656,13 +656,13 @@ if __name__ == '__main__':
 
     filename = '{}/p_files/{}_{}_ras_s{}_3.p'.format(HOME, key, mode, range2)
     output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)
-    print location
-    print filename
-    print output_file
+    print(location)
+    print(filename)
+    print(output_file)
 
     rasd = RAS_D()
     rasd.set_poses(poses_dic, cam)
     rasd.process(range2, range3)
     rasd.clear()
     with open(filename, 'wb') as fp:
-        cPickle.dump(rasd, fp, cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(rasd, fp)
