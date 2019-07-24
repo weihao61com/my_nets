@@ -128,6 +128,13 @@ class DataSet:
 
         return self.prepare(rd)
 
+    def get_ids(self):
+        ids = []
+        for id in self.rasd.poses:
+            for p in self.rasd.poses[id]:
+                ids.append(self.rasd.poses[id][p].Q4[:3, :3])
+        return ids
+
     def load_next_data(self, sub_sample=-1):
         self.bucket = 0
 
@@ -625,7 +632,7 @@ if __name__ == '__main__':
     range3 = -range2
 
 
-    key = 'office'
+    key = 'heads'
     mode = 'Test'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'

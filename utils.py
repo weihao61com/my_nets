@@ -472,6 +472,7 @@ class Utils:
     @staticmethod
     def get_A_T(Q):
         A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
+        A = np.array(A) * 180.0/np.pi
         # A = np.array(BlueNoteSensorRotation.
         #                 get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
         T = Q[:3, 3]
@@ -494,9 +495,10 @@ class Utils:
 
     @  staticmethod
     def create_M(A):
-        M = np.array(BlueNoteSensorRotation.rotation_matrix
-                     (A[0], A[1], A[2], sequence=RotationSequence.XZY))
-        return M
+        M = tr.euler_matrix(A[0], A[1], A[2])
+        # M = np.array(BlueNoteSensorRotation.rotation_matrix
+        #              (A[0], A[1], A[2], sequence=RotationSequence.XZY))
+        return M[:3, :3]
 
     @staticmethod
     def get_A(Q):

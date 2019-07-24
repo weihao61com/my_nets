@@ -59,7 +59,7 @@ def load_indoor_7_poses(location, pose_file):
             if len(line)>8:
                 folder_id = int(line[8:-1])
             else:
-                folder_id = int(line[4:-2])
+                folder_id = int(line[4:-1])
             if not folder_id in poses:
                 poses[folder_id] = SortedDict()
 

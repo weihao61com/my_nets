@@ -102,7 +102,7 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
             truth_dic[b[2][a]] = b[1][a], b[3][a]
 
 
-def run_data(rst_dic, truth_dic, fname, cfg):
+def run_data(rst_dic, truth_dic, fname, cfg, Is):
 
     results = []
     truth = []
@@ -113,6 +113,9 @@ def run_data(rst_dic, truth_dic, fname, cfg):
     fp = open(filename, 'w')
     rs = []
     list_dic = {}
+    RR = []
+    I = []
+    #Rgt = []
     t_scale = np.array(map(float, cfg.t_scale.split(",")))
     for id in rst_dic:
         dst = np.array(rst_dic[id])
@@ -123,11 +126,13 @@ def run_data(rst_dic, truth_dic, fname, cfg):
         t = truth_dic[id][0]
         imgs = truth_dic[id][1]
         result = result[-1]
-
+        RR.append(Utils.create_M(result))
+        #I.append(truth_dic[id][1])
+        #Rgt.append(Utils.create_M(t))
         if len(t)==6 and imgs[0]>imgs[1]:
             t = reverse(t/t_scale)*t_scale
             result = reverse(result/t_scale)*t_scale
-
+        I.append(imgs)
         dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
@@ -144,6 +149,14 @@ def run_data(rst_dic, truth_dic, fname, cfg):
                         fp.write(',')
                     fp.write('{},{}'.format(t[a], mm[a]))
                 fp.write(',{}\n'.format(r))
+
+    P = {}
+    P['RR'] = np.array(RR).transpose()
+    P['Rgt'] = np.array(Is).transpose()
+    P['I'] = np.array(I).transpose()
+    filename = filename[:-4] + '.p'
+    with open(filename, 'wb') as fp:
+        pickle.dump(P, fp)
 
     for a in list_dic:
         vals = np.array(list_dic[a])
@@ -256,8 +269,9 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
     for a in range(mul):
         tr_pre_data = te.prepare(multi=-1, rd = False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+    I = te.get_ids()
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg)
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, I)
 
     for a in range(len(tr_loss)):
         print(a, tr_loss[a], tr_median[a])

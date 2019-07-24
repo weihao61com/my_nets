@@ -1,13 +1,13 @@
 import numpy as np
 import datetime
 import pickle
-from L_utils import LUtils
+#from L_utils import LUtils
 
 
 def load_go(filename='global_offset.csv'):
     return np.array(LUtils.read_csv(filename)).astype(float)
 
-class DataSet:
+class DataSet_L:
     def __init__(self, dataset, cfg, cache=True, sub_sample=-1):
         self.bucket = 0
         self.dataset = dataset
@@ -173,6 +173,12 @@ class DataSet:
             pre_data.append(dd)
 
         return pre_data
+
+    def get_ids(self):
+        print()
+        #for id in self.rasd:
+        #    print(id)
+        return None
 
     def prepare(self, rd=True, multi=1, rdd=True):
         pre_data = []

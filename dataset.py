@@ -207,8 +207,8 @@ class StackNet_cnn(Network):
 
             ref_out_name = ifc2_name
 
-        print self.dim_inter
-        print nodes, self.dim_ref
+        print(self.dim_inter)
+        print(nodes, self.dim_ref)
 
         if verbose:
             print("number of layers = {}".format(len(self.layers)))
