@@ -26,7 +26,7 @@ def load_data(filename, verbose = True, sub_sample=-1):
     if type(filename) is str: #unicode:
         avg_param = 0
         nt = 0
-
+        print('FILE', filename)
         with open(filename, 'rb') as fp:
             data = pickle.load(fp)
             length = 0
@@ -621,7 +621,7 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 1
+    range2 = 3
     range3 = -range2
 
 

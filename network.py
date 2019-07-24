@@ -248,7 +248,7 @@ class Network(object):
     def fc_w2(self, input, ws, name, relu=True):
         #print 'fc_w2', name, input.get_shape(), ws[0].get_shape()
         with tf.compat.v1.variable_scope(name) as scope:
-            op = tf.compat.v1.nn.relu_layer if relu else tf.nn.xw_plus_b
+            op = tf.compat.v1.nn.relu_layer if relu else tf.compat.v1.nn.xw_plus_b
             fc = op(input, ws[0], ws[1], name=scope.name)
             return fc
 
