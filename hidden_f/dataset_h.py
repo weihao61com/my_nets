@@ -94,6 +94,7 @@ class DataSet:
         self.rasd = None
         self.out_offset = cfg.out_offset
         self.fc_Nout = cfg.fc_Nout
+        self.I = None
 
         self.load_next_data(sub_sample)
         self.sz = None
@@ -150,12 +151,23 @@ class DataSet:
             data = self.memories[self.index]
         else:
             rasd = load_data(self.dataset[self.index], self.verbose, sub_sample)
+            self.I = []
+            for g_id in rasd.poses:
+                poses = rasd.poses[g_id]
+                print(g_id, len(poses))
+                for id in poses:
+                    pose = poses[id]
+                    self.I.append(pose.Q4[:3, :3])
+
             data = {}
-            for id in rasd.matches:
+            g_cnt = 0
+            for id in sorted(rasd.matches.keys()):
                 matches = rasd.matches[id]
                 features = rasd.features[id]
                 poses = rasd.poses[id]
+                print(id, g_cnt, len(poses))
                 d_id = []
+
                 for ids in matches:
                     img_id1 = ids[0]
                     img_id2 = ids[1]
@@ -166,19 +178,21 @@ class DataSet:
                     ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])
                     ft1 = features[img_id1][0]
                     ft2 = features[img_id2][0]
-                    if self.att==4:
+                    if self.att == 4:
                         match = matches[ids]
                         f = []
                         for m in match:
                             f1 = ft1[m[0]]
                             f2 = ft2[m[1]]
-                            f.append(np.array([f1[0],f1[1], f2[0], f2[1]]))
-                        d_id.append((f, ar[self.num_output1:self.num_output], ids))
+                            f.append(np.array([f1[0], f1[1], f2[0], f2[1]]))
+                        nid = (ids[0]+g_cnt, ids[1]+g_cnt)
+                        d_id.append((f, ar[self.num_output1:self.num_output], nid))
                     elif self.att==9:
                         raise Exception()
                     else:
                         raise Exception()
                 data[id] = d_id
+                g_cnt += len(rasd.poses[id])
             rt = 2
 
         self.rasd = rasd
@@ -339,7 +353,8 @@ class DataSet:
                 else:
                     raise Exception()
                 outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
-                ids.append(a[2])
+                #ids.append(a[2])
+                ids.append(id)
                 imgs.append(a[3])
             dd = (np.array(ins), np.array(outs), ids, imgs)
             pre_data.append(dd)

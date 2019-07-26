@@ -5,7 +5,7 @@ import datetime
 from sortedcontainers import SortedDict
 import numpy as np
 import os
-from dataset import DataSet, reverse
+from dataset_h import DataSet, reverse
 import pickle
 import random
 
@@ -40,10 +40,10 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
 
         result = np.array(result)
         for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
+            if not b[3][a] in rst_dic:
+                rst_dic[b[3][a]] = []
+            rst_dic[b[3][a]].append(result[:, a, :])
+            truth_dic[b[3][a]] = b[1][a]
 
     results = []
     truth = []
@@ -96,10 +96,10 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
 
         result = np.array(result)
         for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a], b[3][a]
+            if not b[3][a] in rst_dic:
+                rst_dic[b[3][a]] = []
+            rst_dic[b[3][a]].append(result[:, a, :])
+            truth_dic[b[3][a]] = b[1][a], b[3][a]
 
 
 def run_data(rst_dic, truth_dic, fname, cfg, Is):
@@ -115,24 +115,25 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
     list_dic = {}
     RR = []
     I = []
-    #Rgt = []
-    t_scale = np.array(map(float, cfg.t_scale.split(",")))
+    t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
         # result = np.mean(dst, axis=0)
+        #print(result, truth_dic[id])
         results.append(result)
         truth.append(truth_dic[id][0])
         t = truth_dic[id][0]
         imgs = truth_dic[id][1]
         result = result[-1]
-        RR.append(Utils.create_M(result))
-        #I.append(truth_dic[id][1])
-        #Rgt.append(Utils.create_M(t))
+        print(id, imgs)
+        if imgs[0]<20:
+            RR.append(Utils.create_M(result/t_scale[:3]))
+            I.append(imgs)
+
         if len(t)==6 and imgs[0]>imgs[1]:
             t = reverse(t/t_scale)*t_scale
             result = reverse(result/t_scale)*t_scale
-        I.append(imgs)
         dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
@@ -269,9 +270,9 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
     for a in range(mul):
         tr_pre_data = te.prepare(multi=-1, rd = False)
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
-    I = te.get_ids()
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, I)
+
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, te.I)
 
     for a in range(len(tr_loss)):
         print(a, tr_loss[a], tr_median[a])
@@ -381,10 +382,11 @@ if __name__ == '__main__':
 
     loss = None
     last_loss = None
+    As = []
     for a in xy:
         #if a<10:
         #    continue
-        print(a),
+        As.append(a)
         if cfg.L1==0:
             last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
         else:
@@ -393,7 +395,7 @@ if __name__ == '__main__':
             loss = last_loss
         else:
             loss = loss + last_loss
-    print
+    print(As)
 
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
