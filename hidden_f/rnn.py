@@ -126,30 +126,31 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
         t = truth_dic[id][0]
         imgs = truth_dic[id][1]
         result = result[-1]
-        print(id, imgs)
-        if imgs[0]<20:
-            RR.append(Utils.create_M(result/t_scale[:3]))
-            I.append(imgs)
+        # print(id, imgs)
+        #if imgs[0]<100 and imgs[1]<100:
+        RR.append(Utils.create_M(result/t_scale[:3]/180*np.pi))
+        I.append(imgs)
+            # print(imgs, result, t)
 
-        if len(t)==6 and imgs[0]>imgs[1]:
-            t = reverse(t/t_scale)*t_scale
-            result = reverse(result/t_scale)*t_scale
+        #if len(t)==6 and imgs[0]>imgs[1]:
+        #    t = reverse(t/t_scale)*t_scale
+        #    result = reverse(result/t_scale)*t_scale
         dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
 
         if random.random() < 1.2:
-            if len(t) == 6 or imgs[0] < imgs[1]:
+            #if len(t) == 6 or imgs[0] < imgs[1]:
 
-                mm = result
-                for a in range(len(t)):
-                    if a not in list_dic:
-                        list_dic[a] = []
-                    list_dic[a].append(t[a]-mm[a])
-                    if a>0:
-                        fp.write(',')
-                    fp.write('{},{}'.format(t[a], mm[a]))
-                fp.write(',{}\n'.format(r))
+            mm = result
+            for a in range(len(t)):
+                if a not in list_dic:
+                    list_dic[a] = []
+                list_dic[a].append(t[a]-mm[a])
+                if a>0:
+                    fp.write(',')
+                fp.write('{},{}'.format(t[a], mm[a]))
+            fp.write(',{}\n'.format(r))
 
     P = {}
     P['RR'] = np.array(RR).transpose()

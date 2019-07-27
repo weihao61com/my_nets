@@ -39,6 +39,10 @@ def main():
 	Rgt = a['Rgt']
 	RR = a['RR']
 	# print a
+	# I0 = I[0]
+	# print(RR[:,:,0])
+	# print(Rgt[:,:,I0[0]])
+	# print(Rgt[:,:,I0[1]])
 
 	testi = rotation_averaging.util.fix_matrix(numpy.array([[1.0, 0.1, 0.0],[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]))
 	# print testi
