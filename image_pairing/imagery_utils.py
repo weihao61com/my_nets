@@ -6,6 +6,8 @@ from sortedcontainers import SortedDict
 import os
 import cv2
 import math
+import evo.core.transformations as tr
+
 
 def quaternion_matrix(quaternion):
     _EPS = np.finfo(float).eps * 4.0
@@ -62,13 +64,21 @@ def image_resize(img, scale = 1.01):
     y1 = y0 + sz[1]
     return img[x0:x1, y0:y1, :]
 
+def re_normalize(m3):
+    inv = np.linalg.inv(m3)
+    tra = m3.transpose()
+    m1 = (inv+tra)/2
+    m2 = np.linalg.inv(m1)
+    A = tr.euler_from_matrix(m2)
+    m = tr.euler_matrix(A[0], A[1], A[2])
+    return m[:3, :3]
 
 class Pose:
     def __init__(self, line, location, pose_file, data=0, id=0):
         strs = line[:-1].split()
         self.fs = None
         if data==0: # kitti
-            a = np.reshape(np.array(map(float, strs)), (3, 4))
+            a = np.reshape(np.array(list(map(float, strs))), (3, 4))
             nm = '{0}/sequences/{1}/image_1/{2}.png'.format(location, pose_file, str(id).zfill(6))
             self.filename = nm
             self.m3x3 = a[:, :3]
@@ -90,10 +100,12 @@ class Pose:
             self.filename = pose_file
             p_file = pose_file[:-9] + 'pose.txt'
             m3x4 = np.loadtxt(p_file)
-            self.m3x3 = m3x4[:3, :3]
+            m3 = re_normalize(m3x4[:3, :3])
+            self.m3x3 = m3
             self.tran = m3x4[:3, 3]
             basename = os.path.basename(pose_file)[:-10]
             self.id = int(basename[-6:])
+            m3x4[:3, :3] = m3
             self.Q4 = m3x4
         elif data ==3: #TUM????
             self.filename = os.path.join(line, pose_file)

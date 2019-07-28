@@ -471,8 +471,7 @@ class Utils:
 
     @staticmethod
     def get_A_T(Q):
-        A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
-        A = np.array(A) * 180.0/np.pi
+        A = Utils.get_A(Q[:3, :3])
         # A = np.array(BlueNoteSensorRotation.
         #                 get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
         T = Q[:3, 3]
@@ -502,9 +501,10 @@ class Utils:
 
     @staticmethod
     def get_A(Q):
-        #A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
-        A = np.array(BlueNoteSensorRotation.
-                         get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
+        A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
+        A = np.array(A) * 180.0/np.pi
+        #A = np.array(BlueNoteSensorRotation.
+        #                 get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
         return A
 
     @staticmethod
@@ -512,3 +512,14 @@ class Utils:
         for id in bucket:
             for b in bucket[id]:
                 np.random.shuffle(b[0])
+
+if __name__ == "__main__":
+    pose = '-5.591326e-02 5.120575e-02 -9.971217e-01 -1.450234e+02 -2.512261e-02 9.982956e-01 5.267479e-02 -5.651594e+00 9.981195e-01 2.799552e-02 -5.453153e-02 3.692862e+02'
+    mat = np.array(list(map(float , pose.split(' ')))).reshape((3,4))
+    # mat =[[ 0.99999273,  0.00149413,  0.00350839],
+    #       [-0.0014897,   0.99999809, -0.00126595],
+    #       [-0.00351027,  0.00126071,  0.99999304]]
+    # mat = np.array(mat)
+    I = mat[:3, :3].dot(mat[:3, :3].transpose())
+    A = Utils.get_A(mat)
+    print(A, np.linalg.norm(A))

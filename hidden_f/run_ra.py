@@ -28,7 +28,7 @@ def main():
 
 	import sys
 	logging.basicConfig(level=logging.INFO)
-	filename = "/Users/weihao/tmp/test.p" #data/notredame/Notredame.mat"
+	filename = "/home/weihao/tmp/test.p" #data/notredame/Notredame.mat"
 
 	if len(sys.argv) > 1:
 		filename = sys.argv[1]
@@ -63,10 +63,10 @@ def main():
 	for mat in relative_rotations:
 		max_err = max(max_err, scipy.linalg.norm(numpy.identity(3) - mat.dot(mat.transpose())))
 
-	print(max_err)
-	print(global_rotations[0])
-	print(rotation_averaging.so3.matrix_to_axis_angle(global_rotations[0]))
-	print(rotation_averaging.so3.matrix_to_axis_angle(relative_rotations[0]))
+	# print(max_err)
+	# print(global_rotations[0])
+	# print(rotation_averaging.so3.matrix_to_axis_angle(global_rotations[0]))
+	# print(rotation_averaging.so3.matrix_to_axis_angle(relative_rotations[0]))
 	# graphi = graph.generate_random_so3_graph(200, completeness=0.5, noise=0.2)
 	# global_rotations = graphi[0]
 	# relative_rotations = graphi[1]

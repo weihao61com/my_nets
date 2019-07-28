@@ -130,11 +130,16 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
         #if imgs[0]<100 and imgs[1]<100:
         RR.append(Utils.create_M(result/t_scale[:3]/180*np.pi))
         I.append(imgs)
-            # print(imgs, result, t)
 
         #if len(t)==6 and imgs[0]>imgs[1]:
         #    t = reverse(t/t_scale)*t_scale
         #    result = reverse(result/t_scale)*t_scale
+
+        Q = np.linalg.inv(Is[imgs[0]]).dot(Is[imgs[1]])
+        A = Utils.get_A(Q)
+
+        t = Is[imgs[1]].dot(Is[imgs[0]].transpose())
+        t = Utils.get_A(t)
         dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
