@@ -490,11 +490,13 @@ class Utils:
         M = np.concatenate((M, np.array(T).reshape(3, 1)), axis=1)
         M = np.concatenate((M, np.array([0,0,0,1]).reshape(1,4)))
         #M[:3, 3] = T
+        raise Exception()
         return M
 
     @  staticmethod
     def create_M(A):
-        M = tr.euler_matrix(A[0], A[1], A[2])
+        A /= 180.0 / np.pi
+        M = tr.euler_matrix(A[0], A[2], A[1])
         # M = np.array(BlueNoteSensorRotation.rotation_matrix
         #              (A[0], A[1], A[2], sequence=RotationSequence.XZY))
         return M[:3, :3]
@@ -514,12 +516,13 @@ class Utils:
                 np.random.shuffle(b[0])
 
 if __name__ == "__main__":
-    pose = '-5.591326e-02 5.120575e-02 -9.971217e-01 -1.450234e+02 -2.512261e-02 9.982956e-01 5.267479e-02 -5.651594e+00 9.981195e-01 2.799552e-02 -5.453153e-02 3.692862e+02'
-    mat = np.array(list(map(float , pose.split(' ')))).reshape((3,4))
-    # mat =[[ 0.99999273,  0.00149413,  0.00350839],
-    #       [-0.0014897,   0.99999809, -0.00126595],
-    #       [-0.00351027,  0.00126071,  0.99999304]]
-    # mat = np.array(mat)
+    #pose = '-5.591326e-02 5.120575e-02 -9.971217e-01 -1.450234e+02 -2.512261e-02 9.982956e-01 5.267479e-02 -5.651594e+00 9.981195e-01 2.799552e-02 -5.453153e-02 3.692862e+02'
+    #mat = np.array(list(map(float , pose.split(' ')))).reshape((3,4))
+
+    mat =[[ 9.99990614e-01,  2.11742669e-03,  3.77992169e-03],
+ [-2.11779305e-03,  9.99997753e-01,  9.29212715e-05],
+ [-3.77971644e-03, -1.00925491e-04,  9.99992852e-01]]
+    mat = np.array(mat)
     I = mat[:3, :3].dot(mat[:3, :3].transpose())
-    A = Utils.get_A(mat)
+    A = Utils.get_A(mat)/180*np.pi
     print(A, np.linalg.norm(A))

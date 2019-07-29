@@ -173,7 +173,9 @@ class DataSet:
                     img_id2 = ids[1]
                     p1 = poses[img_id1]
                     p2 = poses[img_id2]
-                    Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
+                    # Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
+                    Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+                    P = p2.Q4.dot(p1.Q4.transpose())
                     A, T = Utils.get_A_T(Q)
                     ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])
                     ft1 = features[img_id1][0]
@@ -398,6 +400,9 @@ class DataSet:
                 for a in range(len(data[b][0])):
                     self.data[id][b][0][a] -= av
                     self.data[id][b][0][a] /= st
+        self.rasd.matches=None
+        self.rasd.features=None
+        self.rasd.poses=None
 
     def avg_correction2(self, avg_file):
         self.data = None

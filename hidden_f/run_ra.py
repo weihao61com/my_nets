@@ -72,7 +72,8 @@ def main():
 	# relative_rotations = graphi[1]
 	# indices = graphi[2]
 
-	rotation_averaging.compare.compare_global_rotation_to_graph(global_rotations, relative_rotations, indices, plot=True)
+	rt = rotation_averaging.compare.compare_global_rotation_to_graph(global_rotations, relative_rotations, indices, plot=True)
+	print(rt)
 	initial_guess = rotation_averaging.graph.compute_initial_guess(len(global_rotations), relative_rotations, indices)
 
 	max_err = 0.0
@@ -81,12 +82,15 @@ def main():
 
 	print(max_err)
 
-	rotation_averaging.compare.compare_global_rotation_to_graph(initial_guess, relative_rotations, indices, plot=True)
+	rt = rotation_averaging.compare.compare_global_rotation_to_graph(initial_guess, relative_rotations, indices, plot=True)
+	print(rt)
+
 	# print initial_guess[0].shape, len(initial_guess)
 	# solution = rotation_averaging.algorithms.L1RA(len(global_rotations), relative_rotations, indices, initial_guess)
 	# rotation_averaging.compare.compare_global_rotation_to_graph(solution, relative_rotations, indices, plot=True)
 	solution = rotation_averaging.algorithms.IRLS(len(global_rotations), relative_rotations, indices, initial_guess)
-	rotation_averaging.compare.compare_global_rotation_to_graph(solution, relative_rotations, indices, plot=True)
+	rt=rotation_averaging.compare.compare_global_rotation_to_graph(solution, relative_rotations, indices, plot=True)
+	print(rt)
 
 if __name__ == '__main__':
 	main()

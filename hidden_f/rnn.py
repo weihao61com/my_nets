@@ -102,6 +102,16 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
             truth_dic[b[3][a]] = b[1][a], b[3][a]
 
 
+def reshape(a):
+    ss = a[0].shape
+    ll = len(a)
+    ss = ss + (ll,)
+    output = np.zeros(ss)
+    for b in range(ll):
+        output[:, :, b] = a[b]
+    return output
+
+
 def run_data(rst_dic, truth_dic, fname, cfg, Is):
 
     results = []
@@ -128,18 +138,9 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
         result = result[-1]
         # print(id, imgs)
         #if imgs[0]<100 and imgs[1]<100:
-        RR.append(Utils.create_M(result/t_scale[:3]/180*np.pi))
+        RR.append(Utils.create_M(result/t_scale[:3]))
         I.append(imgs)
 
-        #if len(t)==6 and imgs[0]>imgs[1]:
-        #    t = reverse(t/t_scale)*t_scale
-        #    result = reverse(result/t_scale)*t_scale
-
-        Q = np.linalg.inv(Is[imgs[0]]).dot(Is[imgs[1]])
-        A = Utils.get_A(Q)
-
-        t = Is[imgs[1]].dot(Is[imgs[0]].transpose())
-        t = Utils.get_A(t)
         dr = t - result
         r = np.linalg.norm(dr)
         rs.append(r*r)
@@ -158,8 +159,9 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
             fp.write(',{}\n'.format(r))
 
     P = {}
-    P['RR'] = np.array(RR).transpose()
-    P['Rgt'] = np.array(Is).transpose()
+    P['RR'] =  reshape(RR)
+    # P['Rgt'] = np.array(Is).transpose()
+    P['Rgt'] = reshape(Is)
     P['I'] = np.array(I).transpose()
     filename = filename[:-4] + '.p'
     with open(filename, 'wb') as fp:
@@ -337,9 +339,9 @@ if __name__ == '__main__':
     if test is None:
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
+        tr.avg_correction(avg_file)
         te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
         tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
-        tr.avg_correction(avg_file)
         tr0.avg_correction(avg_file)
 
     else:
