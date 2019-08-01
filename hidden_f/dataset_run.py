@@ -42,7 +42,7 @@ h2 = cam.cy
 output_file = '{}/tmp/feature.csv'.format(HOME)
 fp = open(output_file, 'w')
 
-with open(filename, 'r') as f:
+with open(filename, 'rb') as f:
     data = pickle.load(f)
 
 rs = []
@@ -83,9 +83,16 @@ for data_id in data.matches:
         #b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
         p1 = poses[img1]
         p2 = poses[img2]
-        Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        a, T = Utils.get_A_T(Q)
+        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
 
+        a, T = Utils.get_A_T(Q)
+        a1, T1 = Utils.get_A_T(P)
+        if img2-img1==1:
+            m = P[:3, :3] - np.eye(3)
+           #  m = m.reshape(9)
+            if img1<1000:
+                print(img1, img2, m[0], m[1], m[2])
         e = []
         for c in b:
             if c<-90:
@@ -112,21 +119,21 @@ for data_id in data.matches:
         fp.write('{},{},{},{},{},{},{}\n'.
                  format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
 
-print 'att', att/len(matches)
+print( 'att', att/len(matches))
 angs = np.array(angs)
 rs0 = np.array(rs0)
 rs1 = np.array(rs1)
 rs2 = np.array(rs2)
 
 #rs = np.sqrt(rs)
-print 'name, median, Anger-error, mx, my, mz'
-print '{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
+print ('name, median, Anger-error, mx, my, mz')
+print ('{0}, {1:.4f} {2:.4f} {3:.4f} {4:.4f} {5:.4f}'.format(
     os.path.basename(filename), np.sqrt(np.median(rs)), np.median(angs),
-    np.median(rs0),np.median(rs1),np.median(rs2))
-print 'Average(RMS), {0:.4f} {1:.4f} {2:.4f} {3:.4f} {4:.4f}'.format(
+    np.median(rs0),np.median(rs1),np.median(rs2)))
+print ('Average(RMS), {0:.4f} {1:.4f} {2:.4f} {3:.4f} {4:.4f}'.format(
     np.sqrt(np.mean(rs)), np.sqrt(np.mean(angs*angs)),
     np.sqrt(np.mean(rs0*rs0)),np.sqrt(np.mean(rs1*rs1)),
-    np.sqrt(np.mean(rs2*rs2)))
+    np.sqrt(np.mean(rs2*rs2))))
 #print '{0}, {1:.4f} '.format(
 #    os.path.basename(filename), np.mean(np.sqrt(rs)))
 fp.close()

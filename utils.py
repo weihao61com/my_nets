@@ -510,6 +510,22 @@ class Utils:
         return A
 
     @staticmethod
+    def q_to_A(q):
+        A = tr.euler_from_quaternion(q)
+        A = np.array(A) * 180.0/np.pi
+        return A
+
+    @staticmethod
+    def q_from_m(m):
+        A = tr.quaternion_from_matrix(m)
+        return A
+
+    @staticmethod
+    def q_to_m(q):
+        A = tr.quaternion_matrix(q)
+        return A
+
+    @staticmethod
     def reshuffle_b(bucket):
         for id in bucket:
             for b in bucket[id]:

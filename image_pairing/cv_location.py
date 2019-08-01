@@ -2,10 +2,9 @@ import numpy as np
 import cv2
 from imagery_utils import image_resize
 from pose_ana import *
-import pickle
+import sys
 import os
-from bluenotelib.common import quaternion
-from bluenotelib.common.bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
+#from bluenotelib.common import quaternion
 
 STAGE_FIRST_FRAME = 0
 STAGE_SECOND_FRAME = 1
@@ -15,6 +14,8 @@ kMinNumFeature = 1500
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils, PinholeCamera
+from bluenote_sensor_rotation import BlueNoteSensorRotation, RotationSequence
+
 
 lk_params = dict(winSize=(21, 21),
                  # maxLevel = 3,

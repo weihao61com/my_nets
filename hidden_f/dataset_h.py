@@ -3,14 +3,17 @@ import numpy as np
 import datetime
 import random
 import sys
-from ras_dataset import RAS_D
-from image_pairing.pose_ana import \
-    load_kitti_poses, load_indoor_7_poses, load_TUM_poses
 import os
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 HOME = '{}/../..'.format(this_file_path)
 sys.path.append('{}/my_nets'.format(HOME))
+
+
+from ras_dataset import RAS_D
+from image_pairing.pose_ana import \
+    load_kitti_poses, load_indoor_7_poses, load_TUM_poses
+
 
 from utils import Utils
 
@@ -173,9 +176,10 @@ class DataSet:
                     img_id2 = ids[1]
                     p1 = poses[img_id1]
                     p2 = poses[img_id2]
-                    # Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
-                    Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-                    P = p2.Q4.dot(p1.Q4.transpose())
+
+                    Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
+                    # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+                    # P = p2.Q4.dot(p1.Q4.transpose())
                     A, T = Utils.get_A_T(Q)
                     ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])
                     ft1 = features[img_id1][0]
@@ -651,9 +655,9 @@ if __name__ == '__main__':
     range2 = 3
     range3 = -range2
 
-
-    key = 'heads'
-    mode = 'Test'
+    read_time = False
+    key = '00'
+    mode = 'Train'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'
     #key = 'rgbd_dataset_freiburg3_long_office_household'
@@ -663,6 +667,8 @@ if __name__ == '__main__':
         key = sys.argv[1]
     if len(sys.argv)>2:
         mode = sys.argv[2]
+    if len(sys.argv)>3:
+        read_time = True
 
     print(key, mode, range2, range3)
 
@@ -672,7 +678,7 @@ if __name__ == '__main__':
 
     if key.startswith('0'):
         location = '{}/datasets/kitti'.format(HOME)
-        poses_dic, cam = load_kitti_poses(location, key + ".txt")
+        poses_dic, cam = load_kitti_poses(location, key)
         key = 'kitti_{}'.format(key)
     elif key.startswith('rgbd'):
         location = '{}/datasets/TUM'.format(HOME)
@@ -680,6 +686,13 @@ if __name__ == '__main__':
     else:
         location = "{}/datasets/indoors/{}".format(HOME, key)  # office" #heads
         poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+
+    if read_time:
+        for id in poses_dic:
+            time_table_file = location + '/sequences/' + id + '/times.txt'
+            time_table = np.loadtxt(time_table_file)
+            poses = poses_dic[id]
+            print(len(poses), len(time_table))
 
     filename = '{}/p_files/{}_{}_ras_s{}_3.p'.format(HOME, key, mode, range2)
     output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)

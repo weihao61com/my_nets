@@ -13,13 +13,13 @@ HOME = '{}/../..'.format(this_file_path)
 
 #HOME = '/home/weihao/Projects'
 
-range2 = 1
+range2 = 3
 range3 = 0
 range1 = -range2
-#key = "08"
-#mode = "Test"
-key = 'heads'
-mode = 'Test'
+key = "02"
+mode = "Test"
+#key = 'heads'
+#mode = 'Test'
 #key = 'rgbd_dataset_freiburg3_long_office_household'
 #mode = 'Train'
 
@@ -28,7 +28,7 @@ if len(sys.argv)>1:
 if len(sys.argv)>2:
     mode = sys.argv[2]
 
-print key, mode
+print(key, mode)
 
 #location = '/home/weihao/Projects/cambridge/OldHospital'
 #pose_file = 'dataset_train.txt'
@@ -36,7 +36,7 @@ print key, mode
 
 if key.startswith('0'):
     location = '{}/datasets/kitti'.format(HOME)
-    poses_dic, cam = load_kitti_poses(location, key+".txt")
+    poses_dic, cam = load_kitti_poses(location, key)
     key = 'kitti_{}'.format(key)
 elif key.startswith('rgbd'):
     location = '{}/datasets/TUM'.format(HOME)
@@ -47,12 +47,12 @@ else:
 
 filename = '{}/p_files/{}_{}_cv_s{}_2.p'.format(HOME, key, mode, range2)
 output_file = '{}/tmp/{}_{}.csv'.format(HOME, key, mode)
-print location
-print filename
-print output_file
+print(location)
+print(filename)
+print(output_file)
 
 for p in poses_dic:
-    print p, len(poses_dic[p])
+    print (p, len(poses_dic[p]))
 
 sf = SiftFeature()
 vo = VisualOdometry2(cam, sf)
@@ -63,6 +63,7 @@ t0 = datetime.datetime.now()
 nt = 0
 data = []
 rs = []
+lf = 0
 
 isTest = mode.startswith('Te')
 fpt = None
@@ -96,13 +97,14 @@ for seq in poses_dic:
                     fs[:, 4] = (fs[:, 4]-w2)/w2
                     fs[:, 5] = (fs[:, 5]-h2)/h2
                     data.append([fs, vo.truth])
+                    lf += len(fs)
 
         nt += 1
         if nt % 100 == 0:
-            print nt, img_id1, len(data), datetime.datetime.now() - t0
+            print (nt, img_id1, len(data), lf/len(data), datetime.datetime.now() - t0)
             t0 = datetime.datetime.now()
 
-print 'Total data', len(data)
+print ('Total data', len(data))
 
 with open(filename, 'w') as fp:
     pickle.dump(data, fp)

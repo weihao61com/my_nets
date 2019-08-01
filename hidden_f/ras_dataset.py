@@ -78,7 +78,7 @@ class RAS_D:
             for id in poses:
                 self.features[seq][id] = self.get_feature(poses[id])
                 if len(self.features[seq])%200==0:
-                    print(seq, len(self.features[seq]), datetime.datetime.now()-t0)
+                    print(seq, len(self.features[seq]), len(self.features[seq][id][0]), datetime.datetime.now()-t0)
 
             features = self.features[seq]
             print('matching', datetime.datetime.now()-t0)
@@ -120,7 +120,7 @@ class RAS_D:
                         nt += 1
 
                         if nt % 1000 == 0:
-                            print(nt, id1, datetime.datetime.now() - t0, length/nt, length)
+                            print(nt, id1, datetime.datetime.now() - t0, int(length/nt), length)
                             t0 = datetime.datetime.now()
                         self.matches[seq][(id1, id2)] = pts1
         print

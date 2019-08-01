@@ -1,6 +1,5 @@
 from sortedcontainers import SortedDict
 import numpy as np
-from .imagery_utils import Pose
 import os
 import sys
 
@@ -8,7 +7,7 @@ this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils, PinholeCamera
 from glob import glob
-import os
+from .imagery_utils import Pose
 
 
 def load_TUM_poses(location, pose_file):
@@ -76,7 +75,8 @@ def load_indoor_7_poses(location, pose_file):
 
     return poses, cam
 
-def load_kitti_poses(location, pose_file):
+def load_kitti_poses(location, pose_id):
+    pose_file = pose_id + '.txt'
     poses = SortedDict()
     filename = '{}/poses/{}'.format(location, pose_file)
     id = 0
@@ -88,7 +88,7 @@ def load_kitti_poses(location, pose_file):
     focal = 719  # 719
     cam = PinholeCamera(1241.0, 376.0, focal, focal, 607.1928, 185.2157)
 
-    return {pose_file: poses}, cam
+    return {pose_id: poses}, cam
 
 
 def load_cambridge_poses(location, pose_file):
