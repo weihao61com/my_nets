@@ -112,8 +112,16 @@ class Utils:
                 output.append(int(s))
         return output
 
+
+    @staticmethod
+    def get_relative(p1, p2):
+        Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        A = Utils.get_A(Q4)
+        return A
+
     @staticmethod
     def rotationMatrixToEulerAngles(R):
+        raise Exception()
         sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
         singular = sy < 1e-6
         if not singular:
@@ -481,6 +489,7 @@ class Utils:
     def get_relative_A_T(Q1, Q2):
         Q_inv = np.linalg.inv(Q1)
         Q = Q_inv.dot(Q2)
+        raise Exception()
         return Utils.get_A_T(Q)
 
     @  staticmethod

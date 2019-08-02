@@ -5,7 +5,6 @@ import datetime
 from sortedcontainers import SortedDict
 import numpy as np
 import os
-from dataset_h import DataSet, reverse
 import pickle
 import random
 
@@ -19,6 +18,7 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils, Config
 from network import Network
 #from fc_dataset import DataSet
+from dataset_h import DataSet, reverse
 
 
 def run_data_0(data, inputs, sess, xy, fname, cfg):

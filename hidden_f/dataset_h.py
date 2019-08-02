@@ -466,9 +466,7 @@ class DataSet:
             p1 = poses[im1]
             p2 = poses[im2]
 
-            Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
-
-            A = Utils.rotationMatrixToEulerAngles(Q4[:3, :3])*180/np.pi
+            A = Utils.get_relative(p1, p2)
             A = A * self.t_scale[:3]
             ms = matches[ids]
             random.shuffle(ms)
