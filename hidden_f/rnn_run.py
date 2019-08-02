@@ -5,8 +5,6 @@ import datetime
 from sortedcontainers import SortedDict
 import numpy as np
 import os
-from dataset import DataSet
-import cPickle
 import random
 
 HOME = '/home/weihao/Projects/'
@@ -18,7 +16,7 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 
 from utils import Utils, Config
 from network import Network
-#from fc_dataset import DataSet
+from dataset_h import DataSet
 
 
 def run_data_0(data, inputs, sess, xy, fname, cfg):
@@ -79,10 +77,10 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.L1)
 
 
-def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
+def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic, imgs_dic):
     att = cfg.att
     for b in data:
-        length = b[0].shape[1]/att
+        length = int(b[0].shape[1]/att)
         feed = {}
         b_sz = b[0].shape[0]
 
@@ -96,13 +94,14 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
 
         result = np.array(result)
         for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
+            if not b[3][a] in rst_dic:
+                rst_dic[b[3][a]] = []
+            rst_dic[b[3][a]].append(result[:, a, :])
+            truth_dic[b[3][a]] = b[1][a]
+            # imgs_dic[b[3][a]] = b[2][a]
 
 
-def run_data(rst_dic, truth_dic, fname):
+def run_data(rst_dic, truth_dic, imgs_dic, fname):
 
     results = []
     truth = []
@@ -116,6 +115,7 @@ def run_data(rst_dic, truth_dic, fname):
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
         # result = np.mean(dst, axis=0)
+        print(dst.shape, result.shape)
         results.append(result)
         truth.append(truth_dic[id])
         t = truth_dic[id]
@@ -151,7 +151,7 @@ def run_data(rst_dic, truth_dic, fname):
 class rNet(Network):
 
     def create_ws(self, n, ins, outs):
-        print n, ins, outs
+        print(n, ins, outs)
         w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
         b = self.make_var('biases_{}'.format(n), shape=[outs])
         return [w,b]
@@ -239,37 +239,13 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
 
     rst_dic = {}
     truth_dic = {}
+    imgs_dic = {}
     for a in range(mul):
-        tr_pre_data = te.prepare(multi=-1, rd = False)
-        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+        tr_pre_data = te.prepare(multi=-1, rd=False)
+        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic, imgs_dic)
 
-    rst = run_data(rst_dic, truth_dic, 'test')
+    rst = run_data(rst_dic, truth_dic, imgs_dic, 'test')
     return rst
-
-
-def get_avg_file(tr, avg_file):
-    av = None
-    st = None
-    nt = 0
-    for d in tr.data:
-        if nt == 0:
-            av = np.sum(d[0], 0)
-            st = np.sum(d[0]*d[0], 0)
-        else:
-            av += np.sum(d[0], 0)
-            st += np.sum(d[0] * d[0], 0)
-        nt += d[0].shape[0]
-    av /= nt
-    st /= nt
-    st = np.sqrt(st - av*av)
-    print "Saving averages:", avg_file
-    for a in range(len(av)):
-        print a, av[a], st[a]
-
-    with open(avg_file, 'w') as fp:
-        cPickle.dump((av,st), fp)
-
-    return
 
 
 def avg_file_name(p):
@@ -284,14 +260,22 @@ if __name__ == '__main__':
     cfg = Config(config_file)
 
     avg_file = avg_file_name(cfg.netFile)
-    tr = DataSet(cfg.tr_data, cfg)
-    te = DataSet(cfg.te_data, cfg)
+
+    dt = 'te'
+
+    if len(sys.argv)>1:
+        dt = sys.argv[1]
+
+    if dt=='te':
+        te = DataSet(cfg.te_data, cfg)
+    else:
+        te = DataSet(cfg.tr_data, cfg)
+
     cfg.att = te.att
-    tr.avg_correction(avg_file)
     te.avg_correction(avg_file)
 
-    print "input attribute", cfg.att, "LR", cfg.lr, \
-        'feature', cfg.feature_len, 'add', cfg.add_len
+    print("input attribute", cfg.att, "LR", cfg.lr,
+          'feature', cfg.feature_len, 'add', cfg.add_len)
 
     inputs = {}
 
@@ -321,7 +305,7 @@ if __name__ == '__main__':
         n = 'output_{}'.format(a)
         if n in net.layers:
             xy[a] = net.layers['output_{}'.format(a)]
-    print 'output', len(xy)
+    print ('output', len(xy))
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
@@ -335,10 +319,7 @@ if __name__ == '__main__':
             mul = int(sys.argv[2])
         saver.restore(sess, cfg.netFile)
         rst_te = run_test(input_dic, sess, xy, te, cfg, mul)
-        rst_tr = run_test(input_dic, sess, xy, tr, cfg, mul)
 
         te.set_A_T(rst_te)
-        tr.set_A_T(rst_tr)
 
         te.save_data_2('te')
-        tr.save_data_2('tr')

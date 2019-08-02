@@ -177,10 +177,7 @@ class DataSet:
                     p1 = poses[img_id1]
                     p2 = poses[img_id2]
 
-                    Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
-                    # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-                    # P = p2.Q4.dot(p1.Q4.transpose())
-                    A, T = Utils.get_A_T(Q)
+                    A, T = Utils.get_relative(p1, p2)
                     ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])
                     ft1 = features[img_id1][0]
                     ft2 = features[img_id2][0]
@@ -650,7 +647,7 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 3
+    range2 = 1
     range3 = -range2
 
     read_time = False

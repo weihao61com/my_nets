@@ -405,17 +405,17 @@ if __name__ == '__main__':
             loss = loss + last_loss
     print(As)
 
-    opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
+    opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
                     beta2=0.999, epsilon=0.00000001,
                     use_locking=False, name='Adam').\
         minimize(loss)
     # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
-    init = tf.global_variables_initializer()
-    saver = tf.train.Saver()
+    init = tf.compat.v1.global_variables_initializer()
+    saver = tf.compat.v1.train.Saver()
     t00 = datetime.datetime.now()
     N_total = 0
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         sess.run(init)
 
         if test is not None:

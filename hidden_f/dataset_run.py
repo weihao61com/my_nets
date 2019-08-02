@@ -83,16 +83,17 @@ for data_id in data.matches:
         #b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
         p1 = poses[img1]
         p2 = poses[img2]
-        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-
-        a, T = Utils.get_A_T(Q)
-        a1, T1 = Utils.get_A_T(P)
-        if img2-img1==1:
-            m = P[:3, :3] - np.eye(3)
-           #  m = m.reshape(9)
-            if img1<1000:
-                print(img1, img2, m[0], m[1], m[2])
+        a, t = Utils.get_relative(p1, p2)
+        # P = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        #         # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        #         #
+        #         # a, T = Utils.get_A_T(Q)
+        #         # a1, T1 = Utils.get_A_T(P)
+        #         # if img2-img1==1:
+        #         #     m = P[:3, :3] - np.eye(3)
+        #         #    #  m = m.reshape(9)
+        #         #     if img1<1000:
+        #         #         print(img1, img2, m[0], m[1], m[2])
         e = []
         for c in b:
             if c<-90:
