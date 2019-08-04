@@ -9,7 +9,6 @@ this_file_path = os.path.dirname(os.path.realpath(__file__))
 HOME = '{}/../..'.format(this_file_path)
 sys.path.append('{}/my_nets'.format(HOME))
 
-
 from ras_dataset import RAS_D
 from image_pairing.pose_ana import \
     load_kitti_poses, load_indoor_7_poses, load_TUM_poses
@@ -103,6 +102,7 @@ class DataSet:
         self.sz = None
         for id in self.data:
             self.sz = len(self.data[id][0][0])
+            break
         self.id = None
         features = list(self.rasd.features.values())[0]
         print("features", len(features))
@@ -168,7 +168,7 @@ class DataSet:
                 matches = rasd.matches[id]
                 features = rasd.features[id]
                 poses = rasd.poses[id]
-                print(id, g_cnt, len(poses))
+                # print(id, g_cnt, len(poses))
                 d_id = []
 
                 for ids in matches:
@@ -188,20 +188,19 @@ class DataSet:
                             f1 = ft1[m[0]]
                             f2 = ft2[m[1]]
                             f.append(np.array([f1[0], f1[1], f2[0], f2[1]]))
-                        nid = (ids[0]+g_cnt, ids[1]+g_cnt)
-                        d_id.append((f, ar[self.num_output1:self.num_output], nid))
+                        nid = (ids[0], ids[1], id)
+                        data[nid] = (f, ar[self.num_output1:self.num_output])
+
                     elif self.att==9:
                         raise Exception()
                     else:
                         raise Exception()
-                data[id] = d_id
-                g_cnt += len(rasd.poses[id])
             rt = 2
 
         self.rasd = rasd
         if self.cache:
             self.memories[self.index] = data
-
+        print("total data", len(data))
         self.data = data
 
         return rt
@@ -339,28 +338,27 @@ class DataSet:
         if rdd:
             self.reshuffle_data()
         self.id = 0
-        for id in self.data:
-            d = self.data[id]
-            data = self.create_bucket(d, multi)
-            if rd:
-                np.random.shuffle(data)
-            ins = []
-            outs = []
-            ids = []
-            imgs = []
-            for a in data:
-                if self.net_type == 'fc':
-                    ins.append(a[0])
-                elif self.net_type == 'cnn':
-                    ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
-                else:
-                    raise Exception()
-                outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
-                #ids.append(a[2])
-                ids.append(id)
-                imgs.append(a[3])
-            dd = (np.array(ins), np.array(outs), ids, imgs)
-            pre_data.append(dd)
+        #for id in self.data:
+        # d = self.data[id]
+        data = self.create_bucket(multi)
+        if rd:
+            np.random.shuffle(data)
+        ins = []
+        outs = []
+        #ids = []
+        imgs = []
+        for a in data:
+            if self.net_type == 'fc':
+                ins.append(a[0])
+            elif self.net_type == 'cnn':
+                ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
+            else:
+                raise Exception()
+            outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
+
+            imgs.append(a[2])
+        dd = (np.array(ins), np.array(outs), imgs)
+        pre_data.append(dd)
 
         return pre_data
 
@@ -397,13 +395,12 @@ class DataSet:
         st = A[1]
         for id in self.data:
             data = self.data[id]
-            for b in range(len(data)):
-                for a in range(len(data[b][0])):
-                    self.data[id][b][0][a] -= av
-                    self.data[id][b][0][a] /= st
+            for a in range(len(data[0])):
+                self.data[id][0][a] -= av
+                self.data[id][0][a] /= st
         self.rasd.matches=None
         self.rasd.features=None
-        self.rasd.poses=None
+        # self.rasd.poses=None
 
     def avg_correction2(self, avg_file):
         self.data = None
@@ -507,15 +504,15 @@ class DataSet:
         # print nm
         return output
 
-    def create_bucket(self, data, multi):
+    def create_bucket(self, multi):
 
         outputs = []
         for id in self.data:
-            sz_in = len(self.data[id][0][0][0])
+            sz_in = self.data[id][0][0].shape[0]
             break
 
-        for d in data:
-            input = d[0]
+        for id in self.data:
+            input = self.data[id][0]
             if multi > 0:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
@@ -528,19 +525,18 @@ class DataSet:
             for a in range(0, len(input), self.nPar+self.nAdd):
                 it = np.array(input[a:a + self.nPar+self.nAdd])
                 #truth = d[1][:self.num_output]
-                truth = d[1]# [self.num_output1:self.num_output]
-                Nout = self.num_output - self.num_output1
-                output = (it.reshape((self.nPar+self.nAdd) * sz_in),
-                          truth.reshape(Nout), self.id, d[2])
+                truth = self.data[id][1]# [self.num_output1:self.num_output]
+                #Nout = self.num_output - self.num_output1
+                output = (it.reshape((self.nPar+self.nAdd) * sz_in), truth, id)
                 outputs.append(output)
-            self.id += 1
-
         return outputs
 
     def create_bucket_cnn(self, data):
         outputs = []
         inputs = []
-        sz_in = data[0][0].shape
+        for id in data:
+            sz_in = data[id][0].shape
+            break
 
         for d in data:
             input = d[0]
@@ -647,11 +643,11 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 1
+    range2 = 3
     range3 = -range2
 
     read_time = False
-    key = '00'
+    key = 'office'
     mode = 'Train'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'

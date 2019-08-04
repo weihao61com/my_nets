@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pickle
 import random
+import copy
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -19,6 +20,7 @@ from utils import Utils, Config
 from network import Network
 #from fc_dataset import DataSet
 from dataset_h import DataSet, reverse
+from rotation_averaging.compare import compare_rotation_matrices
 
 
 def run_data_0(data, inputs, sess, xy, fname, cfg):
@@ -40,10 +42,10 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
 
         result = np.array(result)
         for a in range(len(b[2])):
-            if not b[3][a] in rst_dic:
-                rst_dic[b[3][a]] = []
-            rst_dic[b[3][a]].append(result[:, a, :])
-            truth_dic[b[3][a]] = b[1][a]
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
 
     results = []
     truth = []
@@ -96,10 +98,10 @@ def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
 
         result = np.array(result)
         for a in range(len(b[2])):
-            if not b[3][a] in rst_dic:
-                rst_dic[b[3][a]] = []
-            rst_dic[b[3][a]].append(result[:, a, :])
-            truth_dic[b[3][a]] = b[1][a], b[3][a]
+            if not b[2][a] in rst_dic:
+                rst_dic[b[2][a]] = []
+            rst_dic[b[2][a]].append(result[:, a, :])
+            truth_dic[b[2][a]] = b[1][a]
 
 
 def reshape(a):
@@ -112,8 +114,9 @@ def reshape(a):
     return output
 
 
-def run_data(rst_dic, truth_dic, fname, cfg, Is):
+def run_data(rst_dic, truth_dic, fname, cfg, te):
 
+    Is = te.I
     results = []
     truth = []
 
@@ -125,29 +128,40 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
     list_dic = {}
     RR = []
     I = []
+    first_id = None
     t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
+    output_dic = {}
+    ths = []
     for id in rst_dic:
         dst = np.array(rst_dic[id])
         result = np.median(dst, axis=0)
         # result = np.mean(dst, axis=0)
         #print(result, truth_dic[id])
         results.append(result)
-        truth.append(truth_dic[id][0])
-        t = truth_dic[id][0]
-        imgs = truth_dic[id][1]
+        truth.append(truth_dic[id])
+        t = truth_dic[id]
+        imgs = id[0], id[1]
         result = result[-1]
         # print(id, imgs)
         #if imgs[0]<100 and imgs[1]<100:
-        RR.append(Utils.create_M(result/t_scale[:3]))
-        I.append(imgs)
+        if first_id is None or id[2] == first_id:
+            mat = Utils.create_M(result/t_scale[:3])
+            rel = Is[imgs[1]].dot(Is[imgs[0]].transpose())
+            RR.append(mat)
+            I.append(imgs)
+            first_id=id[2]
+            theta = compare_rotation_matrices(mat, rel)*180/np.pi
+            ths.append(theta)
+            if len(ths) == 433:
+                print()
 
         dr = t - result
         r = np.linalg.norm(dr)
-        rs.append(r*r)
+        rs.append(r/10)
 
-        if random.random() < 1.2:
+        #if random.random() < 1.2:
             #if len(t) == 6 or imgs[0] < imgs[1]:
-
+        if abs(id[0] - id[1]) < 20:
             mm = result
             for a in range(len(t)):
                 if a not in list_dic:
@@ -159,7 +173,8 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
             fp.write(',{}\n'.format(r))
 
     P = {}
-    P['RR'] =  reshape(RR)
+    th = np.median(np.array(ths))
+    P['RR'] = reshape(RR)
     # P['Rgt'] = np.array(Is).transpose()
     P['Rgt'] = reshape(Is)
     P['I'] = np.array(I).transpose()
@@ -174,11 +189,12 @@ def run_data(rst_dic, truth_dic, fname, cfg, Is):
         print('\t', a, md, avg)
 
     fp.close()
-    rs = sorted(rs)
+    #rs = sorted(rs)
     length = len(rs)
     fp = open(filename+'.csv', 'w')
     for a in range(length):
-        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+        # fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+        fp.write('{},{}\n'.format(ths[a], rs[a]))
     fp.close()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
@@ -280,27 +296,26 @@ def run_test(input_dic, sess, xy, te, cfg, mul=1):
         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
 
-    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, te.I)
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, te)
 
     for a in range(len(tr_loss)):
         print(a, tr_loss[a], tr_median[a])
 
-    exit(0)
 
 def get_avg_file(tr, avg_file):
     av = None
     st = None
     nt = 0
     for id in tr.data:
-        for ds in tr.data[id]:
-            for d in ds[0]:
-                if nt == 0:
-                    av = d
-                    st = d*d
-                else:
-                    av += d
-                    st += d*d
-                nt += 1
+        ds = tr.data[id]
+        for d in ds[0]:
+            if nt == 0:
+                av = copy.copy(d)
+                st = d*d
+            else:
+                av += d
+                st += d*d
+            nt += 1
     av /= nt
     st /= nt
     st = np.sqrt(st - av*av)
@@ -424,6 +439,7 @@ if __name__ == '__main__':
                 mul = int(sys.argv[2])
             saver.restore(sess, cfg.netFile)
             run_test(input_dic, sess, xy, te, cfg, mul)
+            exit(0)
 
         if cfg.renetFile:
             saver.restore(sess, cfg.renetFile)

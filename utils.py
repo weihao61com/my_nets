@@ -115,8 +115,8 @@ class Utils:
 
     @staticmethod
     def get_relative(p1, p2):
-        Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        #Q4 = np.linalg.inv(p2.Q4).dot(p1.Q4)
+        # Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        Q4 = p2.Q4.dot(p1.Q4.transpose())
         A = Utils.get_A(Q4)
         return A
 
@@ -538,14 +538,13 @@ class Utils:
     @staticmethod
     def reshuffle_b(bucket):
         for id in bucket:
-            for b in bucket[id]:
-                np.random.shuffle(b[0])
+            np.random.shuffle(bucket[id][0])
 
     @staticmethod
     def get_relative(p1, p2):
-
-        Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        #Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        #Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
         # P = p2.Q4.dot(p1.Q4.transpose())
         A, T = Utils.get_A_T(Q)
         return A ,T

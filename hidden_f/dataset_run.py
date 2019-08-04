@@ -18,7 +18,7 @@ sys.path.append('{}/my_nets'.format(HOME))
 from utils import PinholeCamera, Utils
 
 p_file = 'rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p'
-p_file = 'office_Train_ras_s1_3.p'
+p_file = 'heads_Test_ras_s10_3.p'
 filename = '{}/p_files/{}'.format(HOME, p_file)
 
 #filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
@@ -61,6 +61,8 @@ for data_id in data.matches:
         match = matches[m_img]
         d0 = []
         att += len(match)
+        if img2-img1!=9:
+            continue
 
         for m in match:
             point1 = m[0]
@@ -80,20 +82,22 @@ for data_id in data.matches:
         mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
         b = Utils.get_A(R)
+        if np.max(abs(b))>9:
+            print(img1, img2, a, b)
+
         #b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
         p1 = poses[img1]
         p2 = poses[img2]
         a, t = Utils.get_relative(p1, p2)
         # P = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        #         # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-        #         #
-        #         # a, T = Utils.get_A_T(Q)
-        #         # a1, T1 = Utils.get_A_T(P)
-        #         # if img2-img1==1:
-        #         #     m = P[:3, :3] - np.eye(3)
-        #         #    #  m = m.reshape(9)
-        #         #     if img1<1000:
-        #         #         print(img1, img2, m[0], m[1], m[2])
+        # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        #
+        # a, T = Utils.get_A_T(Q)
+        # a1, T1 = Utils.get_A_T(P)
+        # if img2-img1==1:
+        #     m = P[:3, :3] - np.eye(3)
+        #    #  m = m.reshape(9)
+        #     if img1<1000:
         e = []
         for c in b:
             if c<-90:

@@ -123,5 +123,4 @@ class RAS_D:
                             print(nt, id1, datetime.datetime.now() - t0, int(length/nt), length)
                             t0 = datetime.datetime.now()
                         self.matches[seq][(id1, id2)] = pts1
-        print
         print(nt, datetime.datetime.now() - t0, length/nt)

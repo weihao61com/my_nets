@@ -17,241 +17,242 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils, Config
 from network import Network
 from dataset_h import DataSet
+from rnn import avg_file_name, rNet, run_test
 
-
-def run_data_0(data, inputs, sess, xy, fname, cfg):
-    att = cfg.att
-    rst_dic = {}
-    truth_dic = {}
-    for b in data:
-        length = b[0].shape[1]/att
-        feed = {}
-        b_sz = b[0].shape[0]
-
-        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
-        for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
-        result = []
-        for a in xy:
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
-
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
-
-    results = []
-    truth = []
-
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    rs = []
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        r = np.linalg.norm(t - result[-1])
-        rs.append(r*r)
-        if random.random() < 0.2:
-            mm = result[-1]
-            for a in range(len(t)):
-                if a > 0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
-    fp.close()
-    rs = sorted(rs)
-    length = len(rs)
-    fp = open(filename+'.csv', 'w')
-    for a in range(length):
-        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-    fp.close()
-
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.L1)
-
-
-def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic, imgs_dic):
-    att = cfg.att
-    for b in data:
-        length = int(b[0].shape[1]/att)
-        feed = {}
-        b_sz = b[0].shape[0]
-
-        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
-        for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
-        result = []
-        for a in xy:
-            r = sess.run(xy[a], feed_dict=feed)
-            result.append(r)
-
-        result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[3][a] in rst_dic:
-                rst_dic[b[3][a]] = []
-            rst_dic[b[3][a]].append(result[:, a, :])
-            truth_dic[b[3][a]] = b[1][a]
-            # imgs_dic[b[3][a]] = b[2][a]
-
-
-def run_data(rst_dic, truth_dic, imgs_dic, fname):
-
-    results = []
-    truth = []
-
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    rs = []
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        # result = np.mean(dst, axis=0)
-        print(dst.shape, result.shape)
-        results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        dr = t - result[-1]
-        r = np.linalg.norm(dr)
-        rs.append(r*r)
-
-        if random.random() < 1.2:
-            mm = result[-1]
-            for a in range(len(t)):
-                if a>0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
-            # if len(mm)==3:
-            #     fp.write('{},{},{},{},{},{},{}\n'.
-            #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
-            # else:
-            #     fp.write('{},{},{}\n'.
-            #              format(t, mm[0], r))
-    fp.close()
-    rs = sorted(rs)
-    length = len(rs)
-    fp = open(filename+'.csv', 'w')
-    for a in range(length):
-        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-    fp.close()
-
-    v1 = np.array(results)
-    v1 = v1[:, -1, :]
-    return v1
-
-class rNet(Network):
-
-    def create_ws(self, n, ins, outs):
-        print(n, ins, outs)
-        w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
-        b = self.make_var('biases_{}'.format(n), shape=[outs])
-        return [w,b]
-
-    def parameters(self, cfg):
-
-        self.ws = []
-
-        # feature
-        ws = []
-        ins = cfg.att
-        nodes = cfg.nodes[2]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-        self.ws.append(ws)
-
-        # base
-        ws = []
-        ins += cfg.ref_node
-        nodes_in = cfg.nodes[0]
-        for a in range(len(nodes_in)):
-            ws.append(self.create_ws('base_{}'.format(a), ins, nodes_in[a]))
-            ins = nodes_in[a]
-        self.ws.append(ws)
-
-        # out
-        ws = []
-        nodes = cfg.nodes[1]
-        for a in range(len(nodes)):
-            ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
-            ins = nodes[a]
-
-        Nout = cfg.num_output - cfg.num_output1
-        ws.append(self.create_ws('out', ins, Nout))
-        self.ws.append(ws)
-
-    def setup(self):
-        pass
-
-    def real_setup(self, cfg, SIG=False):
-        self.parameters(cfg)
-
-        ref_out = 'input_0'
-        for a in range(0, cfg.feature_len):
-            inputs = 'input_{}'.format(a+1)
-            self.feed(inputs)
-            for b in range(len(self.ws[0])):
-                n = 'input_{}_{}'.format(a, b)
-                if SIG:
-                    self.fc_ws(ws=self.ws[0][b], name=n)
-                else:
-                    self.fc_w2(ws=self.ws[0][b], name=n)
-                f_out = n
-
-            self.feed(f_out, ref_out).concat(1, name='f_inputs_{}'.format(a))
-            for b in range(len(self.ws[1])):
-                n = 'base_{}_{}'.format(a, b)
-                if SIG:
-                    self.fc_ws(ws=self.ws[1][b], name=n)
-                else:
-                    self.fc_w2(ws=self.ws[1][b], name=n)
-                ref_out = n
-
-            if a < cfg.feature_len/2:
-                continue
-
-            self.feed(ref_out)
-            for b in range(len(self.ws[2])):
-                if b < len(self.ws[2])-1:
-                    n = 'output_{}_{}'.format(a, b)
-                    if SIG:
-                        self.fc_ws(ws=self.ws[2][b], name=n)
-                    else:
-                        self.fc_w2(ws=self.ws[2][b], name=n)
-                else:
-                    n = 'output_{}'.format(a)
-                    if SIG:
-                        self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
-                    else:
-                        self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
-
-
-def run_test(input_dic, sess, xy, te, cfg, mul=1):
-
-    rst_dic = {}
-    truth_dic = {}
-    imgs_dic = {}
-    for a in range(mul):
-        tr_pre_data = te.prepare(multi=-1, rd=False)
-        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic, imgs_dic)
-
-    rst = run_data(rst_dic, truth_dic, imgs_dic, 'test')
-    return rst
-
-
-def avg_file_name(p):
-    basename = os.path.basename(p)
-    pathname = os.path.dirname(p)
-    return pathname + '_' + basename+'_avg.p'
+#
+# def run_data_0(data, inputs, sess, xy, fname, cfg):
+#     att = cfg.att
+#     rst_dic = {}
+#     truth_dic = {}
+#     for b in data:
+#         length = b[0].shape[1]/att
+#         feed = {}
+#         b_sz = b[0].shape[0]
+#
+#         feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
+#         for a in range(length):
+#             feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+#         result = []
+#         for a in xy:
+#             r = sess.run(xy[a], feed_dict=feed)
+#             result.append(r)
+#
+#         result = np.array(result)
+#         for a in range(len(b[2])):
+#             if not b[2][a] in rst_dic:
+#                 rst_dic[b[2][a]] = []
+#             rst_dic[b[2][a]].append(result[:, a, :])
+#             truth_dic[b[2][a]] = b[1][a]
+#
+#     results = []
+#     truth = []
+#
+#     filename = '/home/weihao/tmp/{}.csv'.format(fname)
+#     if sys.platform == 'darwin':
+#         filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+#     fp = open(filename, 'w')
+#     rs = []
+#     for id in rst_dic:
+#         dst = np.array(rst_dic[id])
+#         result = np.median(dst, axis=0)
+#         results.append(result)
+#         truth.append(truth_dic[id])
+#         t = truth_dic[id]
+#         r = np.linalg.norm(t - result[-1])
+#         rs.append(r*r)
+#         if random.random() < 0.2:
+#             mm = result[-1]
+#             for a in range(len(t)):
+#                 if a > 0:
+#                     fp.write(',')
+#                 fp.write('{},{}'.format(t[a], mm[a]))
+#             fp.write(',{}\n'.format(r))
+#     fp.close()
+#     rs = sorted(rs)
+#     length = len(rs)
+#     fp = open(filename+'.csv', 'w')
+#     for a in range(length):
+#         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+#     fp.close()
+#
+#     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.L1)
+#
+#
+# def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic, imgs_dic):
+#     att = cfg.att
+#     for b in data:
+#         length = int(b[0].shape[1]/att)
+#         feed = {}
+#         b_sz = b[0].shape[0]
+#
+#         feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
+#         for a in range(length):
+#             feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+#         result = []
+#         for a in xy:
+#             r = sess.run(xy[a], feed_dict=feed)
+#             result.append(r)
+#
+#         result = np.array(result)
+#         for a in range(len(b[2])):
+#             if not b[3][a] in rst_dic:
+#                 rst_dic[b[3][a]] = []
+#             rst_dic[b[3][a]].append(result[:, a, :])
+#             truth_dic[b[3][a]] = b[1][a]
+#             # imgs_dic[b[3][a]] = b[2][a]
+#
+#
+# def run_data(rst_dic, truth_dic, imgs_dic, fname):
+#
+#     results = []
+#     truth = []
+#
+#     filename = '/home/weihao/tmp/{}.csv'.format(fname)
+#     if sys.platform == 'darwin':
+#         filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+#     fp = open(filename, 'w')
+#     rs = []
+#     for id in rst_dic:
+#         dst = np.array(rst_dic[id])
+#         result = np.median(dst, axis=0)
+#         # result = np.mean(dst, axis=0)
+#         print(dst.shape, result.shape)
+#         results.append(result)
+#         truth.append(truth_dic[id])
+#         t = truth_dic[id]
+#         dr = t - result[-1]
+#         r = np.linalg.norm(dr)
+#         rs.append(r*r)
+#
+#         if random.random() < 1.2:
+#             mm = result[-1]
+#             for a in range(len(t)):
+#                 if a>0:
+#                     fp.write(',')
+#                 fp.write('{},{}'.format(t[a], mm[a]))
+#             fp.write(',{}\n'.format(r))
+#             # if len(mm)==3:
+#             #     fp.write('{},{},{},{},{},{},{}\n'.
+#             #          format(t[0], mm[0], t[1], mm[1], t[2], mm[2], r))
+#             # else:
+#             #     fp.write('{},{},{}\n'.
+#             #              format(t, mm[0], r))
+#     fp.close()
+#     rs = sorted(rs)
+#     length = len(rs)
+#     fp = open(filename+'.csv', 'w')
+#     for a in range(length):
+#         fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+#     fp.close()
+#
+#     v1 = np.array(results)
+#     v1 = v1[:, -1, :]
+#     return v1
+#
+# class rNet(Network):
+#
+#     def create_ws(self, n, ins, outs):
+#         print(n, ins, outs)
+#         w = self.make_var('weights_{}'.format(n), shape=[ins, outs])
+#         b = self.make_var('biases_{}'.format(n), shape=[outs])
+#         return [w,b]
+#
+#     def parameters(self, cfg):
+#
+#         self.ws = []
+#
+#         # feature
+#         ws = []
+#         ins = cfg.att
+#         nodes = cfg.nodes[2]
+#         for a in range(len(nodes)):
+#             ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
+#             ins = nodes[a]
+#         self.ws.append(ws)
+#
+#         # base
+#         ws = []
+#         ins += cfg.ref_node
+#         nodes_in = cfg.nodes[0]
+#         for a in range(len(nodes_in)):
+#             ws.append(self.create_ws('base_{}'.format(a), ins, nodes_in[a]))
+#             ins = nodes_in[a]
+#         self.ws.append(ws)
+#
+#         # out
+#         ws = []
+#         nodes = cfg.nodes[1]
+#         for a in range(len(nodes)):
+#             ws.append(self.create_ws('out_{}'.format(a), ins, nodes[a]))
+#             ins = nodes[a]
+#
+#         Nout = cfg.num_output - cfg.num_output1
+#         ws.append(self.create_ws('out', ins, Nout))
+#         self.ws.append(ws)
+#
+#     def setup(self):
+#         pass
+#
+#     def real_setup(self, cfg, SIG=False):
+#         self.parameters(cfg)
+#
+#         ref_out = 'input_0'
+#         for a in range(0, cfg.feature_len):
+#             inputs = 'input_{}'.format(a+1)
+#             self.feed(inputs)
+#             for b in range(len(self.ws[0])):
+#                 n = 'input_{}_{}'.format(a, b)
+#                 if SIG:
+#                     self.fc_ws(ws=self.ws[0][b], name=n)
+#                 else:
+#                     self.fc_w2(ws=self.ws[0][b], name=n)
+#                 f_out = n
+#
+#             self.feed(f_out, ref_out).concat(1, name='f_inputs_{}'.format(a))
+#             for b in range(len(self.ws[1])):
+#                 n = 'base_{}_{}'.format(a, b)
+#                 if SIG:
+#                     self.fc_ws(ws=self.ws[1][b], name=n)
+#                 else:
+#                     self.fc_w2(ws=self.ws[1][b], name=n)
+#                 ref_out = n
+#
+#             if a < cfg.feature_len/2:
+#                 continue
+#
+#             self.feed(ref_out)
+#             for b in range(len(self.ws[2])):
+#                 if b < len(self.ws[2])-1:
+#                     n = 'output_{}_{}'.format(a, b)
+#                     if SIG:
+#                         self.fc_ws(ws=self.ws[2][b], name=n)
+#                     else:
+#                         self.fc_w2(ws=self.ws[2][b], name=n)
+#                 else:
+#                     n = 'output_{}'.format(a)
+#                     if SIG:
+#                         self.fc_ws(ws=self.ws[2][b], name=n, sig=False)
+#                     else:
+#                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
+#
+#
+# def run_test(input_dic, sess, xy, te, cfg, mul=1):
+#
+#     rst_dic = {}
+#     truth_dic = {}
+#     imgs_dic = {}
+#     for a in range(mul):
+#         tr_pre_data = te.prepare(multi=-1, rd=False)
+#         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic, imgs_dic)
+#
+#     rst = run_data(rst_dic, truth_dic, imgs_dic, 'test')
+#     return rst
+#
+#
+# def avg_file_name(p):
+#     basename = os.path.basename(p)
+#     pathname = os.path.dirname(p)
+#     return pathname + '_' + basename+'_avg.p'
 
 if __name__ == '__main__':
 
