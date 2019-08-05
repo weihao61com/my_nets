@@ -150,7 +150,8 @@ def run_data(rst_dic, truth_dic, fname, cfg, te):
             RR.append(mat)
             I.append(imgs)
             first_id=id[2]
-            theta = compare_rotation_matrices(mat, rel)*180/np.pi
+            #theta = compare_rotation_matrices(mat, rel)*180/np.pi
+            theta = 0
             ths.append(theta)
             if len(ths) == 433:
                 print()

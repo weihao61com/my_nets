@@ -17,7 +17,7 @@ sys.path.append('{}/my_nets/fc'.format(HOME))
 from utils import Utils, Config
 from network import Network
 from dataset_h import DataSet
-from rnn import avg_file_name, rNet, run_test
+from rnn import avg_file_name, rNet, run_data_1
 
 #
 # def run_data_0(data, inputs, sess, xy, fname, cfg):
@@ -236,18 +236,36 @@ from rnn import avg_file_name, rNet, run_test
 #                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 #
 #
-# def run_test(input_dic, sess, xy, te, cfg, mul=1):
-#
-#     rst_dic = {}
-#     truth_dic = {}
-#     imgs_dic = {}
-#     for a in range(mul):
-#         tr_pre_data = te.prepare(multi=-1, rd=False)
-#         run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic, imgs_dic)
-#
-#     rst = run_data(rst_dic, truth_dic, imgs_dic, 'test')
-#     return rst
-#
+def run_test(input_dic, sess, xy, te, cfg, mul=1):
+
+    rst_dic = {}
+    truth_dic = {}
+    for a in range(mul):
+        tr_pre_data = te.prepare(multi=-1, rd = False)
+        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+
+    print(len(rst_dic))
+    file_set = {}
+    for id in rst_dic:
+        if id[2] not in file_set:
+            file_set[id[2]] = 0
+        mx = max(id[:2])
+        if mx>file_set[id[2]]:
+            file_set[id[2]] = mx
+        rt = np.array(rst_dic[id])
+        rst_dic[id] = np.median(rt, axis=0)[-1]
+
+    mtx = SortedDict()
+    for f in file_set:
+        for id in rst_dic:
+            if id[2] == f and id[1]-id[0]==1:
+                tr = truth_dic[id]
+                mtx[id[0]] = Utils.create_M(tr/te.t_scale[:3])
+
+    print(len(mtx))
+
+
+
 #
 # def avg_file_name(p):
 #     basename = os.path.basename(p)

@@ -12,6 +12,7 @@ import rotation_averaging.so3
 import rotation_averaging.compare
 import rotation_averaging.graph
 import rotation_averaging.algorithms
+from rotation_averaging.compare import compare_rotation_matrices
 import scipy.io
 import pickle
 
@@ -91,6 +92,19 @@ def main():
 	solution = rotation_averaging.algorithms.IRLS(len(global_rotations), relative_rotations, indices, initial_guess)
 	rt=rotation_averaging.compare.compare_global_rotation_to_graph(solution, relative_rotations, indices, plot=True)
 	print(rt)
+
+	dif = []
+	for (ind, edge) in enumerate(indices):
+		a = edge[0]
+		b = edge[1]
+		d1 = solution[a].dot(solution[b].transpose())
+		d2 = global_rotations[a].dot(global_rotations[b].transpose())
+		theta = compare_rotation_matrices(d1, d2)
+		dif.append(theta)
+
+	dif = numpy.array(dif)
+	dif = dif*180/numpy.pi
+	print(numpy.mean(dif), numpy.median(dif), numpy.std(dif))
 
 if __name__ == '__main__':
 	main()
