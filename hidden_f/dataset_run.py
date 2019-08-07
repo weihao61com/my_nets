@@ -9,6 +9,7 @@ import datetime
 import pickle
 import cv2
 import os
+import rotation_averaging.util
 
 HOME = '/home/weihao/Projects'
 if sys.platform=='darwin':
@@ -18,12 +19,16 @@ sys.path.append('{}/my_nets'.format(HOME))
 from utils import PinholeCamera, Utils
 
 p_file = 'rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p'
-p_file = 'heads_Test_ras_s10_3.p'
+p_file = 'heads_Test_ras_s3_3.p' # 'kitti_02_Test_ras_s3_3.p'
 filename = '{}/p_files/{}'.format(HOME, p_file)
 
 #filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
 if len(sys.argv)>1:
     filename = sys.argv[1]
+output_file = '{}/tmp/feature.csv'.format(HOME)
+
+print('imput', filename)
+print('output', output_file)
 
 if 'kitti' in filename:
     focal = 719  # 719
@@ -39,12 +44,25 @@ else:
 w2 = cam.cx
 h2 = cam.cy
 
-output_file = '{}/tmp/feature.csv'.format(HOME)
 fp = open(output_file, 'w')
 
 with open(filename, 'rb') as f:
     data = pickle.load(f)
 
+dv = []
+for data_id in data.poses:
+    poses = data.poses[data_id]
+    for id in poses:
+        Q = poses[id].Q4[:3, :3]
+        P = rotation_averaging.util.fix_matrix(Q)
+        c = Utils.cos(Q, Q)
+        dv.append(c[0])
+        # data.poses[data_id][id].Q4[:3, :3] = P
+
+dv = np.array(dv)*180/np.pi
+print(np.mean(dv), np.median(dv), np.std(dv))
+
+dv = []
 rs = []
 angs = []
 rs0 = []
@@ -61,8 +79,8 @@ for data_id in data.matches:
         match = matches[m_img]
         d0 = []
         att += len(match)
-        if img2-img1!=9:
-            continue
+        #if img2-img1!=9:
+        #    continue
 
         for m in match:
             point1 = m[0]
@@ -82,16 +100,18 @@ for data_id in data.matches:
         mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=cam.mx)
 
         b = Utils.get_A(R)
-        if np.max(abs(b))>9:
-            print(img1, img2, a, b)
+        #if np.max(abs(b))>9:
+        #    print(img1, img2, a, b)
 
         #b = Utils.rotationMatrixToEulerAngles(R)*180/np.pi
         p1 = poses[img1]
         p2 = poses[img2]
         a, t = Utils.get_relative(p1, p2)
+
         # P = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-        #
+        P = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        c = Utils.cos(P[:3, :3], P[:3, :3])
+        dv.append(c[0])
         # a, T = Utils.get_A_T(Q)
         # a1, T1 = Utils.get_A_T(P)
         # if img2-img1==1:
@@ -118,11 +138,15 @@ for data_id in data.matches:
         rs2.append(abs(dr[2]))
         angs.append(np.linalg.norm(a))
 
-        if random() > 1000.0/len(matches):
+        #if random() > 2000.0/len(matches):
+        #    continue
+        if img2-img1!=1:
             continue
+        fp.write('{},{},{},{},{},{},{},{}\n'.
+                 format(img1, a[0], a[1], a[2], b[0], b[1], b[2], r0))
 
-        fp.write('{},{},{},{},{},{},{}\n'.
-                 format(a[0], a[1], a[2], b[0], b[1], b[2], r0))
+dv = np.array(dv)*180/np.pi
+print(np.mean(dv), np.median(dv), np.std(dv))
 
 print( 'att', att/len(matches))
 angs = np.array(angs)

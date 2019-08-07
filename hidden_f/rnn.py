@@ -153,8 +153,6 @@ def run_data(rst_dic, truth_dic, fname, cfg, te):
             #theta = compare_rotation_matrices(mat, rel)*180/np.pi
             theta = 0
             ths.append(theta)
-            if len(ths) == 433:
-                print()
 
         dr = t - result
         r = np.linalg.norm(dr)
@@ -191,12 +189,12 @@ def run_data(rst_dic, truth_dic, fname, cfg, te):
 
     fp.close()
     #rs = sorted(rs)
-    length = len(rs)
-    fp = open(filename+'.csv', 'w')
-    for a in range(length):
-        # fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-        fp.write('{},{}\n'.format(ths[a], rs[a]))
-    fp.close()
+    # length = len(rs)
+    # fp = open(filename+'.csv', 'w')
+    # for a in range(length):
+    #     # fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+    #     fp.write('{},{}\n'.format(ths[a], rs[a]))
+    # fp.close()
 
     return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
 

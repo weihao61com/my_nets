@@ -118,6 +118,7 @@ class Utils:
         # Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
         Q4 = p2.Q4.dot(p1.Q4.transpose())
         A = Utils.get_A(Q4)
+        raise Exception()
         return A
 
     @staticmethod
@@ -515,8 +516,6 @@ class Utils:
     def get_A(Q):
         A = tr.euler_from_matrix(Q[:3, :3], axes='sxzy')
         A = np.array(A) * 180.0/np.pi
-        #A = np.array(BlueNoteSensorRotation.
-        #                 get_rotation_angles(Q[:3, :3], RotationSequence.XZY))
         return A
 
     @staticmethod
@@ -541,22 +540,44 @@ class Utils:
             np.random.shuffle(bucket[id][0])
 
     @staticmethod
+    def cos(A, B):
+        tr = A.dot(B.transpose())
+        C = Utils.get_A(tr)
+        tr = np.trace(tr)
+        if tr>3:
+            tr=3
+        return np.arccos((tr-1)/2), C
+
+    @staticmethod
     def get_relative(p1, p2):
-        Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-        # Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-        # P = p2.Q4.dot(p1.Q4.transpose())
+        # Good
+        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
+
+        # rotation averaging
+        Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
+
+        # good Q = np.linalg.inv(p2.Q4).dot(p1.Q4)
+
+        # bad Q = p1.Q4.dot(np.linalg.inv(p2.Q4))
+
         A, T = Utils.get_A_T(Q)
-        return A ,T
+
+        P = np.dot(np.linalg.inv(p1.m3x3), p2.m3x3)
+        Q = np.dot(p2.m3x3, np.linalg.inv(p1.m3x3))
+        A = Utils.get_A(Q)
+        return A, T
 
 if __name__ == "__main__":
     #pose = '-5.591326e-02 5.120575e-02 -9.971217e-01 -1.450234e+02 -2.512261e-02 9.982956e-01 5.267479e-02 -5.651594e+00 9.981195e-01 2.799552e-02 -5.453153e-02 3.692862e+02'
     #mat = np.array(list(map(float , pose.split(' ')))).reshape((3,4))
 
-    mat =[[ 9.99990614e-01,  2.11742669e-03,  3.77992169e-03],
- [-2.11779305e-03,  9.99997753e-01,  9.29212715e-05],
- [-3.77971644e-03, -1.00925491e-04,  9.99992852e-01]]
-    mat = np.array(mat)
-    I = mat[:3, :3].dot(mat[:3, :3].transpose())
-    A = Utils.get_A(mat)/180*np.pi
-    print(A, np.linalg.norm(A))
+    mat = [9.3306959e-001,	 -1.6964546e-001,	  3.1708300e-001,	 -9.4861656e-001,
+  1.7337367e-001,	  9.8468649e-001,	  1.6643673e-002,	 -5.6749225e-001,
+ -3.1506166e-001,	  3.9447054e-002,	  9.4821417e-001,	  7.1117169e-001,
+  0.0000000e+000,	  0.0000000e+000,	  0.0000000e+000,	  1.0000000e+000]
+    mat = np.array(mat).reshape((4,4))
+    c = Utils.cos(mat[:3, :3], mat[:3, :3])
+    print(c[0]*180/np.pi, c[1])
+    #I = mat[:3, :3].dot(mat[:3, :3].transpose())
+    #A = Utils.get_A(mat)/180*np.pi
+    #print(A, np.linalg.norm(A))

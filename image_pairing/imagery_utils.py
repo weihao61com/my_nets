@@ -100,7 +100,8 @@ class Pose:
             self.filename = pose_file
             p_file = pose_file[:-9] + 'pose.txt'
             m3x4 = np.loadtxt(p_file)
-            m3 = re_normalize(m3x4[:3, :3])
+            # m3 = re_normalize(m3x4[:3, :3])
+            m3 = (m3x4[:3, :3])
             self.m3x3 = m3
             self.tran = m3x4[:3, 3]
             basename = os.path.basename(pose_file)[:-10]
