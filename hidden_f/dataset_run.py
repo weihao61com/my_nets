@@ -108,8 +108,7 @@ for data_id in data.matches:
         p2 = poses[img2]
         a, t = Utils.get_relative(p1, p2)
 
-        # P = np.linalg.inv(p1.Q4).dot(p2.Q4)
-        P = p2.Q4.dot(np.linalg.inv(p1.Q4))
+        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
         c = Utils.cos(P[:3, :3], P[:3, :3])
         dv.append(c[0])
         # a, T = Utils.get_A_T(Q)

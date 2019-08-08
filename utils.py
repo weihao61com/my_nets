@@ -550,21 +550,8 @@ class Utils:
 
     @staticmethod
     def get_relative(p1, p2):
-        # Good
-        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
-
-        # rotation averaging
-        Q = p2.Q4.dot(np.linalg.inv(p1.Q4))
-
-        # good Q = np.linalg.inv(p2.Q4).dot(p1.Q4)
-
-        # bad Q = p1.Q4.dot(np.linalg.inv(p2.Q4))
-
+        Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
         A, T = Utils.get_A_T(Q)
-
-        P = np.dot(np.linalg.inv(p1.m3x3), p2.m3x3)
-        Q = np.dot(p2.m3x3, np.linalg.inv(p1.m3x3))
-        A = Utils.get_A(Q)
         return A, T
 
 if __name__ == "__main__":

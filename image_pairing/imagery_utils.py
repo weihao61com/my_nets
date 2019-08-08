@@ -25,30 +25,30 @@ def quaternion_matrix(quaternion):
         [                0.0,                 0.0,                 0.0, 1.0]])
 
 class SiftFeature:
-    def __init__(self, target=700):
-        self.th=0.5
+    def __init__(self, target=200):
+        self.th=0.01
         self.target = target
 
     def get_sift_feature(self, img):
-        th_low = 0.1
+        th_low = 0.01
         target_length = self.target
         th = self.th
 
-        detector = cv2.xfeatures2d.SIFT_create(edgeThreshold=th)
+        detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=th)
         feat = detector.detectAndCompute(img, None)
         pre_f = feat
         if len(feat[1])>target_length:
             while len(feat[1])>target_length:
                 self.th = th
-                th *= 1.1
-                detector = cv2.xfeatures2d.SIFT_create(edgeThreshold=th)
+                th *= 1.02
+                detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=th)
                 pre_f = feat
                 feat = detector.detectAndCompute(img, None)
         else:
             while len(feat[1])<target_length and th>th_low:
                 self.th = th
-                th *= 0.9
-                detector = cv2.xfeatures2d.SIFT_create(edgeThreshold=th)
+                th *= 0.98
+                detector = cv2.xfeatures2d.SIFT_create(contrastThreshold=th)
                 pre_f = feat
                 feat = detector.detectAndCompute(img, None)
         return pre_f

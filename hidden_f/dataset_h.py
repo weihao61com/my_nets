@@ -695,13 +695,6 @@ if __name__ == '__main__':
 
     rasd = RAS_D()
 
-    # fix poses
-    for f_id in poses_dic:
-        for id in poses_dic[f_id]:
-            Q = poses_dic[f_id][id].Q4[:3, :3]
-            P = rotation_averaging.util.fix_matrix(Q)
-            # poses_dic[f_id][id].Q4[:3, :3] = P
-
     rasd.set_poses(poses_dic, cam)
     rasd.process(range2, range3)
     rasd.clear()
