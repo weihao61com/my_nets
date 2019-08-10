@@ -645,11 +645,11 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 3
+    range2 = 1
     range3 = -range2
 
     read_time = False
-    key = 'office'
+    key = 'heads'
     mode = 'Train'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'
