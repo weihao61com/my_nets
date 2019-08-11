@@ -364,6 +364,17 @@ class DataSet:
 
         return pre_data
 
+    def prepare_h(self, rd=True, rdd=True):
+        if rdd:
+            self.reshuffle_data()
+        self.id = 0
+
+        data = self.create_bucket_h()
+        if rd:
+            np.random.shuffle(data)
+
+        return data
+
     def create_stage_data(self, data):
         multi = 10
         f2 = 1
@@ -531,6 +542,28 @@ class DataSet:
                 #Nout = self.num_output - self.num_output1
                 output = (it.reshape((self.nPar+self.nAdd) * sz_in), truth, id)
                 outputs.append(output)
+        return outputs
+
+    def create_bucket_h(self):
+
+        outputs = []
+        for id in self.data:
+            sz_in = self.data[id][0][0].shape[0]
+            break
+
+        for id in self.data:
+            input = self.data[id][0]
+            while len(input) < self.nPar + 5:
+                input = np.concatenate((input, input))
+
+            # print(self.nPar + 5, len(input)-1)
+            length = random.randint(self.nPar + 5, len(input))
+            input1 = input[:length-self.nPar]
+            input2 = input[-self.nPar:]
+            truth = self.data[id][1]
+
+            output = (input1, input2, truth, id)
+            outputs.append(output)
         return outputs
 
     def create_bucket_cnn(self, data):

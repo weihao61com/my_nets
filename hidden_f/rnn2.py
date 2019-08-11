@@ -23,62 +23,65 @@ from dataset_h import DataSet, reverse
 from rotation_averaging.compare import compare_rotation_matrices
 
 
-def run_data_0(data, inputs, sess, xy, fname, cfg):
+def run_data_0(data, inputs, sess, xy, ref, fname, cfg):
     att = cfg.att
-    rst_dic = {}
-    truth_dic = {}
+    rst_dic = []
+    truth_dic = []
     for b in data:
-        length = int(b[0].shape[1]/att)
+        length = len(b[1])
         feed = {}
-        b_sz = b[0].shape[0]
 
-        feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
+        feed[inputs['input_0']] = cfg.refs
+        for a in range(len(b[0])):
+            feed[inputs['input_1']] = b[0][a].reshape((1, att))
+            r = sess.run(ref, feed_dict=feed)
+            feed[inputs['input_0']] = r
+
         for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a+1)]] = b[1][a].reshape((1, att))
+
         result = []
         for a in xy:
-            r = sess.run(xy[a], feed_dict=feed)
+            r = sess.run(xy[a], feed_dict=feed)[0]
             result.append(r)
 
         result = np.array(result)
-        for a in range(len(b[2])):
-            if not b[2][a] in rst_dic:
-                rst_dic[b[2][a]] = []
-            rst_dic[b[2][a]].append(result[:, a, :])
-            truth_dic[b[2][a]] = b[1][a]
 
-    results = []
-    truth = []
+        rst_dic.append(result)
+        truth_dic.append(b[2])
 
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    rs = []
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-        results.append(result)
-        truth.append(truth_dic[id])
-        t = truth_dic[id]
-        r = np.linalg.norm(t - result[-1])
-        rs.append(r*r)
-        if random.random() < 0.2:
-            mm = result[-1]
-            for a in range(len(t)):
-                if a > 0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
-    fp.close()
-    rs = sorted(rs)
-    length = len(rs)
-    fp = open(filename+'.csv', 'w')
-    for a in range(length):
-        fp.write('{},{}\n'.format(float(a)/length, rs[a]))
-    fp.close()
+    results = np.array(rst_dic)
+    truth = np.array(truth_dic)
 
-    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), cfg.L1)
+    # filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    # if sys.platform == 'darwin':
+    #     filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    # fp = open(filename, 'w')
+    # rs = []
+    # for id in rst_dic:
+    #     dst = np.array(rst_dic[id])
+    #     result = np.median(dst, axis=0)
+    #     results.append(result)
+    #     truth.append(truth_dic[id])
+    #     t = truth_dic[id]
+    #     r = np.linalg.norm(t - result[-1])
+    #     rs.append(r*r)
+    #     if random.random() < 0.2:
+    #         mm = result[-1]
+    #         for a in range(len(t)):
+    #             if a > 0:
+    #                 fp.write(',')
+    #             fp.write('{},{}'.format(t[a], mm[a]))
+    #         fp.write(',{}\n'.format(r))
+    # fp.close()
+    # rs = sorted(rs)
+    # length = len(rs)
+    # fp = open(filename+'.csv', 'w')
+    # for a in range(length):
+    #     fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+    # fp.close()
+
+    return Utils.calculate_stack_loss_avg(results, truth, cfg.L1)
 
 
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
@@ -267,9 +270,6 @@ class rNet(Network):
                     self.fc_w2(ws=self.ws[1][b], name=n)
                 ref_out = n
 
-            if a < cfg.feature_len/2:
-                continue
-
             self.feed(ref_out)
             for b in range(len(self.ws[2])):
                 if b < len(self.ws[2])-1:
@@ -338,7 +338,7 @@ def avg_file_name(p):
 
 if __name__ == '__main__':
 
-    config_file = "config.json"
+    config_file = "config2.json"
 
     #if len(sys.argv)>1:
     #    config_file = sys.argv[1]
@@ -404,6 +404,7 @@ if __name__ == '__main__':
 
     loss = None
     last_loss = None
+    ref0 = net.layers['base_0_{}'.format(len(cfg.fc_nodes_2_feature)-1)]
     As = []
     for a in xy:
         #if a<10:
@@ -450,11 +451,11 @@ if __name__ == '__main__':
             str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
                 format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
 
-            tr_pre_data = tr0.prepare()
-            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
+            tr_pre_data = tr0.prepare_h()
+            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, ref0, 'tr', cfg)
 
-            te_pre_data = te.prepare()
-            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
+            te_pre_data = te.prepare_h()
+            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, ref0, 'te', cfg)
 
             s = -1
             while True:
@@ -474,32 +475,49 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare(multi=cfg.multi)
+                tr_pre_data = tr.prepare_h()
 
                 while tr_pre_data:
-                    for b in tr_pre_data:
-                        total_length = len(b[0])
-                        length = int(b[0].shape[1]/cfg.att)
-                        for c in range(0, total_length, cfg.batch_size):
-                            feed = {learning_rate: lr}
-                            n0 = 0
-                            for a in range(length):
-                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
-                                feed[inputs[a + 1]] = x
-                                n0 = x.shape[0]
-                            feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
-                            o = b[1][c:c + cfg.batch_size]
-                            if len(o.shape) == 1:
-                                o = o.reshape((len(o), 1))
-                            feed[output] = o
+                    length = len(tr_pre_data)
+                    for c in range(0, length, cfg.batch_size):
+                        data = tr_pre_data[c:c + cfg.batch_size]
 
-                            ll3,_= sess.run([loss, opt],feed_dict=feed)
-                            tl3 += ll3
-                            nt += n0
+                        rs = []
+                        for b in data:
+                            feed = {learning_rate: lr}
+                            feed[input_dic['input_0']] = cfg.refs
+                            for a in range(len(b[0])):
+                                feed[input_dic['input_1']] = b[0][a].reshape((1, att))
+                                r = sess.run(ref0, feed_dict=feed)
+                                feed[input_dic['input_0']] = r
+                            rs.append(r[0, :])
+
+                        rs = np.array(rs)
+
+                        feed = {learning_rate: lr}
+                        feed[inputs[0]] = rs
+                        ipt = []
+                        x = data
+                        o = []
+                        for a in range(len(x)):
+                            ipt.append(x[a][1])
+                            o.append(x[a][2])
+                        ipt = np.array(ipt)
+                        for a in range(1, len(inputs)):
+                            feed[inputs[a]] = ipt[:, a-1, :]
+                        o = np.array(o)
+                        if len(o.shape) == 1:
+                            o = o.reshape((len(o), 1))
+                        feed[output] = o
+
+                        ll3,_= sess.run([loss, opt],feed_dict=feed)
+                        tl3 += ll3
+                        nt += ipt.shape[0]
+
                     tr_pre_data = tr.get_next(avg=avg_file)
-                N_total += 1
-                if N_total % cfg.INC_win == 0:
-                    lr -= cfg.d_lr
+                    N_total += 1
+                    if N_total % cfg.INC_win == 0:
+                        lr -= cfg.d_lr
 
             str1 = "{0:.3f} ".format(tl3/nt)
             Utils.save_tf_data(saver, sess, cfg.netFile)
