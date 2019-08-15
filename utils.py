@@ -3,7 +3,7 @@ import numpy as np
 import os
 import random
 import json
-from sortedcontainers import SortedDict
+from sortedcontainers import SortedDict, SortedList
 import sys
 import pickle
 import shutil
@@ -35,6 +35,7 @@ class Config:
         self.te2_data = []
         self.nodes = []
         self.fc_nodes = []
+        self.a_nets = SortedList()
         for key in self.js:
             if key.startswith('tr'):
                 self.tr_data.append(HOME + self.js[key])
@@ -49,6 +50,9 @@ class Config:
                 self.nodes.append(list(map(int, self.js[key].split(','))))
             if key.startswith('fc_nodes'):
                 self.fc_nodes.append(map(int, self.js[key].split(',')))
+            if key.startswith('anet'):
+                self.a_nets.add(self.js[key])
+
 
         self.netFile = HOME + 'NNs/' + self.netFile + '/fc'
         # self.netTest = fc_const.HOME + 'NNs/' + self.netTest + '/fc'
@@ -165,7 +169,7 @@ class Utils:
             diff = v1[:, a, :] - v2
             r = np.linalg.norm(diff, axis=1)
             if abs_err == 0:
-                loss = np.mean(r * r)
+                loss = np.sqrt(np.mean(r * r))
             else:
                 loss = np.mean(r)
             L.append(loss)

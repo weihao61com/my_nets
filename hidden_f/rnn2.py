@@ -354,8 +354,8 @@ if __name__ == '__main__':
         tr = DataSet(cfg.tr_data, cfg)
         get_avg_file(tr, avg_file)
         tr.avg_correction(avg_file)
-        te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
-        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
+        te = DataSet(cfg.te_data, cfg, sub_sample=0.3)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.3)
         tr0.avg_correction(avg_file)
 
     else:

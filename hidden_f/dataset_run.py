@@ -111,12 +111,7 @@ for data_id in data.matches:
         P = np.linalg.inv(p1.Q4).dot(p2.Q4)
         c = Utils.cos(P[:3, :3], P[:3, :3])
         dv.append(c[0])
-        # a, T = Utils.get_A_T(Q)
-        # a1, T1 = Utils.get_A_T(P)
-        # if img2-img1==1:
-        #     m = P[:3, :3] - np.eye(3)
-        #    #  m = m.reshape(9)
-        #     if img1<1000:
+
         e = []
         for c in b:
             if c<-90:

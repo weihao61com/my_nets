@@ -89,7 +89,7 @@ class DataSet:
         self.verbose = True
         self.cache = cache
         self.memories = {}
-        self.t_scale = list(map(float, cfg.t_scale.split(',')))
+        self.t_scale = np.array(list(map(float, cfg.t_scale.split(','))))
         self.net_type = cfg.net_type
         self.num_output = cfg.num_output
         self.num_output1 = cfg.num_output1
@@ -180,7 +180,7 @@ class DataSet:
                     p2 = poses[img_id2]
 
                     A, T = Utils.get_relative(p1, p2)
-                    ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])
+                    ar = np.array([A[0], A[1], A[2], T[0], T[1], T[2]])*self.t_scale
                     ft1 = features[img_id1][0]
                     ft2 = features[img_id2][0]
                     if self.att == 4:
@@ -356,7 +356,7 @@ class DataSet:
                 ins.append(a[0].reshape(((self.nPar + self.nAdd), self.att,1)))
             else:
                 raise Exception()
-            outs.append(a[1]*self.t_scale[self.num_output1:self.num_output])
+            outs.append(a[1])
 
             imgs.append(a[2])
         dd = (np.array(ins), np.array(outs), imgs)
@@ -678,7 +678,7 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 1
+    range2 = 3
     range3 = -range2
 
     read_time = False
