@@ -230,6 +230,70 @@ def get_avg_file(tr, avg_file):
 
     return
 
+
+def get_results(rst_dic, truth_dic):
+    Is = te.I
+    results = []
+    truth = []
+    fname = 'test'
+
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+    rs = []
+    list_dic = {}
+    RR = []
+    I = []
+    first_id = None
+    t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
+    output_dic = {}
+    ths = SortedDict()
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+
+        results.append(result)
+        t = truth_dic[id]
+        truth.append(t)
+
+        result = result[-1]
+
+        dr = t - result
+        r = np.linalg.norm(dr)
+        rs.append(r / 10)
+
+        if id[1] - id[0] == 1:
+            ths[id[1]] = result / t_scale
+
+        if id[1] - id[0] == 1:
+            mm = result
+            for a in range(len(t)):
+                if a not in list_dic:
+                    list_dic[a] = []
+                list_dic[a].append(t[a] - mm[a])
+                if a > 0:
+                    fp.write(',')
+                fp.write('{},{}'.format(t[a], mm[a]))
+            fp.write(',{}\n'.format(r))
+    fp.close()
+
+    for a in list_dic:
+        vals = np.array(list_dic[a])
+        md = np.median(abs(vals))
+        avg = np.sqrt(np.mean(vals * vals))
+        print('\t Diff=1', a, md, avg)
+
+    results = np.array(results)
+    truth = np.array(truth)
+    tr_loss, tr_median = Utils.calculate_stack_loss_avg(results, truth, 0)
+
+    for a in range(len(tr_loss)):
+        print(a, tr_loss[a], tr_median[a])
+
+    return ths
+
+
 if __name__ == '__main__':
 
     config_file = "config.json"
@@ -292,56 +356,73 @@ if __name__ == '__main__':
             tr_pre_data = te.prepare(multi=-1, rd=False)
             run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
 
-        Is = te.I
-        results = []
-        truth = []
-        fname = 'test'
+        ths = get_results(rst_dic, truth_dic)
 
-        filename = '/home/weihao/tmp/{}.csv'.format(fname)
-        if sys.platform == 'darwin':
-            filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-        fp = open(filename, 'w')
-        rs = []
-        list_dic = {}
-        RR = []
-        I = []
-        first_id = None
-        t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
-        output_dic = {}
-        ths = []
-        for id in rst_dic:
-            dst = np.array(rst_dic[id])
-            result = np.median(dst, axis=0)
+        R = np.eye(4)
+        print(len(ths))
+        for rst in ths:
+            Q = Utils.get_Q(ths[rst])
+            R = R.dot(Q)
+            A, T = Utils.get_A_T(R)
+            print(A,T)
 
-            results.append(result)
-            t = truth_dic[id]
-            truth.append(t)
-
-            result = result[-1]
-
-            dr = t - result
-            r = np.linalg.norm(dr)
-            rs.append(r / 10)
-
-            if id[0] - id[1] == 1:
-                mm = result
-                for a in range(len(t)):
-                    if a not in list_dic:
-                        list_dic[a] = []
-                    list_dic[a].append(t[a] - mm[a])
-                    if a > 0:
-                        fp.write(',')
-                    fp.write('{},{}'.format(t[a], mm[a]))
-                fp.write(',{}\n'.format(r))
-        fp.close()
-
-        for a in list_dic:
-            vals = np.array(list_dic[a])
-            md = np.median(abs(vals))
-            avg = np.sqrt(np.mean(vals * vals))
-            print('\t Diff=1', a, md, avg)
-
-        tr_loss, tr_median = Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
-
-        for a in range(len(tr_loss)):
-            print(a, tr_loss[a], tr_median[a])
+        #
+        # Is = te.I
+        # results = []
+        # truth = []
+        # fname = 'test'
+        #
+        # filename = '/home/weihao/tmp/{}.csv'.format(fname)
+        # if sys.platform == 'darwin':
+        #     filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+        # fp = open(filename, 'w')
+        # rs = []
+        # list_dic = {}
+        # RR = []
+        # I = []
+        # first_id = None
+        # t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
+        # output_dic = {}
+        # ths = SortedDict()
+        # for id in rst_dic:
+        #     dst = np.array(rst_dic[id])
+        #     result = np.median(dst, axis=0)
+        #
+        #     results.append(result)
+        #     t = truth_dic[id]
+        #     truth.append(t)
+        #
+        #     result = result[-1]
+        #
+        #     dr = t - result
+        #     r = np.linalg.norm(dr)
+        #     rs.append(r / 10)
+        #
+        #     if id[1] - id[0] == 1:
+        #         if id[1] - id[0] == 1:
+        #             ths[id[1]] = result/t_scale
+        #         mm = result
+        #         for a in range(len(t)):
+        #             if a not in list_dic:
+        #                 list_dic[a] = []
+        #             list_dic[a].append(t[a] - mm[a])
+        #             if a > 0:
+        #                 fp.write(',')
+        #             fp.write('{},{}'.format(t[a], mm[a]))
+        #         fp.write(',{}\n'.format(r))
+        # fp.close()
+        #
+        # for a in list_dic:
+        #     vals = np.array(list_dic[a])
+        #     md = np.median(abs(vals))
+        #     avg = np.sqrt(np.mean(vals * vals))
+        #     print('\t Diff=1', a, md, avg)
+        #
+        # results = np.array(results)
+        # truth = np.array(truth)
+        # tr_loss, tr_median = Utils.calculate_stack_loss_avg(results, truth, 0)
+        #
+        # for a in range(len(tr_loss)):
+        #     print(a, tr_loss[a], tr_median[a])
+        #
+        # print(len(ths))

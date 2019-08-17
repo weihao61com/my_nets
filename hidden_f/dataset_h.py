@@ -682,8 +682,8 @@ if __name__ == '__main__':
     range3 = -range2
 
     read_time = False
-    key = 'heads'
-    mode = 'Train'
+    key = '02'
+    mode = 'TTest'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'
     #key = 'rgbd_dataset_freiburg3_long_office_household'

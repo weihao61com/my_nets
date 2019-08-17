@@ -19,7 +19,7 @@ sys.path.append('{}/my_nets'.format(HOME))
 from utils import PinholeCamera, Utils
 
 p_file = 'rgbd_dataset_freiburg3_long_office_household_Train_ras_s1_3.p'
-p_file = 'heads_Test_ras_s3_3.p' # 'kitti_02_Test_ras_s3_3.p'
+p_file = 'kitti_02_Test_ras_s3_3.p'
 filename = '{}/p_files/{}'.format(HOME, p_file)
 
 #filename = '{}/p_files/rgbd_dataset_freiburg3_nostructure_texture_near_withloop_Test_cv_s1_2.p'.format(HOME)
@@ -94,6 +94,8 @@ for data_id in data.matches:
         d0 = np.array(d0)
         px_last = d0[:, :2]
         px_new = d0[:, 2:4]
+        if d0.shape[0]==5:
+            print(d0.shape)
 
         E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=cam.mx,
                                        method=cv2.RANSAC)
@@ -108,7 +110,7 @@ for data_id in data.matches:
         p2 = poses[img2]
         a, t = Utils.get_relative(p1, p2)
 
-        P = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        P = np.linalg.inv(p1.Q4[:3, :3]).dot(p2.Q4[:3, :3])
         c = Utils.cos(P[:3, :3], P[:3, :3])
         dv.append(c[0])
 

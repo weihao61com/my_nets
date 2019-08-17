@@ -25,7 +25,7 @@ def quaternion_matrix(quaternion):
         [                0.0,                 0.0,                 0.0, 1.0]])
 
 class SiftFeature:
-    def __init__(self, target=200):
+    def __init__(self, target=2000):
         self.th=0.01
         self.target = target
 

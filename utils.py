@@ -118,7 +118,7 @@ class Utils:
 
 
     @staticmethod
-    def get_relative(p1, p2):
+    def get_relative_0(p1, p2):
         # Q4 = np.linalg.inv(p1.Q4).dot(p2.Q4)
         Q4 = p2.Q4.dot(p1.Q4.transpose())
         A = Utils.get_A(Q4)
@@ -260,7 +260,7 @@ class Utils:
         return datasource(images, poses, c)
 
     @staticmethod
-    def  mtx_2_q(mx):
+    def mtx_2_q(mx):
         qw = np.sqrt(1 + mx[0][0] + mx[1][1] + mx[2][2]) / 2
         qx = (mx[2][1] - mx[1][2]) / (4 * qw)
         qy = (mx[0][2] - mx[2][0]) / (4 * qw)
@@ -498,7 +498,16 @@ class Utils:
         raise Exception()
         return Utils.get_A_T(Q)
 
-    @  staticmethod
+    @staticmethod
+    def get_Q(val):
+        A = val[:3]
+        T = val[3:]
+        Q = np.eye(4)
+        Q[:3, :3] = Utils.create_M(A)
+        Q[:3, 3] = T
+        return Q
+
+    @staticmethod
     def create_Q(A, T):
         M = np.array(BlueNoteSensorRotation.rotation_matrix
                      (A[0], A[1], A[2], sequence=RotationSequence.XZY))
@@ -554,7 +563,9 @@ class Utils:
 
     @staticmethod
     def get_relative(p1, p2):
-        Q = np.linalg.inv(p1.Q4).dot(p2.Q4)
+        Q1 = p1.Q4
+        Q2 = p2.Q4
+        Q = np.linalg.inv(Q1).dot(Q2)
         A, T = Utils.get_A_T(Q)
         return A, T
 
