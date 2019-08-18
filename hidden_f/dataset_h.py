@@ -557,7 +557,7 @@ class DataSet:
                 input = np.concatenate((input, input))
 
             # print(self.nPar + 5, len(input)-1)
-            length = random.randint(self.nPar + 5, len(input))
+            length = len(input)
             input1 = input[:length-self.nPar]
             input2 = input[-self.nPar:]
             truth = self.data[id][1]

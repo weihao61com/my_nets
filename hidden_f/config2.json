@@ -13,7 +13,7 @@
     "netFile": "t3",
     "_renetFile": "t",
     "add_len": 0,
-    "feature_len": 10,
+    "feature_len": 20,
     "out_offset": 10,
     "num_output": 3,
     "num_output1": 0,
@@ -32,6 +32,6 @@
     "L1": 0,
     "anet0": "t0",
     "anet1": "t3",
-    "anet2": "t5"
-
+    "anet2": "t5",
+    "fc_Nout": 0
 }
