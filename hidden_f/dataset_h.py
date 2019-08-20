@@ -110,6 +110,7 @@ class DataSet:
         print("features", len(features))
         matches = list(self.rasd.matches.values())[0]
         print("matches", len(matches))
+        self.rasd = None
         #self.att = self.sz[1]
 
     def init_truth(self, dim):
@@ -411,8 +412,8 @@ class DataSet:
             for a in range(len(data[0])):
                 self.data[id][0][a] -= av
                 self.data[id][0][a] /= st
-        self.rasd.matches=None
-        self.rasd.features=None
+        #self.rasd.matches=None
+        #self.rasd.features=None
         # self.rasd.poses=None
 
     def avg_correction2(self, avg_file):

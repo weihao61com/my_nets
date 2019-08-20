@@ -502,20 +502,14 @@ class Utils:
     def get_Q(val):
         A = val[:3]
         T = val[3:]
+        return Utils.create_Q(A, T)
+
+    @staticmethod
+    def create_Q(A, T):
         Q = np.eye(4)
         Q[:3, :3] = Utils.create_M(A)
         Q[:3, 3] = T
         return Q
-
-    @staticmethod
-    def create_Q(A, T):
-        M = np.array(BlueNoteSensorRotation.rotation_matrix
-                     (A[0], A[1], A[2], sequence=RotationSequence.XZY))
-        M = np.concatenate((M, np.array(T).reshape(3, 1)), axis=1)
-        M = np.concatenate((M, np.array([0,0,0,1]).reshape(1,4)))
-        #M[:3, 3] = T
-        raise Exception()
-        return M
 
     @  staticmethod
     def create_M(A):

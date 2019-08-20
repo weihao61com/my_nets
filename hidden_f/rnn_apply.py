@@ -263,8 +263,9 @@ def get_results(rst_dic, truth_dic):
         r = np.linalg.norm(dr)
         rs.append(r / 10)
 
-        if id[1] - id[0] == 1:
-            ths[id[1]] = result / t_scale
+        #if id[1] - id[0] == 1:
+        ths[id] = result / t_scale
+        # ths[id] = t / t_scale
 
         if id[1] - id[0] == 1:
             mm = result
@@ -359,13 +360,38 @@ if __name__ == '__main__':
         ths = get_results(rst_dic, truth_dic)
 
         R = np.eye(4)
+        A, T = Utils.get_A_T(R)
+        ATs = {0: (A, T)}
         print(len(ths))
-        for rst in ths:
-            Q = Utils.get_Q(ths[rst])
-            R = R.dot(Q)
-            A, T = Utils.get_A_T(R)
-            print(A,T)
+        for id in ths:
+            if id[1]-id[0]==1:
+                Q = Utils.get_Q(ths[id])
+                R = R.dot(Q)
+                A, T = Utils.get_A_T(R)
+                print(id[1], A, T)
+                ATs[id[1]] = (A, T)
+            if id[1]>10:
+                break
 
+        print()
+        for id in ths:
+            if id[1] == 5:
+                Q = Utils.get_Q(ths[id])
+                A, T = ATs[id[0]]
+                P = Utils.create_Q(A, T)
+                R = P.dot(Q)
+                A, T = Utils.get_A_T(R)
+                print(id[0], A, T)
+
+        print()
+        for id in ths:
+            if id[0] == 5:
+                Q = Utils.get_Q(ths[id])
+                A, T = ATs[id[1]]
+                P = Utils.create_Q(A, T)
+                R = P.dot(np.linalg.inv(Q))
+                A, T = Utils.get_A_T(R)
+                print(id[1], A, T)
         #
         # Is = te.I
         # results = []
