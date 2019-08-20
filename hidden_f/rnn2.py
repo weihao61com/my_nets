@@ -404,7 +404,7 @@ if __name__ == '__main__':
 
     loss = None
     last_loss = None
-    ref0 = net.layers['base_0_{}'.format(len(cfg.fc_nodes_2_feature)-1)]
+    ref0 = net.layers['base_0_{}'.format(len(cfg.nodes[0])-1)]
     As = []
     for a in xy:
         #if a<10:
