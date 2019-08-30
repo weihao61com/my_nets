@@ -22,12 +22,11 @@ def run_colmap(project_path, img_dir):
 
     if not os.path.exists(image_path):
         os.mkdir(image_path)
+        print('cp {} {}'.format(img_dir, image_path))
         os.system('cp {} {}'.format(img_dir, image_path))
 
     if not os.path.exists(sparse_path):
         os.mkdir(sparse_path)
-
-
 
     cmd = '{} feature_extractor'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)
@@ -39,12 +38,16 @@ def run_colmap(project_path, img_dir):
 
     run_cmd(cmd)
 
-    cmd = '{} exhaustive_matcher'.format(EXEC)
-    # cmd = '{} sequential_matcher'.format(EXEC)
+    #cmd = '{} exhaustive_matcher'.format(EXEC)
+    #cmd += ' --database_path {}'.format(database_path)
+    #cmd += ' --SiftMatching.use_gpu {}'.format(GPU)
+
+    cmd = '{} sequential_matcher'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)
     cmd += ' --SiftMatching.use_gpu {}'.format(GPU)
-    # cmd += ' --SiftMatching.num_threads 6'
-    # cmd += ' --SequentialMatching.overlap 10'
+    cmd += ' --SiftMatching.num_threads 6'
+    cmd += ' --SequentialMatching.overlap 10'
+    cmd += '  --SequentialMatching.loop_detection 1'
 
     run_cmd(cmd)
 
