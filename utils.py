@@ -513,8 +513,8 @@ class Utils:
 
     @  staticmethod
     def create_M(A):
-        A /= 180.0 / np.pi
-        M = tr.euler_matrix(A[0], A[2], A[1])
+        B = A/180.0*np.pi
+        M = tr.euler_matrix(B[0], B[2], B[1])
         # M = np.array(BlueNoteSensorRotation.rotation_matrix
         #              (A[0], A[1], A[2], sequence=RotationSequence.XZY))
         return M[:3, :3]

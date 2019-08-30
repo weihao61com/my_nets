@@ -5,6 +5,7 @@ import random
 import sys
 import os
 import rotation_averaging.util
+import cv2
 
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -99,6 +100,7 @@ class DataSet:
         self.out_offset = cfg.out_offset
         self.fc_Nout = cfg.fc_Nout
         self.I = None
+        self.cam = None
 
         self.load_next_data(sub_sample)
         self.sz = None
@@ -106,12 +108,54 @@ class DataSet:
             self.sz = len(self.data[id][0][0])
             break
         self.id = None
+        self.run_cv2()
         features = list(self.rasd.features.values())[0]
         print("features", len(features))
         matches = list(self.rasd.matches.values())[0]
         print("matches", len(matches))
         self.rasd = None
         #self.att = self.sz[1]
+
+    def run_cv2(self):
+        data = self.rasd
+        dv = []
+        for data_id in data.matches:
+            matches = data.matches[data_id]
+            features = data.features[data_id]
+            poses = data.poses[data_id]
+            for m_img in matches:
+                img1 = m_img[0]
+                img2 = m_img[1]
+                match = matches[m_img]
+                d0 = []
+                #att += len(match)
+                # if img2-img1!=9:
+                #    continue
+
+                for m in match:
+                    point1 = m[0]
+                    point2 = m[1]
+                    feature1 = features[img1][0][point1]
+                    feature2 = features[img2][0][point2]
+                    # descriptor1 = features[img1][1][point1]
+                    # descriptor2 = features[img2][1][point2]
+                    d0.append([feature1[0], feature1[1], feature2[0], feature2[1]])
+
+                d0 = np.array(d0)
+                px_last = d0[:, :2]
+                px_new = d0[:, 2:4]
+                if d0.shape[0] <= 5:
+                    print(d0.shape)
+                    raise Exception("matches length {}".format(len(d0.shape)))
+
+                E, mask = cv2.findEssentialMat(px_new, px_last, cameraMatrix=self.cam.mx,
+                                               method=cv2.RANSAC)
+                mh, R, t, mask0 = cv2.recoverPose(E, px_new, px_last, cameraMatrix=self.cam.mx)
+
+                b = Utils.get_A(R)
+                nid = (m_img[0], m_img[1], data_id)
+                self.data[nid] = self.data[nid] + (b,)
+
 
     def init_truth(self, dim):
         for id in self.rasd.features:
@@ -157,6 +201,7 @@ class DataSet:
             data = self.memories[self.index]
         else:
             rasd = load_data(self.dataset[self.index], self.verbose, sub_sample)
+            self.cam = rasd.cam
             self.I = []
             for g_id in rasd.poses:
                 poses = rasd.poses[g_id]
@@ -365,12 +410,12 @@ class DataSet:
 
         return pre_data
 
-    def prepare_h(self, rd=True, rdd=True):
+    def prepare_h(self, rd=True, rdd=True, multi=1):
         if rdd:
             self.reshuffle_data()
         self.id = 0
 
-        data = self.create_bucket_h()
+        data = self.create_bucket_h(multi)
         if rd:
             np.random.shuffle(data)
 
@@ -524,9 +569,19 @@ class DataSet:
         for id in self.data:
             sz_in = self.data[id][0][0].shape[0]
             break
+        t_scale = self.t_scale
 
         for id in self.data:
             input = self.data[id][0]
+            truth = self.data[id][1]
+            cv_val = self.data[id][2]
+            n = np.linalg.norm(truth-cv_val)
+            if n > 20:
+                continue
+
+            truth *= t_scale[:3]
+            cv_val *= t_scale[:3]
+            # att = len(input[0]) + len(truth)
             if multi > 0:
                 num = multi  # *int(np.ceil(len(input)/float(self.nPar)))
             else:
@@ -538,33 +593,37 @@ class DataSet:
             input = input[:length]
             for a in range(0, len(input), self.nPar+self.nAdd):
                 it = np.array(input[a:a + self.nPar+self.nAdd])
-                #truth = d[1][:self.num_output]
-                truth = self.data[id][1]# [self.num_output1:self.num_output]
-                #Nout = self.num_output - self.num_output1
-                output = (it.reshape((self.nPar+self.nAdd) * sz_in), truth, id)
+                nt = it.shape[0]
+                nt = np.repeat(cv_val.reshape(1,3), nt, axis=0)
+                it = np.concatenate((it, nt), axis=1)
+                output = (it.reshape((self.nPar+self.nAdd) * (sz_in+3)), truth-cv_val, id)
                 outputs.append(output)
         return outputs
 
-    def create_bucket_h(self):
+    def create_bucket_h(self, multi=1):
 
         outputs = []
-        for id in self.data:
-            sz_in = self.data[id][0][0].shape[0]
-            break
+        # for id in self.data:
+        #     sz_in = self.data[id][0][0].shape[0]
+        #     break
 
         for id in self.data:
             input = self.data[id][0]
-            while len(input) < self.nPar + 5:
+            while len(input) < (self.nPar + self.out_offset)*multi:
                 input = np.concatenate((input, input))
 
-            # print(self.nPar + 5, len(input)-1)
-            length = len(input)
-            input1 = input[:length-self.nPar]
-            input2 = input[-self.nPar:]
+            input = input[:(self.nPar + self.out_offset)*multi]
+
+
             truth = self.data[id][1]
 
-            output = (input1, input2, truth, id)
-            outputs.append(output)
+            for a in range(multi):
+                start = a * (self.nPar + self.out_offset)
+                input1 = input[start:start+self.out_offset]
+                input2 = input[start+self.out_offset:start+self.out_offset+self.nPar]
+
+                output = (input1, input2, truth, id)
+                outputs.append(output)
         return outputs
 
     def create_bucket_cnn(self, data):
@@ -679,12 +738,12 @@ class DataSet:
 
 
 if __name__ == '__main__':
-    range2 = 3
+    range2 = 1
     range3 = -range2
 
     read_time = False
     key = '02'
-    mode = 'TTest'
+    mode = 'Test'
     # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
     # mode = 'Test'
     #key = 'rgbd_dataset_freiburg3_long_office_household'

@@ -20,7 +20,6 @@ from utils import Utils, Config
 from network import Network
 #from fc_dataset import DataSet
 from dataset_h import DataSet, reverse
-from rnn import avg_file_name
 from rotation_averaging.compare import compare_rotation_matrices
 
 
@@ -29,13 +28,13 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
     rst_dic = {}
     truth_dic = {}
     for b in data:
-        length = int(b[0].shape[1]/att)
+        length = b[0].shape[0]
         feed = {}
         b_sz = b[0].shape[0]
 
         feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
         for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a+1)]] = b[0][a].reshape((1, att))
         result = []
         for a in xy:
             r = sess.run(xy[a], feed_dict=feed)
@@ -113,6 +112,92 @@ def reshape(a):
     for b in range(ll):
         output[:, :, b] = a[b]
     return output
+
+
+def run_data(rst_dic, truth_dic, fname, cfg, te):
+
+    Is = te.I
+    results = []
+    truth = []
+
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+    rs = []
+    list_dic = {}
+    RR = []
+    I = []
+    first_id = None
+    t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
+    output_dic = {}
+    ths = []
+    for id in rst_dic:
+        dst = np.array(rst_dic[id])
+        result = np.median(dst, axis=0)
+        # result = np.mean(dst, axis=0)
+        #print(result, truth_dic[id])
+        results.append(result)
+        t = truth_dic[id]
+        truth.append(t)
+
+        # imgs = id[0], id[1]
+        result = result[-1]
+        # print(id, imgs)
+        #if imgs[0]<100 and imgs[1]<100:
+        # if first_id is None or id[2] == first_id:
+        #     mat = Utils.create_M(result/t_scale[cfg.num_output1:cfg.num_output])
+        #     rel = Is[imgs[1]].dot(Is[imgs[0]].transpose())
+        #     RR.append(mat)
+        #     I.append(imgs)
+        #     first_id=id[2]
+        #     #theta = compare_rotation_matrices(mat, rel)*180/np.pi
+        #     theta = 0
+        #     ths.append(theta)
+
+        dr = t - result
+        r = np.linalg.norm(dr)
+        rs.append(r/10)
+
+        #if random.random() < 1.2:
+            #if len(t) == 6 or imgs[0] < imgs[1]:
+        #if abs(id[0] - id[1]) < 20:
+        #if id[1] - id[0] == 4:
+        mm = result
+        fp.write('{},{},'.format(id[0],id[1]))
+        for a in range(len(t)):
+            if a not in list_dic:
+                list_dic[a] = []
+            list_dic[a].append(t[a]-mm[a])
+            fp.write('{},{},'.format(t[a], mm[a]))
+        fp.write('{}\n'.format(r))
+
+    # P = {}
+    # th = np.median(np.array(ths))
+    # P['RR'] = reshape(RR)
+    # # P['Rgt'] = np.array(Is).transpose()
+    # P['Rgt'] = reshape(Is)
+    # P['I'] = np.array(I).transpose()
+    # filename = filename[:-4] + '.p'
+    # with open(filename, 'wb') as fp:
+    #     pickle.dump(P, fp)
+    fp.close()
+
+    for a in list_dic:
+        vals = np.array(list_dic[a])
+        md = np.median(abs(vals))
+        avg = np.sqrt(np.mean(vals*vals))
+        print('\t Diff=1', a, md, avg)
+
+    #rs = sorted(rs)
+    # length = len(rs)
+    # fp = open(filename+'.csv', 'w')
+    # for a in range(length):
+    #     # fp.write('{},{}\n'.format(float(a)/length, rs[a]))
+    #     fp.write('{},{}\n'.format(ths[a], rs[a]))
+    # fp.close()
+
+    return Utils.calculate_stack_loss_avg(np.array(results), np.array(truth), 0)
 
 
 class rNet(Network):
@@ -202,6 +287,20 @@ class rNet(Network):
                         self.fc_w2(ws=self.ws[2][b], name=n, relu=False)
 
 
+def run_test(input_dic, sess, xy, te, cfg, mul=1):
+
+    rst_dic = {}
+    truth_dic = {}
+    for a in range(mul):
+        tr_pre_data = te.prepare(multi=-1, rd = False)
+        run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+
+    tr_loss, tr_median = run_data(rst_dic, truth_dic, 'test', cfg, te)
+
+    for a in range(len(tr_loss)):
+        print(a, tr_loss[a], tr_median[a])
+
+
 def get_avg_file(tr, avg_file):
     av = None
     st = None
@@ -231,103 +330,59 @@ def get_avg_file(tr, avg_file):
     return
 
 
-def get_results(rst_dic, truth_dic):
-    Is = te.I
-    results = []
-    truth = []
-    fname = 'test'
-
-    filename = '/home/weihao/tmp/{}.csv'.format(fname)
-    if sys.platform == 'darwin':
-        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-    fp = open(filename, 'w')
-    rs = []
-    list_dic = {}
-    RR = []
-    I = []
-    first_id = None
-    t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
-    output_dic = {}
-    ths = SortedDict()
-    for id in rst_dic:
-        dst = np.array(rst_dic[id])
-        result = np.median(dst, axis=0)
-
-        results.append(result)
-        t = truth_dic[id]
-        truth.append(t)
-
-        result = result[-1]
-
-        dr = t - result
-        r = np.linalg.norm(dr)
-        rs.append(r / 10)
-
-        if len(t)==3:
-            t0 = np.append(t, [0,0,0])
-            r0 = np.append(result, [0,0,0])
-            ths[id] = (t0/t_scale, r0/t_scale)
-        else:
-            ths[id] = (t/t_scale, result/t_scale)
-
-
-        if id[1] - id[0] == 1:
-            mm = result
-            for a in range(len(t)):
-                if a not in list_dic:
-                    list_dic[a] = []
-                list_dic[a].append(t[a] - mm[a])
-                if a > 0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
-    fp.close()
-
-    for a in list_dic:
-        vals = np.array(list_dic[a])
-        md = np.median(abs(vals))
-        avg = np.sqrt(np.mean(vals * vals))
-        print('\t Diff=1', a, md, avg)
-
-    results = np.array(results)
-    truth = np.array(truth)
-    tr_loss, tr_median = Utils.calculate_stack_loss_avg(results, truth, 0)
-
-    for a in range(len(tr_loss)):
-        print(a, tr_loss[a], tr_median[a])
-
-    return ths
+def avg_file_name(p):
+    basename = os.path.basename(p)
+    pathname = os.path.dirname(p)
+    return pathname + '_' + basename+'_avg.p'
 
 
 if __name__ == '__main__':
 
-    config_file = "config.json"
+    config_file = "config4.json"
 
-    test = 'te'
+    #if len(sys.argv)>1:
+    #    config_file = sys.argv[1]
+
+    test = None
     if len(sys.argv)>1:
         test = sys.argv[1]
-
-    # trth = False
-    # if len(sys.argv)>2:
-    #    trth = True
 
     cfg = Config(config_file)
 
     avg_file = avg_file_name(cfg.netFile)
-    if test == 'te':
-        te = DataSet([cfg.te_data[0]], cfg)
+    if test is None:
+        tr = DataSet(cfg.tr_data, cfg)
+        get_avg_file(tr, avg_file)
+        tr.avg_correction(avg_file)
+        te = DataSet(cfg.te_data, cfg, sub_sample=0.15)
+        tr0 = DataSet([cfg.tr_data[0]], cfg, sub_sample=0.1)
+        tr0.avg_correction(avg_file)
+
     else:
-        te = DataSet([cfg.tr_data[0]], cfg)
+        if test == 'te':
+            te = DataSet([cfg.te_data[0]], cfg)
+        else:
+            te = DataSet([cfg.tr_data[0]], cfg)
+
     te.avg_correction(avg_file)
+    iterations = 10000
+    loop = cfg.loop
+    print("input attribute", cfg.att, "LR", cfg.lr,
+          'feature', cfg.feature_len, 'add', cfg.add_len)
 
     inputs = {}
+    lr = cfg.lr
+    learning_rate =  tf.compat.v1.placeholder(tf.float32, shape=[])
 
     Nout = cfg.num_output - cfg.num_output1
     setattr(cfg, 'Nout', Nout)
+
+    # output = tf.placeholder(tf.float32, [None, cfg.num_output])
     output = tf.compat.v1.placeholder(tf.float32, [None, Nout])
 
     cfg.ref_node = list(cfg.nodes[0])[-1]
-    cfg.refs = np.ones((1, cfg.ref_node))
+    cfg.refs = np.ones(cfg.ref_node) #(np.array(range(cfg.ref_node)) + 1.0)/cfg.ref_node - 0.5
+    cfg.refs = cfg.refs.reshape((1, cfg.ref_node))
     inputs[0] = tf.compat.v1.placeholder(tf.float32, [None, cfg.ref_node])
 
     for a in range(cfg.feature_len):
@@ -347,6 +402,29 @@ if __name__ == '__main__':
             xy[a] = net.layers['output_{}'.format(a)]
     print('output', len(xy))
 
+    loss = None
+    last_loss = None
+    As = []
+    for a in xy:
+        #if a<10:
+        #    continue
+        As.append(a)
+        if cfg.L1==0:
+            last_loss = tf.reduce_sum(tf.square(tf.subtract(xy[a], output)))
+        else:
+            last_loss = tf.reduce_sum(tf.abs(tf.subtract(xy[a], output)))
+        if loss is None:
+            loss = last_loss
+        else:
+            loss = loss + last_loss
+    print(As)
+
+    opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9,
+                    beta2=0.999, epsilon=0.00000001,
+                    use_locking=False, name='Adam').\
+        minimize(loss)
+    # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
+
     init = tf.compat.v1.global_variables_initializer()
     saver = tf.compat.v1.train.Saver()
     t00 = datetime.datetime.now()
@@ -354,126 +432,76 @@ if __name__ == '__main__':
     with tf.compat.v1.Session() as sess:
         sess.run(init)
 
-        mul = 1
-        if len(sys.argv) > 2:
-            mul = int(sys.argv[2])
-        saver.restore(sess, cfg.netFile)
+        if test is not None:
+            mul = 1
+            if len(sys.argv) > 2:
+                mul = int(sys.argv[2])
+            saver.restore(sess, cfg.netFile)
+            run_test(input_dic, sess, xy, te, cfg, mul)
+            exit(0)
 
-        rst_dic = {}
-        truth_dic = {}
-        for a in range(mul):
-            tr_pre_data = te.prepare(multi=-1, rd=False)
-            run_data_1(tr_pre_data, input_dic, sess, xy, cfg, rst_dic, truth_dic)
+        if cfg.renetFile:
+            saver.restore(sess, cfg.renetFile)
 
-        ths = get_results(rst_dic, truth_dic)
-        target = 500
+        str1 = ''
+        for a in range(iterations):
 
-        R = np.eye(4)
-        Rt = np.eye(4)
-        A, T = Utils.get_A_T(R)
-        A1, T1 = Utils.get_A_T(R)
-        ATs = {0: (A, T, A, T)}
-        print(len(ths))
-        for id in ths:
-            if id[1]-id[0]==1:
-                if abs(id[1]-target)<10:
-                    Q = Utils.get_Q(ths[id][0])
-                    R = R.dot(Q)
-                    A, T = Utils.get_A_T(R)
-                    Q = Utils.get_Q(ths[id][1])
-                    Rt = Rt.dot(Q)
-                    A1, T1 = Utils.get_A_T(Rt)
-                    print(id[1], A, T, A1, T1)
-                ATs[id[1]] = (A, T, A1, T1)
-            #if id[1]>20:
-            #    break
-        print()
-        for id in ths:
-            if id[1] == target:
-                A, T, A1, T1 = ATs[id[0]]
+            t1 = datetime.datetime.now()
+            str = "it: {0:.3f} {1:.3f} {2:4.2e}".\
+                format(a*loop/1000.0, (t1 - t00).total_seconds()/3600.0, lr)
 
-                Q = Utils.get_Q(ths[id][0])
-                P = Utils.create_Q(A, T)
-                R = P.dot(Q)
+            tr_pre_data = tr0.prepare(multi=2)
+            tr_loss, tr_median = run_data_0(tr_pre_data, input_dic, sess, xy, 'tr', cfg)
 
-                Ax, Tx = Utils.get_A_T(R)
-                Q = Utils.get_Q(ths[id][1])
-                P = Utils.create_Q(A1, T1)
-                R = P.dot(Q)
-                A1x, T1x = Utils.get_A_T(R)
-                print(id[0], Ax, Tx, A1x, T1x)
+            te_pre_data = te.prepare()
+            te_loss, te_median = run_data_0(te_pre_data, input_dic, sess, xy, 'te', cfg)
 
-        print()
+            s = -1
+            while True:
+                s += int(len(tr_loss)/2)
+                str += " {0:.3f} {1:.3f} {2:.3f} {3:.3f} ".format(tr_loss[s], te_loss[s], tr_median[s], te_median[s])
+                if s==len(tr_loss)-1:
+                    break
 
-        for id in ths:
-            if id[0] == target:
-                A, T, A1, T1 = ATs[id[1]]
-                Q = Utils.get_Q(ths[id][0])
-                P = Utils.create_Q(A, T)
-                R = P.dot(np.linalg.inv(Q))
-                A, T = Utils.get_A_T(R)
-                Q = Utils.get_Q(ths[id][1])
-                P = Utils.create_Q(A1, T1)
-                R = P.dot(np.linalg.inv(Q))
-                A1, T1 = Utils.get_A_T(R)
-                print(id[1], A, T, A1, T1)
-        #
-        # Is = te.I
-        # results = []
-        # truth = []
-        # fname = 'test'
-        #
-        # filename = '/home/weihao/tmp/{}.csv'.format(fname)
-        # if sys.platform == 'darwin':
-        #     filename = '/Users/weihao/tmp/{}.csv'.format(fname)
-        # fp = open(filename, 'w')
-        # rs = []
-        # list_dic = {}
-        # RR = []
-        # I = []
-        # first_id = None
-        # t_scale = np.fromiter(map(float, cfg.t_scale.split(",")), dtype=np.float)
-        # output_dic = {}
-        # ths = SortedDict()
-        # for id in rst_dic:
-        #     dst = np.array(rst_dic[id])
-        #     result = np.median(dst, axis=0)
-        #
-        #     results.append(result)
-        #     t = truth_dic[id]
-        #     truth.append(t)
-        #
-        #     result = result[-1]
-        #
-        #     dr = t - result
-        #     r = np.linalg.norm(dr)
-        #     rs.append(r / 10)
-        #
-        #     if id[1] - id[0] == 1:
-        #         if id[1] - id[0] == 1:
-        #             ths[id[1]] = result/t_scale
-        #         mm = result
-        #         for a in range(len(t)):
-        #             if a not in list_dic:
-        #                 list_dic[a] = []
-        #             list_dic[a].append(t[a] - mm[a])
-        #             if a > 0:
-        #                 fp.write(',')
-        #             fp.write('{},{}'.format(t[a], mm[a]))
-        #         fp.write(',{}\n'.format(r))
-        # fp.close()
-        #
-        # for a in list_dic:
-        #     vals = np.array(list_dic[a])
-        #     md = np.median(abs(vals))
-        #     avg = np.sqrt(np.mean(vals * vals))
-        #     print('\t Diff=1', a, md, avg)
-        #
-        # results = np.array(results)
-        # truth = np.array(truth)
-        # tr_loss, tr_median = Utils.calculate_stack_loss_avg(results, truth, 0)
-        #
-        # for a in range(len(tr_loss)):
-        #     print(a, tr_loss[a], tr_median[a])
-        #
-        # print(len(ths))
+            print(str, str1)
+
+            if lr<1e-9:
+                break
+
+            tl3 = 0
+            #tl4 = 0
+            #tl5 = 0
+            nt = 0
+            att = cfg.att
+            for _ in range(loop):
+                tr_pre_data = tr.prepare(multi=cfg.multi)
+
+                while tr_pre_data:
+                    for b in tr_pre_data:
+                        total_length = len(b[0])
+                        length = int(b[0].shape[1]/cfg.att)
+                        for c in range(0, total_length, cfg.batch_size):
+                            feed = {learning_rate: lr}
+                            n0 = 0
+                            for a in range(length):
+                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
+                                feed[inputs[a + 1]] = x
+                                n0 = x.shape[0]
+                            feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)
+                            o = b[1][c:c + cfg.batch_size]
+                            if len(o.shape) == 1:
+                                o = o.reshape((len(o), 1))
+                            feed[output] = o
+
+                            ll3,_= sess.run([loss, opt],feed_dict=feed)
+                            tl3 += ll3
+                            nt += n0
+                    tr_pre_data = tr.get_next(avg=avg_file)
+                N_total += 1
+                if N_total % cfg.INC_win == 0:
+                    lr -= cfg.d_lr
+
+            str1 = "{0:.3f} ".format(tl3/nt)
+            Utils.save_tf_data(saver, sess, cfg.netFile)
+
+

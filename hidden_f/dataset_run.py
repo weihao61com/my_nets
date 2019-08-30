@@ -136,10 +136,10 @@ for data_id in data.matches:
 
         #if random() > 2000.0/len(matches):
         #    continue
-        if img2-img1!=1:
-            continue
-        fp.write('{},{},{},{},{},{},{},{}\n'.
-                 format(img1, a[0], a[1], a[2], b[0], b[1], b[2], r0))
+        #if img2-img1!=1:
+        #    continue
+        fp.write('{},{},{},{},{},{},{},{},{}\n'.
+                 format(img1, img2, a[0], b[0], a[1], b[1], a[2], b[2], r0))
 
 dv = np.array(dv)*180/np.pi
 print(np.mean(dv), np.median(dv), np.std(dv))

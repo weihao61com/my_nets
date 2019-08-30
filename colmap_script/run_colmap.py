@@ -148,12 +148,11 @@ def run_colmap(project_dir, key, mode, max_image, max_match_per_image):
     else:
         create_image_list(project_path, image_list, max_match_per_image*5)
 
-    cmd = '{} matches_importer'.format(EXEC)
+    cmd = '{} sequential_matcher'.format(EXEC)
     cmd += ' --database_path {}'.format(database_path)
     cmd += ' --SiftMatching.use_gpu {}'.format(GPU)
     cmd += ' --SiftMatching.num_threads 6'
-    cmd += ' --match_list_path {}'.format(os.path.join(project_path, MATCHES_LIST))
-
+    cmd += '--SequentialMatching.overlap 2'
     run_cmd(cmd)
 
     # shutil.rmtree(image_path)

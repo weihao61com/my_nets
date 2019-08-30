@@ -61,8 +61,9 @@ class RAS_D:
                 A[img_id] = [keypoints, fs[1]]
             self.features[seq] = A
 
-    def process(self, range2, range1=None):
-        range3 = 0
+    def process(self, range2, range1=None, range3=None):
+        if range3 is None:
+            range3 = 0
         if range1 is None:
             range1 = -range2
 

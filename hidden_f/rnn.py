@@ -28,13 +28,13 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
     rst_dic = {}
     truth_dic = {}
     for b in data:
-        length = int(b[0].shape[1]/att)
+        length = int(b[0].shape[1]/(att+3))
         feed = {}
         b_sz = b[0].shape[0]
 
         feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
         for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a+1)]] = b[0][:, (att+3) * a:(att+3) * (a + 1)]
         result = []
         for a in xy:
             r = sess.run(xy[a], feed_dict=feed)
@@ -84,13 +84,13 @@ def run_data_0(data, inputs, sess, xy, fname, cfg):
 def run_data_1(data, inputs, sess, xy, cfg, rst_dic, truth_dic):
     att = cfg.att
     for b in data:
-        length = int(b[0].shape[1]/att)
+        length = int(b[0].shape[1]/(att+3))
         feed = {}
         b_sz = b[0].shape[0]
 
         feed[inputs['input_0']] = np.repeat(cfg.refs, b_sz,  axis=0)
         for a in range(length):
-            feed[inputs['input_{}'.format(a+1)]] = b[0][:, att * a:att * (a + 1)]
+            feed[inputs['input_{}'.format(a+1)]] = b[0][:, (att+3) * a:(att+3) * (a + 1)]
         result = []
         for a in xy:
             r = sess.run(xy[a], feed_dict=feed)
@@ -142,6 +142,7 @@ def run_data(rst_dic, truth_dic, fname, cfg, te):
         truth.append(t)
 
         # imgs = id[0], id[1]
+        r0 = result[0]
         result = result[-1]
         # print(id, imgs)
         #if imgs[0]<100 and imgs[1]<100:
@@ -162,16 +163,15 @@ def run_data(rst_dic, truth_dic, fname, cfg, te):
         #if random.random() < 1.2:
             #if len(t) == 6 or imgs[0] < imgs[1]:
         #if abs(id[0] - id[1]) < 20:
-        if id[0] - id[1] < 10:
-            mm = result
-            for a in range(len(t)):
-                if a not in list_dic:
-                    list_dic[a] = []
-                list_dic[a].append(t[a]-mm[a])
-                if a>0:
-                    fp.write(',')
-                fp.write('{},{}'.format(t[a], mm[a]))
-            fp.write(',{}\n'.format(r))
+        #if id[1] - id[0] == 4:
+        mm = result
+        fp.write('{},{},'.format(id[0],id[1]))
+        for a in range(len(t)):
+            if a not in list_dic:
+                list_dic[a] = []
+            list_dic[a].append(t[a]-mm[a])
+            fp.write('{},{},{},'.format(t[a], mm[a], r0[a]))
+        fp.write('{}\n'.format(r))
 
     # P = {}
     # th = np.median(np.array(ths))
@@ -215,7 +215,7 @@ class rNet(Network):
 
         # feature
         ws = []
-        ins = cfg.att
+        ins = cfg.att+3
         nodes = list(cfg.nodes[2])
         for a in range(len(nodes)):
             ws.append(self.create_ws('feature_{}'.format(a), ins, nodes[a]))
@@ -387,7 +387,7 @@ if __name__ == '__main__':
     inputs[0] = tf.compat.v1.placeholder(tf.float32, [None, cfg.ref_node])
 
     for a in range(cfg.feature_len):
-        inputs[a+1] = tf.compat.v1.placeholder(tf.float32, [None, cfg.att])
+        inputs[a+1] = tf.compat.v1.placeholder(tf.float32, [None, cfg.att+3])
 
     input_dic = {}
     for a in range(cfg.feature_len+1):
@@ -480,12 +480,12 @@ if __name__ == '__main__':
                 while tr_pre_data:
                     for b in tr_pre_data:
                         total_length = len(b[0])
-                        length = int(b[0].shape[1]/cfg.att)
+                        length = int(b[0].shape[1]/(cfg.att+3))
                         for c in range(0, total_length, cfg.batch_size):
                             feed = {learning_rate: lr}
                             n0 = 0
                             for a in range(length):
-                                x = b[0][c:c + cfg.batch_size, cfg.att * a:cfg.att * (a + 1)]
+                                x = b[0][c:c + cfg.batch_size, (cfg.att+3) * a:(cfg.att+3) * (a + 1)]
                                 feed[inputs[a + 1]] = x
                                 n0 = x.shape[0]
                             feed[inputs[0]] = np.repeat(cfg.refs, n0, axis=0)

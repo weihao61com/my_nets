@@ -475,7 +475,7 @@ if __name__ == '__main__':
             nt = 0
             att = cfg.att
             for _ in range(loop):
-                tr_pre_data = tr.prepare_h()
+                tr_pre_data = tr.prepare_h(cfg.multi)
 
                 while tr_pre_data:
                     length = len(tr_pre_data)
