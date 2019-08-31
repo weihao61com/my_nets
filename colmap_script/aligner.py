@@ -19,13 +19,13 @@ def create_aligner(key, mode, filename):
     else:
         location = "{}/datasets/indoors/{}".format(HOME, key)  # office" #heads
         poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
-
-    if read_time:
-        for id in poses_dic:
-            time_table_file = location + '/sequences/' + id + '/times.txt'
-            time_table = np.loadtxt(time_table_file)
-            poses = poses_dic[id]
-            print(len(poses), len(time_table))
+    #
+    # if read_time:
+    #     for id in poses_dic:
+    #         time_table_file = location + '/sequences/' + id + '/times.txt'
+    #         time_table = np.loadtxt(time_table_file)
+    #         poses = poses_dic[id]
+    #         print(len(poses), len(time_table))
 
     print(key, mode)
 
@@ -34,7 +34,7 @@ def create_aligner(key, mode, filename):
             for pose in poses_dic[id]:
                 filename = os.path.basename(poses_dic[id][pose].filename)
                 tran = poses_dic[id][pose].tran
-                fp.write('{} {} {} {}\n',filename, tran[0], tran[1], tran[2])
+                fp.write('{} {} {} {}\n'.format(filename, tran[0], tran[1], tran[2]))
 
 if __name__ == '__main__':
 

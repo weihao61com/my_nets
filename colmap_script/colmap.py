@@ -1,5 +1,6 @@
 import os
 import sys
+from aligner import create_aligner
 
 DB_NAME = 'proj.db'
 IMAGE_FOLEDER = 'images'
@@ -80,12 +81,18 @@ def run_colmap(project_path, img_dir, step=0):
 
     run_cmd(cmd)
 
+
 if __name__ == "__main__":
 
+    import shutil
     project_dir = 'tmp/heads_02'
     images_dir = 'datasets/indoors/heads/seq-02/*color.png'
 
     project_dir = '{}/{}'.format(HOME, project_dir)
     images_dir = '{}/{}'.format(HOME, images_dir)
+
+    if not os.path.exists('{}/sparse/align_0'.format(project_dir)):
+        os.makedirs('{}/sparse/align_0'.format(project_dir))
+    create_aligner('heads', 'Train', '{}/sparse/align_0/aligner.txt'.format(project_dir))
 
     run_colmap(project_dir, images_dir)
