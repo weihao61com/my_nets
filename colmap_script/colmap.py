@@ -1,10 +1,16 @@
 import os
+import sys
 
 DB_NAME = 'proj.db'
 IMAGE_FOLEDER = 'images'
-GPU = 1
-# EXEC = '/Users/weihao/Applications/COLMAP.app/Contents/MacOS/colmap'
-EXEC = '/usr/local/bin/colmap'
+
+if sys.platform=='darwin':
+    HOME = '/Users/weihao/Projects'
+    GPU = 0
+    EXEC = '/Users/weihao/Applications/COLMAP.app/Contents/MacOS/colmap'
+else:
+    EXEC = '/usr/local/bin/colmap'
+    HOME = '/home/weihao/Projects'
 
 
 def run_cmd(cmd):
@@ -12,7 +18,7 @@ def run_cmd(cmd):
     os.system(cmd)
 
 
-def run_colmap(project_path, img_dir):
+def run_colmap(project_path, img_dir, step=0):
     if not os.path.exists(project_path):
         os.mkdir(project_path)
 
@@ -22,8 +28,8 @@ def run_colmap(project_path, img_dir):
 
     if not os.path.exists(image_path):
         os.mkdir(image_path)
-        print('cp {} {}'.format(img_dir, image_path))
-        os.system('cp {} {}'.format(img_dir, image_path))
+        cmd = 'cp {} {}'.format(img_dir, image_path)
+        run_cmd(cmd)
 
     if not os.path.exists(sparse_path):
         os.mkdir(sparse_path)
@@ -47,7 +53,7 @@ def run_colmap(project_path, img_dir):
     cmd += ' --SiftMatching.use_gpu {}'.format(GPU)
     cmd += ' --SiftMatching.num_threads 6'
     cmd += ' --SequentialMatching.overlap 10'
-    cmd += '  --SequentialMatching.loop_detection 1'
+    cmd += ' --SequentialMatching.loop_detection 1'
 
     run_cmd(cmd)
 
@@ -66,9 +72,13 @@ def run_colmap(project_path, img_dir):
 
     run_cmd(cmd)
 
+
 if __name__ == "__main__":
 
-    project_dir = '/home/weihao/tmp/heads'
-    images_dir = '/home/weihao/Projects/datasets/indoors/heads/seq-01/*color.png'
+    project_dir = 'tmp/heads_02'
+    images_dir = 'datasets/indoors/heads/seq-02/*color.png'
+
+    project_dir = '{}/{}'.format(HOME, project_dir)
+    images_dir = '{}/{}'.format(HOME, images_dir)
 
     run_colmap(project_dir, images_dir)

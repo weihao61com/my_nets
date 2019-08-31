@@ -23,10 +23,10 @@ def get_rows(conn, table_name, verbose = True):
 
     rows = c.fetchall()
     if verbose:
-        print '\n\ttable', table_name
+        print('\n\ttable', table_name)
         for name in c_names:
-            print '\t', name
-        print '\tdata length', len(rows)
+            print('\t', name)
+        print('\tdata length', len(rows))
     return rows
 
 
@@ -35,9 +35,9 @@ def view_cameras_table(conn):
 
     nt = 0
     for row in rows:
-        print '\t', row
+        print('\t', row)
         data1 = camera_params(row[4])
-        print '\tparams', data1
+        print('\tparams', data1)
         nt += 1
         if nt>5:
             break
@@ -105,7 +105,7 @@ class ImageFeature:
                 self.key_points[id] = KeyPoint(kp)
                 id += 1
         else:
-            print p
+            print(p)
             # raise Exception()
             #print kp[0], kp[1], kp[2], kp[3], kp[4], kp[5]
         #print ('\n')
@@ -141,7 +141,7 @@ class Colmap_DB:
             conn = sqlite3.connect(db_name)
             res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
             for name in res:
-                print name[0]
+                print(name[0])
 
             view_data_table(conn, 'cameras', 4, 'd')
             view_data_table(conn, 'sqlite_sequence')
@@ -168,7 +168,7 @@ class Colmap_DB:
             else:
                 pass
                 # print image_ids(long(row[0])), row
-        print 'Total match', len(matches), 'out of', len(rows), 'at threshold', min_matches
+        print('Total match', len(matches), 'out of', len(rows), 'at threshold', min_matches)
 
         for id in self.imagelist:
             self.imagelist[id].reduce_matches(max_match_per_image)
@@ -178,7 +178,7 @@ class Colmap_DB:
                     ids[1] in self.imagelist[ids[0]].ids):
                 self.matches[ids] = matches[ids]
 
-        print 'Final match', len(self.matches)
+        print('Final match', len(self.matches))
 
 
     def get_relative_poses(self, mx, filename, tr):
@@ -230,7 +230,7 @@ class Colmap_DB:
             self.imagelist[row[0]] = ImageFeature(row[1])
             #print('\t{}'.format(row))
 
-        print 'Total image', len(self.imagelist)
+        print('Total image', len(self.imagelist))
 
     def get_image_feature(self):
         conn = sqlite3.connect(self.name)
@@ -239,7 +239,7 @@ class Colmap_DB:
         for p in kp:
             np += self.imagelist[p[0]].add_key_point(p)
 
-        print 'Average key point', np/len(kp)
+        print('Average key point', np/len(kp))
 
         des = get_rows(conn, 'descriptors', False)
         for p in des:
@@ -247,8 +247,8 @@ class Colmap_DB:
 
 
 def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose=False):
-    db = '{}/colmap_features/{}_{}/proj.db'.format(project_dir, key, mode)
-    output = '{}/colmap_features/{}_{}/pairs.p'.format(project_dir, key, mode)
+    db = '{}/tmp/{}/proj.db'.format(project_dir, key)
+    output = '{}/tmp/{}/pairs.p'.format(project_dir, key)
 
     c = Colmap_DB(db, verbose)
 
@@ -262,8 +262,8 @@ def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose
     c.get_relative_poses(cam.mx, output, mode.startswith('Tr'))
 
 if __name__ == "__main__":
-    project_dir = '/home/weihao/Projects'
+    project_dir = '/Users/weihao/Projects'
     key = 'heads'  # office" #heads
     mode = 'Test'
 
-    process_db(project_dir, key, mode, 20)
+    process_db(project_dir, key, mode, 2000, 5)
