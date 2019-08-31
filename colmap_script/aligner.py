@@ -7,25 +7,7 @@ from utils import HOME
 from image_pairing.pose_ana import \
     load_kitti_poses, load_indoor_7_poses, load_TUM_poses
 
-
-if __name__ == '__main__':
-    range2 = 1
-    range3 = -range2
-
-    read_time = False
-    key = 'heads'
-    mode = 'Test'
-    # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
-    # mode = 'Test'
-    #key = 'rgbd_dataset_freiburg3_long_office_household'
-    #mode = 'Train'
-
-    if len(sys.argv)>1:
-        key = sys.argv[1]
-    if len(sys.argv)>2:
-        mode = sys.argv[2]
-    if len(sys.argv)>3:
-        read_time = True
+def create_aligner(key, mode, filename):
 
     if key.startswith('0'):
         location = '{}/datasets/kitti'.format(HOME)
@@ -45,13 +27,33 @@ if __name__ == '__main__':
             poses = poses_dic[id]
             print(len(poses), len(time_table))
 
-    print(key, mode, range2, range3)
+    print(key, mode)
 
-    for id in poses_dic:
-        for pose in poses_dic[id]:
-            filename = os.path.basename(poses_dic[id][pose].filename)
-            tran = poses_dic[id][pose].tran
-            #print(filename, tran[0], tran[1], tran[2])
+    with open(filename, 'w') as fp:
+        for id in poses_dic:
+            for pose in poses_dic[id]:
+                filename = os.path.basename(poses_dic[id][pose].filename)
+                tran = poses_dic[id][pose].tran
+                fp.write('{} {} {} {}\n',filename, tran[0], tran[1], tran[2])
+
+if __name__ == '__main__':
+
+    read_time = False
+    key = 'heads'
+    mode = 'Test'
+    # key = 'rgbd_dataset_freiburg3_nostructure_texture_near_withloop'
+    # mode = 'Test'
+    #key = 'rgbd_dataset_freiburg3_long_office_household'
+    #mode = 'Train'
+
+    if len(sys.argv)>1:
+        key = sys.argv[1]
+    if len(sys.argv)>2:
+        mode = sys.argv[2]
+    if len(sys.argv)>3:
+        read_time = True
+
+    create_aligner(key, mode, 'aligner.txt')
 
     EXEC = '/Users/weihao/Applications/COLMAP.app/Contents/MacOS/colmap'
     EXEC += ' model_aligner'
