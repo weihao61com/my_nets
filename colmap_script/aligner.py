@@ -3,38 +3,30 @@ import numpy as np
 import os
 sys.path.append('..')
 
-from utils import HOME
+from utils import HOME, Utils
 from image_pairing.pose_ana import \
     load_kitti_poses, load_indoor_7_poses, load_TUM_poses
 
-def create_aligner(key, mode, filename):
+def create_aligner(poses_dic, project_dir, images_dir):
 
-    if key.startswith('0'):
-        location = '{}/datasets/kitti'.format(HOME)
-        poses_dic, cam = load_kitti_poses(location, key)
-        key = 'kitti_{}'.format(key)
-    elif key.startswith('rgbd'):
-        location = '{}/datasets/TUM'.format(HOME)
-        poses_dic, cam = load_TUM_poses(location, key)
-    else:
-        location = "{}/datasets/indoors/{}".format(HOME, key)  # office" #heads
-        poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
-    #
-    # if read_time:
-    #     for id in poses_dic:
-    #         time_table_file = location + '/sequences/' + id + '/times.txt'
-    #         time_table = np.loadtxt(time_table_file)
-    #         poses = poses_dic[id]
-    #         print(len(poses), len(time_table))
+    if len(poses_dic)!=1:
+        raise Exception("Single run please")
 
-    print(key, mode)
-
+    filename = os.path.join(project_dir, 'aligner.txt')
     with open(filename, 'w') as fp:
+        nt = 0
         for id in poses_dic:
-            for pose in poses_dic[id]:
-                filename = os.path.basename(poses_dic[id][pose].filename)
-                tran = poses_dic[id][pose].tran
-                fp.write('{} {} {} {}\n'.format(filename, tran[0], tran[1], tran[2]))
+            poses = poses_dic[id]
+            for pose_id in poses:
+                pose = poses[pose_id]
+                image_name = pose.filename
+                cmd = 'cp {} {}'.format(image_name, images_dir)
+                Utils.run_cmd(cmd)
+                tran = pose.tran
+                fp.write('{} {} {} {}\n'.
+                         format(os.path.basename(image_name), tran[0], tran[1], tran[2]))
+                nt += 1
+
 
 if __name__ == '__main__':
 
