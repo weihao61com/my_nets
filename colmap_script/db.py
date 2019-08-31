@@ -10,13 +10,14 @@ import pickle
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
-from utils import Utils, PinholeCamera
+from utils import Utils, PinholeCamera, HOME
+
 
 def camera_params(data):
     return struct.unpack('dddd', data)
 
 
-def get_rows(conn, table_name, verbose = True):
+def get_rows(conn, table_name, verbose=True):
     c = conn.cursor()
     cameras = c.execute('select * from {}'.format(table_name))
     c_names = list(map(lambda x: x[0], cameras.description))
@@ -39,18 +40,20 @@ def view_cameras_table(conn):
         data1 = camera_params(row[4])
         print('\tparams', data1)
         nt += 1
-        if nt>5:
+        if nt > 5:
             break
+
 
 def get_data(data, fmt):
     length = 4
-    if fmt=='d':
+    if fmt == 'd':
         length = 8
-    if fmt=='B':
+    if fmt == 'B':
         length = 1
-    ft = "<{}{}".format(len(data)/length, fmt)
+    ft = "<{}{}".format(int(len(data) / length), fmt)
     d = struct.unpack(ft, data)
     return d
+
 
 def view_data_table(conn, table_name, id=None, fmt=None):
     rows = get_rows(conn, table_name)
@@ -62,7 +65,7 @@ def view_data_table(conn, table_name, id=None, fmt=None):
                 data1 = get_data(row[id], fmt)
                 print('\t{}'.format(data1[:12]))
             nt += 1
-            if nt>5:
+            if nt > 5:
                 break
 
 
@@ -72,7 +75,7 @@ class KeyPoint:
         self.x = p[0]
         self.y = p[1]
         self.angle = math.atan2(p[3], p[2])
-        self.r = np.sqrt(p[2]*p[2]+p[3]*p[3])
+        self.r = np.sqrt(p[2] * p[2] + p[3] * p[3])
         self.descriptor = None
 
     def add_descriptor(self, p):
@@ -95,7 +98,7 @@ class ImageFeature:
     def add_key_point(self, p):
         length = int(p[1])
         width = int(p[2])
-        if length>0:
+        if length > 0:
             data = get_data(p[3], 'f')
 
             kps = np.array(data).reshape((length, width))
@@ -107,9 +110,9 @@ class ImageFeature:
         else:
             print(p)
             # raise Exception()
-            #print kp[0], kp[1], kp[2], kp[3], kp[4], kp[5]
-        #print ('\n')
-        #print len(data)
+            # print kp[0], kp[1], kp[2], kp[3], kp[4], kp[5]
+        # print ('\n')
+        # print len(data)
         return length
 
     def add_descriptor(self, p):
@@ -122,13 +125,14 @@ class ImageFeature:
             self.key_points[id].add_descriptor(dec)
             id += 1
 
-    def add_match_id(self,id):
+    def add_match_id(self, id):
         self.ids.append(id)
 
-    def reduce_matches(self, max_ids = 20 ):
-        if len(self.ids)>max_ids:
+    def reduce_matches(self, max_ids=20):
+        if len(self.ids) > max_ids:
             np.random.shuffle(self.ids)
             self.ids = self.ids[:max_ids]
+
 
 class Colmap_DB:
 
@@ -145,11 +149,11 @@ class Colmap_DB:
 
             view_data_table(conn, 'cameras', 4, 'd')
             view_data_table(conn, 'sqlite_sequence')
-            view_data_table(conn, 'images',3, None)
+            view_data_table(conn, 'images', 3, None)
             view_data_table(conn, 'keypoints', 3, 'd')
             view_data_table(conn, 'descriptors', 3, 'I')
-            view_data_table(conn, 'matches',1)
-            view_data_table(conn, 'two_view_geometries',1)
+            view_data_table(conn, 'matches', 1)
+            view_data_table(conn, 'two_view_geometries', 1)
 
     def get_image_match(self, min_matches, max_match_per_image):
         conn = sqlite3.connect(self.name)
@@ -161,7 +165,7 @@ class Colmap_DB:
             width = int(row[2])
             if int(row[1]) > min_matches:
                 data = np.array(get_data(row[3], 'I')).reshape((length, width))
-                ids = image_ids(long(row[0]))
+                ids = image_ids(int(row[0]))
                 matches[ids] = data
                 self.imagelist[ids[0]].add_match_id(ids[1])
                 self.imagelist[ids[1]].add_match_id(ids[0])
@@ -179,7 +183,6 @@ class Colmap_DB:
                 self.matches[ids] = matches[ids]
 
         print('Final match', len(self.matches))
-
 
     def get_relative_poses(self, mx, filename, tr):
 
@@ -200,21 +203,21 @@ class Colmap_DB:
 
             pts1 = np.array(pts1)
             pts2 = np.array(pts2)
-            #for p in range(len(pts1)):
+            # for p in range(len(pts1)):
             #    print pts1[p][0], pts1[p][1],pts2[p][0], pts2[p][1]
             # print pts1.shape, pts2.shape
-            #print mx
-            angles = [0,0,0]
+            # print mx
+            angles = [0, 0, 0]
             mh = 0
 
             if not tr:
                 E, mask = cv2.findEssentialMat(pts1, pts2, cameraMatrix=mx)
                 #                               ,method=cv2.RANSAC, prob=0.9999, threshold=1.0)
                 mh, R, t, mask = cv2.recoverPose(E, pts1, pts2, cameraMatrix=mx)
-                #print mh
-                #print R
-                #print np.reshape(t, (3))
-                #print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
+                # print mh
+                # print R
+                # print np.reshape(t, (3))
+                # print Utils.rotationMatrixToEulerAngles(R) * 180 / 3.1416,\
                 #    Utils.rotationMatrixToEulerAngles(R)
                 angles = Utils.rotationMatrixToEulerAngles(R)
             data.append((img0.name, img1.name, angles, pts1, pts2, mh))
@@ -228,7 +231,7 @@ class Colmap_DB:
 
         for row in rows:
             self.imagelist[row[0]] = ImageFeature(row[1])
-            #print('\t{}'.format(row))
+            # print('\t{}'.format(row))
 
         print('Total image', len(self.imagelist))
 
@@ -239,7 +242,7 @@ class Colmap_DB:
         for p in kp:
             np += self.imagelist[p[0]].add_key_point(p)
 
-        print('Average key point', np/len(kp))
+        print('Average key point', np / len(kp))
 
         des = get_rows(conn, 'descriptors', False)
         for p in des:
@@ -247,8 +250,8 @@ class Colmap_DB:
 
 
 def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose=False):
-    db = '{}/tmp/{}/proj.db'.format(project_dir, key)
-    output = '{}/tmp/{}/pairs.p'.format(project_dir, key)
+    db = '{}/tmp/{}_{}/proj.db'.format(project_dir, key, mode)
+    output = '{}/tmp/{}_{}/pairs.p'.format(project_dir, key, mode)
 
     c = Colmap_DB(db, verbose)
 
@@ -261,8 +264,9 @@ def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose
     cam = PinholeCamera(640.0, 480.0, focal, focal, 320.0, 240.0)
     c.get_relative_poses(cam.mx, output, mode.startswith('Tr'))
 
+
 if __name__ == "__main__":
-    project_dir = '/Users/weihao/Projects'
+    project_dir = HOME
     key = 'heads'  # office" #heads
     mode = 'Test'
 

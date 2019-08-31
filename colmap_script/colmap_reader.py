@@ -26,6 +26,6 @@ def process(model_file):
 
 if __name__ == '__main__':
 
-    model_file = '/Users/weihao/Projects/tmp/heads/align'
+    model_file = '/home/weihao/Projects/tmp/heads_Test/sparse/align_0'
 
     process(model_file)
