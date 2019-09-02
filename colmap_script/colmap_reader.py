@@ -10,6 +10,17 @@ def process(model_file):
 
     mm = Sparse_Model_Mngr(model_dir=model_file)
     images = mm.read_images()
+    p3D = mm.read_points3d()
+
+    print(len(p3D))
+    for p in p3D:
+        point = p3D[p]
+        img_ids = point.image_ids
+        pnt_ids = point.point2d_idxs
+        xyz = point.xyz
+        for img_id in img_ids:
+            img = images[img_id]
+            q = img.qvec
 
     points = []
     for image_id in images:
@@ -26,6 +37,6 @@ def process(model_file):
 
 if __name__ == '__main__':
 
-    model_file = '/home/weihao/Projects/tmp/heads_Test/sparse/align_0'
+    model_file = '/Users/weihao/Projects/tmp/heads_Train/sparse/align_0'
 
     process(model_file)

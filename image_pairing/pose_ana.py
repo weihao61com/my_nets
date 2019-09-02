@@ -5,7 +5,7 @@ import sys
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
-from utils import Utils, PinholeCamera
+from utils import Utils, PinholeCamera, HOME
 from glob import glob
 from .imagery_utils import Pose
 
@@ -158,6 +158,20 @@ def interp_poses(ps, tp):
     p = pl + dp*(tp-tl)/(dt)
     return p
 
+
+def load_truth(key, mode):
+    if key.startswith('0'):
+        location = '{}/datasets/kitti'.format(HOME)
+        poses_dic, cam = load_kitti_poses(location, key)
+        key = 'kitti_{}'.format(key)
+    elif key.startswith('rgbd'):
+        location = '{}/datasets/TUM'.format(HOME)
+        poses_dic, cam = load_TUM_poses(location, key)
+    else:
+        location = "{}/datasets/indoors/{}".format(HOME, key)  # office" #heads
+        poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
+
+    return poses_dic, cam, key
 
 
 if __name__ == '__main__':

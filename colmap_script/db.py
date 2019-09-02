@@ -170,17 +170,19 @@ class Colmap_DB:
                 self.imagelist[ids[0]].add_match_id(ids[1])
                 self.imagelist[ids[1]].add_match_id(ids[0])
             else:
+                # print(image_ids(int(row[0])), row)
                 pass
-                # print image_ids(long(row[0])), row
         print('Total match', len(matches), 'out of', len(rows), 'at threshold', min_matches)
 
-        for id in self.imagelist:
-            self.imagelist[id].reduce_matches(max_match_per_image)
+        #for id in self.imagelist:
+        #    self.imagelist[id].reduce_matches(max_match_per_image)
 
         for ids in matches:
             if (ids[0] in self.imagelist[ids[1]].ids or
                     ids[1] in self.imagelist[ids[0]].ids):
                 self.matches[ids] = matches[ids]
+            else:
+                print()
 
         print('Final match', len(self.matches))
 
@@ -268,6 +270,6 @@ def process_db(project_dir, key, mode, max_match_per_image, min_matches, verbose
 if __name__ == "__main__":
     project_dir = HOME
     key = 'heads'  # office" #heads
-    mode = 'Test'
+    mode = 'Train'
 
     process_db(project_dir, key, mode, 2000, 5)

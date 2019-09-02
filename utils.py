@@ -547,8 +547,8 @@ class Utils:
             np.random.shuffle(bucket[id][0])
 
     @staticmethod
-    def cos(A, B):
-        tr = A.dot(B.transpose())
+    def cos(A, B, dim=3):
+        tr = A[:dim, :dim].dot(B[:dim, :dim].transpose())
         C = Utils.get_A(tr)
         tr = np.trace(tr)
         if tr>3:
@@ -559,7 +559,11 @@ class Utils:
     def get_relative(p1, p2):
         Q1 = p1.Q4
         Q2 = p2.Q4
-        Q = np.linalg.inv(Q1).dot(Q2)
+        # Q = np.linalg.inv(Q1).dot(Q2)
+        Q = Q1.dot(np.linalg.inv(Q2))
+        # P0 = Q2.dot(np.linalg.inv(Q1))
+        # Q0 = np.linalg.inv(Q2).dot(Q1)
+
         A, T = Utils.get_A_T(Q)
         return A, T
 
