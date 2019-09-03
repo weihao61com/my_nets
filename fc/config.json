@@ -1,5 +1,5 @@
 {
-    "batch_size": 100,
+    "batch_size": 1000,
     "te": "tmp/heads_Test/pairs.p",
     "tr": "tmp/heads_Train/pairs.p",
     "netFile": "fc",
@@ -8,5 +8,5 @@
     "nodes": "128, 16",
     "num_output": 3,
     "loop": 1,
-    "mode": 3
+    "mode": 1
 }

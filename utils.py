@@ -559,8 +559,8 @@ class Utils:
     def get_relative(p1, p2):
         Q1 = p1.Q4
         Q2 = p2.Q4
-        # Q = np.linalg.inv(Q1).dot(Q2)
-        Q = Q1.dot(np.linalg.inv(Q2))
+        Q = np.linalg.inv(Q1).dot(Q2)
+        # Q = Q1.dot(np.linalg.inv(Q2))
         # P0 = Q2.dot(np.linalg.inv(Q1))
         # Q0 = np.linalg.inv(Q2).dot(Q1)
 
