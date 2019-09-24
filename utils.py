@@ -567,6 +567,13 @@ class Utils:
         A, T = Utils.get_A_T(Q)
         return A, T
 
+    @staticmethod
+    def avg_file_name(p):
+        basename = os.path.basename(p)
+        pathname = os.path.dirname(p)
+        return pathname + '_' + basename + '_avg.p'
+
+
 if __name__ == "__main__":
     #pose = '-5.591326e-02 5.120575e-02 -9.971217e-01 -1.450234e+02 -2.512261e-02 9.982956e-01 5.267479e-02 -5.651594e+00 9.981195e-01 2.799552e-02 -5.453153e-02 3.692862e+02'
     #mat = np.array(list(map(float , pose.split(' ')))).reshape((3,4))

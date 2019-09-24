@@ -8,7 +8,6 @@ import os
 import sys
 import pickle
 import logging
-import colmap_script
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s')
 logger = logging.getLogger("last2")
@@ -16,11 +15,14 @@ logger.setLevel(logging.INFO)
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('{}/..'.format(this_file_path))
+sys.path.append('{}/../../../GITHUB/colmap/scripts/python'.format(this_file_path))
+
 from utils import Utils, PinholeCamera, HOME
 # from db import COLMAPDatabase
 # from colmapdeplib.sparse_model_mngr import Sparse_Model_Mngr
-from colmap_script.database import COLMAPDatabase
-from colmap_script import colmap_reader
+
+from database import COLMAPDatabase
+from read_model import read_model
 from image_pairing.pose_ana import load_truth
 
 
@@ -44,23 +46,24 @@ if __name__ == '__main__':
     print(project_dir)
 
     db_file = '{}/proj.db'.format(project_dir)
+
     output_file = '{}/pairs.p'.format(project_dir)
     model_file = '{}/sparse/align_0'.format(project_dir)
 
     logger.info("Model {}".format(model_file))
-    cameras, images, points3D = read_model(path=model_file, ext='bin')
+    cameras, images, p3D = read_model(path=model_file, ext='.bin')
 
     logger.info("DB file {}".format(db_file))
-    db = Colmap_DB(db_file)
+    db = COLMAPDatabase.connect(db_file)
+    #db.get_image_match(0,2000)
+    #db = Colmap_DB(db_file)
     db.get_image_list()
     db.get_image_feature()
     db.get_image_match(0, 2000)
-
-    mm = Sparse_Model_Mngr(model_dir=model_file)
-    images = mm.read_images()
-
-
-    p3D = mm.read_points3d()
+    #
+    # mm = Sparse_Model_Mngr(model_dir=model_file)
+    # images = mm.read_images()
+    # p3D = mm.read_points3d()
 
     output = []
     total_match = 0

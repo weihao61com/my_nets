@@ -105,8 +105,6 @@ if __name__ == "__main__":
         key = sys.argv[1]
     if len(sys.argv) > 2:
         mode = sys.argv[2]
-    if len(sys.argv) > 3:
-        read_time = True
 
     print(key, mode)
 
@@ -126,7 +124,7 @@ if __name__ == "__main__":
         poses_dic, cam = load_indoor_7_poses(location, "{}Split.txt".format(mode))
 
 
-    project_dir = 'tmp/{}_{}'.format(key, mode)
+    project_dir = 'tmp/{}_{}_2'.format(key, mode)
     images_dir = '{}/images'.format(project_dir)
     project_dir = '{}/{}'.format(HOME, project_dir)
     images_dir = '{}/{}'.format(HOME, images_dir)

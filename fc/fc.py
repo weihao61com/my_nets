@@ -52,6 +52,8 @@ class DataSet:
             return self.prepare2(count)
         elif self.cfg.mode == 3:
             return self.prepare3(count)
+        elif self.cfg.mode <0:
+            return self.prepare4()
         else:
             raise Exception('Unknown mode {}'.format(cfg.mode))
 
@@ -136,6 +138,22 @@ class DataSet:
             truth.append(b[1])
         return np.array(rst), np.array(truth)
 
+    def prepare4(self):
+
+        out = {}
+        for d in self.data:
+            P1 = d[0]
+            P2 = d[1]
+            A, T = Utils.get_relative(P1, P2)
+            out[T] = []
+            for a in d[2]:
+                xyz = a[0]
+                p1 = a[1]
+                p2 = a[2]
+                xyz0 = P1.Q4.dot(np.concatenate((xyz, [1])))[:3]
+                data = np.concatenate((xyz0, A, p1, p2))
+                out[T].append(data)
+        return out
 
 class P1Net1(Network):
 
@@ -158,12 +176,41 @@ def avg_file_name(p):
     return pathname + '_' + basename + '_avg.p'
 
 
+def run_data_all(data, inputs, sess, xy, fname, cfg):
+    rst = data[0]
+    truth = data[1]
+    feed = {}
+    feed[inputs['data_{}'.format(cfg.mode)]] = np.array(rst)
+    r = sess.run(xy[cfg.mode - 1], feed_dict=feed)
+
+    rt = 2000.0 / len(rst)
+    filename = '/home/weihao/tmp/{}.csv'.format(fname)
+    if sys.platform == 'darwin':
+        filename = '/Users/weihao/tmp/{}.csv'.format(fname)
+    fp = open(filename, 'w')
+    rs = []
+    for d in range(len(rst)):
+        mm = r[d, :]
+        t = truth[d]
+        r0 = np.linalg.norm(mm - t)
+        if random.random() < rt:
+            for a in range(len(t)):
+                if a > 0:
+                    fp.write(',')
+                fp.write('{},{}'.format(t[a], mm[a]))
+            fp.write(',{}\n'.format(r0))
+    fp.close()
+    diff = r - np.array(truth)
+    dist = np.linalg.norm(diff, axis=1)
+    return np.mean(dist * dist), np.median(dist)
+
+
 def run_data(data, inputs, sess, xy, fname, cfg):
     rst = data[0]
     truth = data[1]
     feed = {}
     feed[inputs['data_{}'.format(cfg.mode)]] = np.array(rst)
-    r = sess.run(xy[cfg.mode-1], feed_dict=feed)
+    r = sess.run(xy[cfg.mode - 1], feed_dict=feed)
 
     rt = 2000.0 / len(rst)
     filename = '/home/weihao/tmp/{}.csv'.format(fname)
@@ -205,7 +252,7 @@ if __name__ == '__main__':
     output = []
     for a in range(3):
         output.append(tf.compat.v1.placeholder(tf.float32, [None, cfg.num_output]))
-        input_dic['data_{}'.format(a + 1)] =  tf.compat.v1.placeholder(tf.float32, [None, feature_len])
+        input_dic['data_{}'.format(a + 1)] = tf.compat.v1.placeholder(tf.float32, [None, feature_len])
 
     net = P1Net1(input_dic)
     net.real_setup(cfg.nodes[0], cfg.num_output)
@@ -218,8 +265,8 @@ if __name__ == '__main__':
         xy.append(net.layers['output_{}'.format(a + 1)])
         loss.append(tf.reduce_sum(tf.square(tf.subtract(xy[a], output[a]))))
         opt.append(tf.compat.v1.train.AdamOptimizer(learning_rate=cfg.lr, beta1=0.9,
-                                          beta2=0.999, epsilon=0.00000001,
-                                          use_locking=False, name='Adam').minimize(loss[a]))
+                                                    beta2=0.999, epsilon=0.00000001,
+                                                    use_locking=False, name='Adam').minimize(loss[a]))
     # opt = tf.train.GradientDescentOptimizer(learning_rate=cfg.lr).minimize(loss)
 
     init = tf.compat.v1.global_variables_initializer()
@@ -230,9 +277,15 @@ if __name__ == '__main__':
 
     if cfg.mode == 0:
         tr.get_avg(avg_file)
-    else:
+    elif cfg.mode > 0:
         tr.subtract_avg(avg_file)
         te = DataSet(cfg.te_data[0], cfg)
+        te.subtract_avg(avg_file)
+    elif cfg.mode == -1:
+        te = DataSet(cfg.te_data[0], cfg)
+        te.subtract_avg(avg_file)
+    elif cfg.mode == -2:
+        te = tr
         te.subtract_avg(avg_file)
 
     with tf.compat.v1.Session() as sess:
@@ -240,6 +293,10 @@ if __name__ == '__main__':
         if cfg.mode == 0:
             saver.save(sess, cfg.netFile)
             exit(0);
+
+        if cfg.mode<0:
+            tr_pre_data = tr.prepare()
+            run_data_all(tr_pre_data, input_dic, sess, xy, 'test', cfg)
 
         saver.restore(sess, cfg.netFile)
 
@@ -269,8 +326,8 @@ if __name__ == '__main__':
 
                 for c in range(0, length, cfg.batch_size):
                     feed = {input_dic['data_{}'.format(cfg.mode)]: data[c:c + cfg.batch_size],
-                            output[cfg.mode-1]: truth[c:c + cfg.batch_size]}
-                    _, A = sess.run([opt[cfg.mode-1], loss[cfg.mode-1]], feed_dict=feed)
+                            output[cfg.mode - 1]: truth[c:c + cfg.batch_size]}
+                    _, A = sess.run([opt[cfg.mode - 1], loss[cfg.mode - 1]], feed_dict=feed)
                     t_loss += A
                     t_count += len(data[c:c + cfg.batch_size])
                 st1 = '{}'.format(t_loss / t_count)

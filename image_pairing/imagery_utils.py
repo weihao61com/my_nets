@@ -77,6 +77,7 @@ class Pose:
     def __init__(self, line, location, pose_file, data=0, id=0):
         strs = line[:-1].split()
         self.fs = None
+        self.inv = None
         if data==0: # kitti
             a = np.reshape(np.array(list(map(float, strs))), (3, 4))
             nm = '{0}/sequences/{1}/image_1/{2}.png'.format(location, pose_file, str(id).zfill(6))
@@ -130,6 +131,14 @@ class Pose:
     def get_string(self):
         return 'a b c {} d e f {} g h i {}'.\
             format(self.tran[0], self.tran[1], self.tran[2])
+
+    def add_inv(self):
+        if not hasattr(self, 'inv'):
+            setattr(self, 'inv', None)
+
+        if self.inv is None:
+            self.inv = np.linalg.inv(self.Q4)
+
 
 def pose_realign(poses):
     mx = None
