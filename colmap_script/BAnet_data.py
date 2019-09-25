@@ -8,7 +8,6 @@ import os
 import sys
 import pickle
 import logging
-import colmap_script
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s')
 logger = logging.getLogger("last2")
@@ -19,8 +18,8 @@ sys.path.append('{}/..'.format(this_file_path))
 from utils import Utils, PinholeCamera, HOME
 # from db import COLMAPDatabase
 # from colmapdeplib.sparse_model_mngr import Sparse_Model_Mngr
-from colmap_script.database import COLMAPDatabase
-from colmap_script import colmap_reader
+from .database import COLMAPDatabase
+from . import colmap_reader
 from image_pairing.pose_ana import load_truth
 
 

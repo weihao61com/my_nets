@@ -51,7 +51,6 @@ class DataSet:
                 self.data = A[0]
                 # self.data = pickle.load(fp)
                 self.id_list = A[1]
-                # print(self.data[0][2])
         self.cfg = cfg
         nt = 0
         x0 = 140
@@ -139,7 +138,7 @@ class DataSet:
         avx = np.mean(x, axis=0)
         stx = np.std(x, axis=0)
 
-        print(avg_file)
+        print(filename)
         with open(filename, 'wb') as fp:
             pickle.dump((avx, stx), fp)
 
@@ -173,8 +172,8 @@ class DataSet:
                         idx1 = self.get_id(x, id1)
                         idx2 = self.get_id(y, id2)
                     else:
-                        idx1 = 0
-                        idx2 = 0
+                        idx1 = np.array(d[2][a][3])
+                        idx2 = np.array(d[2][a][4])
                     x = (x - av) / st
                     y = (y - av) / st
                     d[2][a] = (d[2][a][0], x, y, idx1, idx2)
@@ -596,21 +595,10 @@ def create_net(cfg):
 
     return init, saver, input_dic, outputs, losses, opts, xys
 
-if __name__ == '__main__':
 
-    config_file = "config.json"
+def run(cfg):
 
-    if len(sys.argv) > 2:
-        config_file = sys.argv[2]
-
-    cfg = Config(config_file)
-
-    if len(sys.argv) > 1:
-        mode = int(sys.argv[1])
-        cfg.mode = mode
-
-    cfg.num_output = list(map(int, cfg.num_output.split(',')))
-    iterations = 200
+    iterations = 10
     logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
     #
     # input_dic = {}
@@ -660,7 +648,9 @@ if __name__ == '__main__':
     else:
         tr = DataSet(cfg.tr_data[0], cfg)
         tr.get_avg(avg_file)
-        tr.subtract_avg(avg_file, save_im=True)
+        tr.subtract_avg(avg_file, save_im=False)
+        te = DataSet(cfg.te_data[0], cfg)
+        te.subtract_avg(avg_file, save_im=False)
 
     with tf.compat.v1.Session() as sess:
         sess.run(init)
@@ -677,6 +667,10 @@ if __name__ == '__main__':
         print(outputs[mode-1])
         for a in range(iterations):
 
+            t_loss = 0
+            t_count = 0
+            te_loss = 0
+            te_count = 0
             for lp in range(cfg.loop):
                 tr_pre = tr.prepare(1000000, clear=True)
 
@@ -684,8 +678,6 @@ if __name__ == '__main__':
                 truth = tr_pre[1]
                 length = data.shape[0]
 
-                t_loss = 0
-                t_count = 0
                 for c in range(0, length, cfg.batch_size):
                     dd = data[c:c + cfg.batch_size]
                     th = []
@@ -703,6 +695,37 @@ if __name__ == '__main__':
                     t_loss += A
                     t_count += len(th)
 
-                logger.info("Err {0:.6f}".format(t_loss/t_count))
+            tr_pre = te.prepare(1000000, clear=True)
+            data = tr_pre[0]
+            truth = tr_pre[1]
+            length = data.shape[0]
+            for c in range(0, length, cfg.batch_size):
+                dd = data[c:c + cfg.batch_size]
+                th = []
+                for d in range(c, c + dd.shape[0]):
+                    t = truth[d][4]
+                    th.append(t)
+                th = np.array(th)
+                if len(th.shape) == 1:
+                    lenght = len(th)
+                    th = th.reshape((lenght, 1))
+                # print(th.shape, len(th.shape))
+                feed = {input_dic['data_{}'.format(mode)]: np.array(dd), outputs[mode - 1]: th}
+                # _ = sess.run(opt, feed_dict=feed)
+                A= sess.run(losses[mode - 1], feed_dict=feed)
+                te_loss += A
+                te_count += len(th)
+
+            logger.info("Err {0:.6f} {1:.6f}".format(t_loss/t_count, te_loss/te_count))
             saver.save(sess, cfg.netFile)
 
+if __name__ == '__main__':
+
+    config_file = "config.json"
+
+    cfg = Config(config_file)
+    cfg.num_output = list(map(int, cfg.num_output.split(',')))
+
+    for mode in range(2, 6):
+        cfg.mode = mode
+        run(cfg)
