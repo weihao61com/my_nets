@@ -78,6 +78,7 @@ class Pose:
         strs = line[:-1].split()
         self.fs = None
         self.inv = None
+        self.id = id
         if data==0: # kitti
             a = np.reshape(np.array(list(map(float, strs))), (3, 4))
             nm = '{0}/sequences/{1}/image_1/{2}.png'.format(location, pose_file, str(id).zfill(6))

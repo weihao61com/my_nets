@@ -18,13 +18,25 @@ sys.path.append('.')
 from utils import Utils, Config, HOME
 from network import Network
 from distance import distance_cal
+import evo.core.transformations as etr
 
 
-def transfor_T(pose, r, w2c=True):
-    if w2c:
-        return pose.inv.dot(np.concatenate((r, [1])))[:3]
-    return pose.Q4.dot(np.concatenate((r, [1])))[:3]
 
+def data_form(xyz, T, A0, A1, A2, p1, p2, P1, P2, a3, a4):
+    data = np.concatenate((xyz, T, [A1], [A2], p1, p2))
+    return data, (P1, P2, a3, a4, A0)
+
+def data_form_1(xyz, T, A, p1, p2, P1, P2, a3, a4):
+    data = np.concatenate((xyz, T, [A[2]], p1, p2))
+    return data, (P1, P2, a3, a4, A[:2])
+
+def data_form_2(xyz, T, A, p1, p2, P1, P2, a3, a4):
+    data = np.concatenate((xyz, T, A[:2], p1, p2))
+    return data, (P1, P2, a3, a4, A[2])
+
+def data_form_3(xyz, T, A, p1, p2, a3, a4):
+    data = np.concatenate((T, A, p1, p2))
+    return data, (a3, a4, xyz)
 
 def find_idx(xy, id_list):
     idx = 0
@@ -36,11 +48,133 @@ def find_idx(xy, id_list):
     return -1
 
 
-class DataSet:
-    def __init__(self, p_file, cfg, imf=None):
+class DataSet2:
+    def __init__(self, p_file, cfg, imf=None, mx=None):
         if p_file is not None:
-            with open(os.path.join(HOME, p_file), 'rb') as fp:
+            with open(p_file, 'rb') as fp:
+                d = pickle.load(fp, encoding='latin1')
+                self.images = d[0]
+                self.matches = d[1]
+                self.poses = d[2]
+                logger.info("Total data {} {}".format(len(self.images), len(self.matches)))
+        else:
+            with open(os.path.join(HOME, imf), 'rb') as fp:
+                A = pickle.load(fp)
+                self.data = A[0]
+                # self.data = pickle.load(fp)
+                self.id_list = A[1]
+        self.cfg = cfg
+        nt = 0
+        for id in self.images:
+            img = self.images[id]
+            pose = self.poses[id]
+            Q = etr.quaternion_matrix(img[0])
+            self.poses[id].Q4 = etr.quaternion_matrix(img[0])
+            self.poses[id].Q4[:3, 3] = img[1]
+            # print(self.poses[id].Q4)
+            self.poses[id].add_inv()
+        self.out = None
+
+    def get_avg(self, filename):
+        x = []
+        for d in self.matches:
+            mm = self.matches[d]
+            for a in mm:
+                x.append(a[1])
+                x.append(a[2])
+
+        x = np.array(x)
+        avx = np.mean(x, axis=0)
+        stx = np.std(x, axis=0)
+
+        print("Average: ", avx)
+        print("STD:     ", stx)
+        print(filename)
+        with open(filename, 'wb') as fp:
+            pickle.dump((avx, stx), fp)
+
+    def subtract_avg(self, filename):
+        with open(filename, 'br') as fp:
+            av, st = pickle.load(fp, encoding='latin1')
+            print(av, st)
+            # raise Exception()
+            # av, st = pickle.load(fp)
+            nt = 0
+            for d in self.matches:
+                mm = self.matches[d]
+
+                for a in range(len(mm)):
+                    # for a in range(len(d[2])):
+                    x = np.array(mm[a][1])
+                    y = np.array(mm[a][2])
+
+                    idx1 = d[0]
+                    idx2 = d[1]
+                    x = (x - av) / st
+                    y = (y - av) / st
+                    mm[a] = (mm[a][0], x, y, d, mm[a][3])
+                # print(id1, id2, len(d[2]), len(self.id_list[id1]), len(self.id_list[id2]), len(self.id_list))
+
+                nt += 1
+                if nt%2000==0:
+                    # (self.data[0][2])
+                    logger.info('subtract_avg {} {}'.format(nt, len(self.matches)))
+
+    def prepare(self, count=None, clear=False):
+        #logger.info("Prepare data")
+        if self.cfg.mode > 0:
+            return self.prepare_n(count, self.cfg.mode, clear)
+        elif self.cfg.mode == -1:
+            out = self.prepare4(2)
+            rst = []
+            truth = []
+            for b in out:
+                #if count is None or random.random() < r/2:
+                rst.append(b[0])
+                truth.append(b[1])
+            # logger.info("load: {}".format(len(truth)))
+            return np.array(rst), truth
+        else:
+            raise Exception('Unknown mode {}'.format(cfg.mode))
+
+    def prepare4(self,  r):
+        if self.out is None:
+            out = []
+            num = 20
+
+            for imgs in self.matches:
+                id1 = imgs[0]
+                id2 = imgs[1]
+                if id1 > num or id2 > num:
+                    continue
+                P1 = self.poses[id1]
+                P2 = self.poses[id2]
+                A1, T1 = Utils.get_relative(P1, P2)
+                A2, T2 = Utils.get_relative(P2, P1)
+                for a in self.matches[imgs]:
+                    if random.random() < r:
+                        xyz = a[0]
+                        p1 = a[1]
+                        p2 = a[2]
+                        xyz1 = Utils.transfor_T(P1, xyz)
+                        xyz2 = Utils.transfor_T(P2, xyz)
+                        xyz1 = Utils.xyz_tran(xyz1)
+                        xyz2 = Utils.xyz_tran(xyz2)
+                        a0 = [a[3][0], a[4][0]]
+                        a1 = [a[3][1], a[4][1]]
+                        out.append(data_form_3(xyz1, T1, A1, p1, p2, a0, a1))
+                        out.append(data_form_3(xyz2, T2, A2, p2, p1, a1, a0))
+            self.out = out
+        return self.out
+
+
+class DataSet:
+    def __init__(self, p_file, cfg, imf=None, mx=None):
+        if p_file is not None:
+            with open(p_file, 'rb') as fp:
                 self.data = pickle.load(fp, encoding='latin1')
+                if mx:
+                    self.data = self.data[:mx]
                 # self.data = pickle.load(fp)
                 self.id_list = {}
                 # print(self.data[0])
@@ -53,31 +187,15 @@ class DataSet:
                 self.id_list = A[1]
         self.cfg = cfg
         nt = 0
-        x0 = 140
-        y0 = 100
-        win = 1
         for d in self.data:
             d[0].add_inv()
             d[1].add_inv()
-            # print(len(d))
-            # print(d[0].Q4)
-            # print(d[1].Q4)
-            # print(d[3].Q4)
-            # print(d[4].Q4)
-            # for x in range(5):
-            #     xyz = d[2][x][0]
-            #     p1 = transfor_T(d[0], xyz)
-            #     p2 = transfor_T(d[1], xyz)
-            #     print(d[2][x])
-            #     print(p1)
-            #     print(p2)
-            # raise Exception()
-
             nt += len(d[2])
         logger.info("Total match {}".format(nt))
         self.nt = nt
         self.dists_dic = {}
         self.out = None
+
 
 
     def run_data_0(self, data, inputs, sess, xy):
@@ -172,11 +290,12 @@ class DataSet:
                         idx1 = self.get_id(x, id1)
                         idx2 = self.get_id(y, id2)
                     else:
-                        idx1 = np.array(d[2][a][3])
-                        idx2 = np.array(d[2][a][4])
+                        ids = d[2][a][3]
+                        idx1 = ids[0]
+                        idx2 = ids[1]
                     x = (x - av) / st
                     y = (y - av) / st
-                    d[2][a] = (d[2][a][0], x, y, idx1, idx2)
+                    d[2][a] = (d[2][a][0], x, y, idx1, idx2, d[3])
                 # print(id1, id2, len(d[2]), len(self.id_list[id1]), len(self.id_list[id2]), len(self.id_list))
 
                 nt += 1
@@ -193,11 +312,124 @@ class DataSet:
     def prepare(self, count=None, clear=False):
         #logger.info("Prepare data")
         if self.cfg.mode > 0:
-            return self.prepare_n(count, cfg.mode, clear)
+            return self.prepare_n(count, self.cfg.mode, clear)
         elif self.cfg.mode == -1:
-            return self.prepare4()
+            out = self.prepare4(self.data, 2)
+            rst = []
+            truth = []
+            for b in out:
+                #if count is None or random.random() < r/2:
+                rst.append(b[0])
+                truth.append(b[1])
+            # logger.info("load: {}".format(len(truth)))
+            return np.array(rst), truth
         else:
             raise Exception('Unknown mode {}'.format(cfg.mode))
+
+    @staticmethod
+    def prepare_data(sdata, n, r):
+        out = []
+        nc = 0
+        for d in sdata:
+            P1 = d[0]
+            P2 = d[1]
+
+            # A10, T10 = Utils.get_relative(P1, P2)
+            # A20, T20 = Utils.get_relative(P2, P1)
+
+            P1.Q4 = Utils.get_pose(d[3][0], d[3][1])
+            P1.inv = np.linalg.inv(P1.Q4)
+            P2.Q4 = Utils.get_pose(d[3][2], d[3][3])
+            P2.inv = np.linalg.inv(P2.Q4)
+            # Q_org = poses_by_name[img.name]
+            # Q_org.add_inv()
+            # xyz = []
+            # xyz_c = []
+            # for p in D3:
+            #     xyz.append(p.xyz)
+            #     # c = Utils.transfor_T(Q_org, p.xyz)
+            #     c = Q.dot(np.concatenate((p.xyz, [1])))[:3]
+            #     if c[2]<-15:
+            #         print()
+            #     xyz_c.append(c)
+            A1, T1 = Utils.get_relative(P1, P2)
+            A2, T2 = Utils.get_relative(P2, P1)
+            length = len(d[2])
+            for b in range(length):
+                a = d[2][b]
+                if random.random() < r:
+                    # if len(out)<count:
+                    xyz = a[0]
+                    p1 = a[1]
+                    p2 = a[2]
+                    xyz1 = Utils.transfor_T(P1, xyz)
+                    xyz2 = Utils.transfor_T(P2, xyz)
+                    if n == 1:
+                        out.append(data_form_1(xyz1, T1, A1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_1(xyz2, T2, A2, p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((A1, T1, p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], xyz1)))
+                        # data = np.concatenate((A2, T2, p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], xyz2)))
+                    elif n == 2:
+                        out.append(data_form_2(xyz1, T1, A1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_2(xyz2, T2, A2, p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((xyz1, A1, [T1[2]], p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], T1[:2])))
+                        # data = np.concatenate((xyz2, A2, [T2[2]], p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], T2[:2])))
+                    elif n == 3:
+                        out.append(data_form_1(xyz1, A1, T1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_1(xyz2, A2, T2, p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((xyz1, A1, T1[:2], p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], T1[2])))
+                        # data = np.concatenate((xyz2, A2, T2[:2], p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], T2[2])))
+                    elif n == 4:
+                        out.append(data_form_2(xyz1, A1, T1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_2(xyz2, A2, T2, p2, p1, P2, P1, a[4], a[3]))
+                        #out.append(data_form(xyz1, T1, A1[0], A1[1], A1[2], p1, p2, P1, P2, a[3], a[4]))
+                        #out.append(data_form(xyz2, T2, A2[0], A2[1], A2[2], p2, p1, P2, P1, a[4], a[3]))
+                        #xyz1, A1 = A1, xyz1
+                        #xyz2, A2 = A2, xyz2
+                        #out.append(data_form(xyz1, T1, A1[0], A1[1], A1[2], p1, p2, P1, P2, a[3], a[4]))
+                        #out.append(data_form(xyz2, T2, A2[0], A2[1], A2[2], p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((xyz1, T1, [A1[1]], [A1[2]], p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], A1[0])))
+                        # data = np.concatenate((xyz2, T2, [A2[1]], [A2[2]], p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], A2[0])))
+                    elif n == 5:
+                        xyz1 = Utils.xyz_tran(xyz1)
+                        xyz2 = Utils.xyz_tran(xyz2)
+                        out.append(data_form_1(T1, A1, xyz1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_1(T2, A2, xyz2, p2, p1, P2, P1, a[4], a[3]))
+                        #xyz1, A1 = A1, xyz1
+                        #xyz2, A2 = A2, xyz2
+                        #out.append(data_form(xyz1, T1, A1[1], A1[0], A1[2], p1, p2, P1, P2, a[3], a[4]))
+                        #out.append(data_form(xyz2, T2, A2[1], A2[0], A2[2], p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((xyz1, T1, [A1[0]], [A1[2]], p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], A1[1])))
+                        # data = np.concatenate((xyz2, T2, [A2[0]], [A2[2]], p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], A2[1])))
+                    elif n == 6:
+                        xyz1 = Utils.xyz_tran(xyz1)
+                        xyz2 = Utils.xyz_tran(xyz2)
+                        out.append(data_form_2(T1, A1, xyz1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_2(T2, A2, xyz2, p2, p1, P2, P1, a[4], a[3]))
+                        #xyz1, A1 = A1, xyz1
+                        #xyz2, A2 = A2, xyz2
+                        #out.append(data_form(xyz1, T1, A1[2], A1[0], A1[1], p1, p2, P1, P2, a[3], a[4]))
+                        #out.append(data_form(xyz2, T2, A2[2], A2[0], A2[1], p2, p1, P2, P1, a[4], a[3]))
+                        # data = np.concatenate((xyz1, T1, [A1[0]], [A1[1]], p1, p2))
+                        # out.append((data, (P1, P2, a[3], a[4], A1[2])))
+                        # data = np.concatenate((xyz2, T2, [A2[0]], [A2[1]], p2, p1))
+                        # out.append((data, (P2, P1, a[4], a[3], A2[2])))
+                    else:
+                        raise Exception("Unknown n={}".format(n))
+
+                # if nc%100000==0 and nc>0:
+                #    logger.info("prepare {} {}".format(n, len(out)))
+        return out
 
     def prepare_n(self, count, n, clear):
 
@@ -205,69 +437,20 @@ class DataSet:
             r = float(count) / self.nt
 
         if self.out is None:
-            out = []
-            nc = 0
-            for d in self.data:
-                P1 = d[0]
-                P2 = d[1]
-                A1, T1 = Utils.get_relative(P1, P2)
-                A2, T2 = Utils.get_relative(P2, P1)
-                length = len(d[2])
-                for b in range(length):
-                    a = d[2][b]
-                    #if count is None or random.random() < r/2:
-                    #if len(out)<count:
-                    xyz = a[0]
-                    p1 = a[1]
-                    p2 = a[2]
-                    xyz1 = transfor_T(P1, xyz)
-                    xyz2 = transfor_T(P2, xyz)
-
-                    if n==1:
-                        data = np.concatenate((A1, T1, p1, p2))
-                        out.append((data, (P1, P2, a[3], a[4], xyz1)))
-                        data = np.concatenate((A2, T2, p2, p1))
-                        out.append((data, (P2, P1, a[4], a[3], xyz2)))
-                    elif n==2:
-                        data = np.concatenate((xyz1, A1, p1, p2))
-                        out.append((data, (P1, P2, a[3], a[4], T1)))
-                        data = np.concatenate((xyz2, A2, p2, p1))
-                        out.append((data, (P2, P1, a[4], a[3], T2)))
-                    elif n==3:
-                        data = np.concatenate((xyz1, T1, [A1[1]], [A1[2]], p1, p2))
-                        out.append((data, (P1, P2, a[3], a[4], A1[0])))
-                        data = np.concatenate((xyz2, T2, [A2[1]], [A2[2]], p2, p1))
-                        out.append((data, (P2, P1, a[4], a[3], A2[0])))
-                    elif n==4:
-                        data = np.concatenate((xyz1, T1, [A1[0]], [A1[2]], p1, p2))
-                        out.append((data, (P1, P2, a[3], a[4], A1[1])))
-                        data = np.concatenate((xyz2, T2, [A2[0]], [A2[2]], p2, p1))
-                        out.append((data, (P2, P1, a[4], a[3], A2[1])))
-                    elif n==5:
-                        data = np.concatenate((xyz1, T1, [A1[0]], [A1[1]], p1, p2))
-                        out.append((data, (P1, P2, a[3], a[4], A1[2])))
-                        data = np.concatenate((xyz2, T2, [A2[0]], [A2[1]], p2, p1))
-                        out.append((data, (P2, P1, a[4], a[3], A2[2])))
-                    else:
-                        raise Exception("Unknown n={}".format(n))
-
-                    #if nc%100000==0 and nc>0:
-                    #    logger.info("prepare {} {}".format(n, len(out)))
-
-            self.out = out
-            self.data = None
+            self.out = DataSet.prepare_data(self.data, n, r)
 
         np.random.shuffle(self.out)
-        # logger.info("prepare {} {} {}".format(n, len(out), nc))
         if clear:
             self.data = None
+            self.id_list = None
 
         rst = []
         truth = []
         for b in self.out:
-            if count is None or random.random() < r/2:
-                rst.append(b[0])
-                truth.append(b[1])
+            #if count is None or random.random() < r/2:
+            rst.append(b[0])
+            truth.append(b[1])
+        # logger.info("load: {}".format(len(truth)))
         return np.array(rst), truth
 
     def get_data4(self, P1, P2, d, swap):
@@ -364,33 +547,41 @@ class DataSet:
         return data_array, Utils.get_A(P2.m3x3), (P2.id, P1.id), tran, Q1.Q4
 
 
-    def prepare4(self):
-        ID0 = 0
-        ID1 = 100
-        out = []
-        for d in self.data:
-            P1 = d[0]
-            P2 = d[1]
-            # len(out)==17:
-            #    print()
-            if ID1 > P2.id >= ID0:
-                out.append(self.get_data4(P1, P2, d, False))
-            if ID1 > P1.id >= ID0:
-                out.append(self.get_data4(P2, P1, d, True))
+    def prepare4(self, sdata,  r):
+        if self.out is None:
+            out = []
+            nc = 0
+            num=20
 
-        rst = []
-        truth = []
-        ids = []
-        Ts = []
-        trans = []
-        for b in out:
-            if len(b[0])>1:
-                rst.append(b[0])
-                truth.append(b[1])
-                ids.append(b[2])
-                Ts.append(b[3])
-                trans.append(b[4])
-        return rst, np.array(truth), ids, Ts, trans
+            for d in sdata:
+                P1 = d[0]
+                P2 = d[1]
+                length = len(d[2])
+                if P1.id>num or P2.id>num:
+                    continue
+                # print('Match:', P1.id, P2.id, length)
+                A1, T1 = Utils.get_relative(P1, P2)
+                A2, T2 = Utils.get_relative(P2, P1)
+                for b in range(length):
+                    a = d[2][b]
+                    if random.random() < r:
+                        # if len(out)<count:
+                        xyz = a[0]
+                        p1 = a[1]
+                        p2 = a[2]
+                        xyz1 = Utils.transfor_T(P1, xyz)
+                        xyz2 = Utils.transfor_T(P2, xyz)
+                        xyz1 = Utils.xyz_tran(xyz1)
+                        xyz2 = Utils.xyz_tran(xyz2)
+                        out.append(data_form_3(xyz1, T1, A1, p1, p2, P1, P2, a[3], a[4]))
+                        out.append(data_form_3(xyz2, T2, A2, p2, p1, P2, P1, a[4], a[3]))
+
+                    # if nc%100000==0 and nc>0:
+                    #    logger.info("prepare {} {}".format(n, len(out)))
+
+            self.out = out
+        return self.out
+
 
     def prepare5(self):
         ID0 = -600
@@ -418,6 +609,7 @@ class DataSet:
                 ids.append(b[2])
                 Ts.append(b[3])
                 trans.append(b[4])
+
         return rst, np.array(truth), ids, Ts, trans
 
     def prepare6(self):
@@ -568,7 +760,7 @@ def create_net(cfg):
     for num_output in num_outputs:
         output = tf.compat.v1.placeholder(tf.float32, [None, num_output])
         outputs.append(output)
-        input_dic['data_{}'.format(nt)] =  tf.compat.v1.placeholder(tf.float32, [None, 13-num_output])
+        input_dic['data_{}'.format(nt)] = tf.compat.v1.placeholder(tf.float32, [None, 13-num_output])
         nt += 1
 
     net = P1Net1(input_dic)
@@ -596,9 +788,9 @@ def create_net(cfg):
     return init, saver, input_dic, outputs, losses, opts, xys
 
 
-def run(cfg):
+def run(cfg, iterations):
 
-    iterations = 10
+    #terations = 50
     logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
     #
     # input_dic = {}
@@ -641,6 +833,7 @@ def run(cfg):
     outputs = net[3]
     losses = net[4]
     opts = net[5]
+    xyz = net[6]
 
     avg_file = Utils.avg_file_name(cfg.netFile)
     if hasattr(cfg, 'inter_file'):
@@ -671,8 +864,10 @@ def run(cfg):
             t_count = 0
             te_loss = 0
             te_count = 0
+            filename = '/home/weihao/Projects/tmp/rst_{}.csv'.format(cfg.mode)
+
             for lp in range(cfg.loop):
-                tr_pre = tr.prepare(1000000, clear=True)
+                tr_pre = tr.prepare(2000000, clear=True)
 
                 data = tr_pre[0]
                 truth = tr_pre[1]
@@ -690,34 +885,57 @@ def run(cfg):
                         th = th.reshape((lenght,1))
                     # print(th.shape, len(th.shape))
                     feed = {input_dic['data_{}'.format(mode)]: np.array(dd), outputs[mode-1]: th}
-                   # _ = sess.run(opt, feed_dict=feed)
+                    # _ = sess.run(opt, feed_dict=feed)
                     A,_ = sess.run([losses[mode-1], opts[mode-1]], feed_dict=feed)
                     t_loss += A
                     t_count += len(th)
 
-            tr_pre = te.prepare(1000000, clear=True)
+            tr_pre = te.prepare(100000, clear=True)
+
+            fp = open(filename, 'w')
+
             data = tr_pre[0]
             truth = tr_pre[1]
             length = data.shape[0]
+            td0 = None
             for c in range(0, length, cfg.batch_size):
                 dd = data[c:c + cfg.batch_size]
                 th = []
+                ids = []
                 for d in range(c, c + dd.shape[0]):
-                    t = truth[d][4]
-                    th.append(t)
+                    td = truth[d]
+                    th.append(td[4])
+                    ids.append((td[0].id, td[1].id, td[2], td[3]))
                 th = np.array(th)
                 if len(th.shape) == 1:
                     lenght = len(th)
                     th = th.reshape((lenght, 1))
                 # print(th.shape, len(th.shape))
-                feed = {input_dic['data_{}'.format(mode)]: np.array(dd), outputs[mode - 1]: th}
+                feed = {input_dic['data_{}'.format(mode)]: np.array(dd)}
                 # _ = sess.run(opt, feed_dict=feed)
-                A= sess.run(losses[mode - 1], feed_dict=feed)
-                te_loss += A
-                te_count += len(th)
+                A = sess.run(xyz[mode - 1], feed_dict=feed)
+                sz = A.shape
+                diff = np.linalg.norm(A-th, axis=1)
 
-            logger.info("Err {0:.6f} {1:.6f}".format(t_loss/t_count, te_loss/te_count))
+                c=0
+                i = ids[c]
+                fp.write('{},{},{},{},'.format(i[0], i[1], i[2], i[3]))
+                for b in range(sz[1]):
+                    fp.write('{},{},'.format(th[c, b], A[c, b]))
+                fp.write('{}\n'.format(diff[c]))
+                te_loss += np.sum(diff)
+                te_count += len(th)
+                if td0 is None:
+                    td0 = diff
+                else:
+                    td0 = np.concatenate((td0, diff))
+
+            fp.close()
+
+            logger.info("Err {2} {0:.6f} {1:.6f} {3}".
+                        format(t_loss/t_count, te_loss/te_count, a, np.median(np.array(td0))))
             saver.save(sess, cfg.netFile)
+
 
 if __name__ == '__main__':
 
@@ -726,6 +944,12 @@ if __name__ == '__main__':
     cfg = Config(config_file)
     cfg.num_output = list(map(int, cfg.num_output.split(',')))
 
-    for mode in range(2, 6):
-        cfg.mode = mode
-        run(cfg)
+    iterations = 10
+
+    if len(sys.argv)>1:
+        cfg.mode = int(sys.argv[1])
+
+    if len(sys.argv)>2:
+        iterations = int(sys.argv[2])
+
+    run(cfg, iterations)

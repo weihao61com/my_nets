@@ -56,19 +56,6 @@ class DataSet:
         for d in self.data:
             d[0].add_inv(1)
             d[1].add_inv(1)
-            # print(len(d))
-            # print(d[0].Q4)
-            # print(d[1].Q4)
-            # print(d[3].Q4)
-            # print(d[4].Q4)
-            # for x in range(5):
-            #     xyz = d[2][x][0]
-            #     p1 = transfor_T(d[0], xyz)
-            #     p2 = transfor_T(d[1], xyz)
-            #     print(d[2][x])
-            #     print(p1)
-            #     print(p2)
-            # raise Exception()
 
             nt += len(d[2])
         logger.info("Total match {}".format(nt))

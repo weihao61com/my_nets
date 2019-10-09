@@ -3,7 +3,7 @@ import sys
 import collections
 import numpy as np
 import struct
-from bluenotelib.common.quaternion import Quaternion
+# from bluenotelib.common.quaternion import Quaternion
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
 HOME = '{}/../..'.format(this_file_path)
@@ -249,14 +249,14 @@ def read_points3d_binary(path_to_model_file):
 
 
 def read_model(path, ext):
-    if ext == ".txt":
-        cameras = read_cameras_text(os.path.join(path, "cameras" + ext))
-        images = read_images_text(os.path.join(path, "images" + ext))
-        points3D = read_points3D_text(os.path.join(path, "points3D") + ext)
+    if ext == "txt":
+        cameras = read_cameras_text(os.path.join(path, "cameras." + ext))
+        images = read_images_text(os.path.join(path, "images." + ext))
+        points3D = read_points3D_text(os.path.join(path, "points3D.") + ext)
     else:
-        cameras = read_cameras_binary(os.path.join(path, "cameras" + ext))
-        images = read_images_binary(os.path.join(path, "images" + ext))
-        points3D = read_points3d_binary(os.path.join(path, "points3D") + ext)
+        cameras = read_cameras_binary(os.path.join(path, "cameras." + ext))
+        images = read_images_binary(os.path.join(path, "images." + ext))
+        points3D = read_points3d_binary(os.path.join(path, "points3D.") + ext)
     return cameras, images, points3D
 
 
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     for seq in poses_dic:
         poses = poses_dic[seq]
-        print seq, len(poses)
+        print(seq, len(poses))
 
         pre = None
         for id in poses:
@@ -324,7 +324,7 @@ if __name__ == '__main__':
                 q2 = img_dic[os.path.basename(p2.filename)]
                 X, Y = Utils.get_relative_A_T(q1, q2)
 
-                print A[0], X[0], A[1], X[1],A[2], X[2]
+                print (A[0], X[0], A[1], X[1],A[2], X[2])
             pre = poses[id]
 
         # for id in poses:

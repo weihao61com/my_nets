@@ -12,6 +12,7 @@ import evo.core.transformations as tr
 # from bluenotelib.common.bluenote_sensor_rotation \
 #    import BlueNoteSensorRotation, RotationSequence
 
+PIR = 180/np.pi
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -556,14 +557,14 @@ class Utils:
         return np.arccos((tr-1)/2), C
 
     @staticmethod
-    def get_relative(p1, p2):
-        Q1 = p1.Q4
+    def get_relative_T(p1, p2):
+        Q1 = p1.inv
         Q2 = p2.Q4
-        Q = np.linalg.inv(Q1).dot(Q2)
-        # Q = Q1.dot(np.linalg.inv(Q2))
-        # P0 = Q2.dot(np.linalg.inv(Q1))
-        # Q0 = np.linalg.inv(Q2).dot(Q1)
+        return Q1.dot(Q2)
 
+    @staticmethod
+    def get_relative(p1, p2):
+        Q = Utils.get_relative_T(p1, p2)
         A, T = Utils.get_A_T(Q)
         return A, T
 
@@ -572,6 +573,82 @@ class Utils:
         basename = os.path.basename(p)
         pathname = os.path.dirname(p)
         return pathname + '_' + basename + '_avg.p'
+
+    @staticmethod
+    def create_ply(points, output_file, rgb=None):
+
+        ply_header = 'ply\n'
+        ply_header += 'format ascii 1.0\n'
+        ply_header += 'element vertex {}\n'.format(len(points))
+        ply_header += 'property float x\n'
+        ply_header += 'property float y\n'
+        ply_header += 'property float z\n'
+        if rgb is not None:
+            ply_header += 'property uchar red\n'
+            ply_header += 'property uchar green\n'
+            ply_header += 'property uchar blue\n'
+        ply_header += 'end_header\n'
+
+        with open(output_file, 'w') as fp:
+            fp.write(ply_header)
+            for a in range(len(points)):
+                p = points[a]
+                fp.write('{} {} {}'.format(p[0], p[1], p[2]))
+                if rgb is not None:
+                    p = rgb[a]
+                    fp.write(' {} {} {}'.format(p[0], p[1], p[2]))
+                fp.write('\n')
+
+    @staticmethod
+    def transfor_T(pose, r, w2c=True):
+        if w2c:
+            return pose.inv.dot(np.concatenate((r, [1])))[:3]
+        return pose.Q4.dot(np.concatenate((r, [1])))[:3]
+
+    @staticmethod
+    def get_pose(qv, tv):
+        Q = Utils.q_to_m(qv)
+        Q[:3, 3] = tv
+        Q = np.linalg.inv(Q)
+        return Q
+
+    @staticmethod
+    def xyz_tran(x):
+        a = np.arctan2(x[0], x[2])*PIR
+        b = np.arctan2(x[1], x[2])*PIR
+        c = 1/x[2]
+        return [a, b, c]
+
+    @staticmethod
+    def xyz_tran_R(x):
+        r = x[2]
+        if r<0.1:
+            r = 0.1
+        r = 1.0/r
+        x = x[:2]/PIR
+        a = r * np.tan(x[0])
+        b = r * np.tan(x[1])
+        return [a, b, r]
+
+    @staticmethod
+    def create_cloud(data):
+        point_list = []
+        for imgs in data.matches:
+            ms = data.matches[imgs]
+            for m in ms:
+                point_list.append(m[0])
+
+        image_dic = data.poses
+
+        print("num_image", len(image_dic), "   num_point", len(point_list))
+        ps = []
+        for id in image_dic:
+            img = image_dic[id]
+            # ps.append(img.inv[:3, 3])
+            ps.append(img.inv[:3, 3])
+
+        Utils.create_ply(ps, '/home/weihao/tmp/pose.ply')
+        Utils.create_ply(point_list, '/home/weihao/tmp/points.ply')
 
 
 if __name__ == "__main__":
