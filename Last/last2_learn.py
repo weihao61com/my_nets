@@ -140,8 +140,8 @@ def run(cfg, iterations):
                     feed = {input_dic['data_1'.format(mode)]: np.array(dd), outputs: th}
                     A, _, B = sess.run([losses, opts, xyz], feed_dict=feed)
                     te_loss += A
-                    diff_loss1 += np.sum((B[:2]-th[:2])*(B[:2]-th[:2])
-                    diff_loss1 += (B[3]-th[3])*(B[3]-th[3]))
+                    diff_loss1 += np.sum((B[:, :2]-th[:, :2])*(B[:, :2]-th[:,:2]))
+                    diff_loss2 += np.sum((B[:, 2]-th[:, 2])*(B[:, 2]-th[:, 2]))
                     te_count += len(th)
 
                 # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)

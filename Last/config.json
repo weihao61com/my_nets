@@ -7,7 +7,7 @@
     "tr1": "tmp/kitti_00_Train/pairs_2.p",
     "netFile": "fc1",
     "_renetFile": "fc",
-    "lr": 1.0e-6,
+    "lr": 1.0e-4,
     "d_lr": 1.0e-7,
     "_nodes": "8, 4",
     "nodes_0_base": "32, 8",
