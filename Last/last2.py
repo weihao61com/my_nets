@@ -56,7 +56,7 @@ class DataSet2:
                 self.images = d[0]
                 self.matches = d[1]
                 self.poses = d[2]
-                logger.info("Total data {} {}".format(len(self.images), len(self.matches)))
+                print("Total data {} {}".format(len(self.images), len(self.matches)))
         else:
             with open(os.path.join(HOME, imf), 'rb') as fp:
                 A = pickle.load(fp)
@@ -118,10 +118,10 @@ class DataSet2:
                 nt += 1
                 if nt%2000==0:
                     # (self.data[0][2])
-                    logger.info('subtract_avg {} {}'.format(nt, len(self.matches)))
+                    print('subtract_avg {} {}'.format(nt, len(self.matches)))
 
     def prepare(self, count=None, clear=False):
-        #logger.info("Prepare data")
+        #print("Prepare data")
         if self.cfg.mode > 0:
             return self.prepare_n(count, self.cfg.mode, clear)
         elif self.cfg.mode == -1:
@@ -132,7 +132,7 @@ class DataSet2:
                 #if count is None or random.random() < r/2:
                 rst.append(b[0])
                 truth.append(b[1])
-            # logger.info("load: {}".format(len(truth)))
+            # print("load: {}".format(len(truth)))
             return np.array(rst), truth
         else:
             raise Exception('Unknown mode {}'.format(cfg.mode))
@@ -178,7 +178,7 @@ class DataSet:
                 # self.data = pickle.load(fp)
                 self.id_list = {}
                 # print(self.data[0])
-                logger.info("Total data {}".format(len(self.data)))
+                print("Total data {}".format(len(self.data)))
         else:
             with open(os.path.join(HOME, imf), 'rb') as fp:
                 A = pickle.load(fp)
@@ -191,7 +191,7 @@ class DataSet:
             d[0].add_inv()
             d[1].add_inv()
             nt += len(d[2])
-        logger.info("Total match {}".format(nt))
+        print("Total match {}".format(nt))
         self.nt = nt
         self.dists_dic = {}
         self.out = None
@@ -199,7 +199,7 @@ class DataSet:
 
 
     def run_data_0(self, data, inputs, sess, xy):
-        logger.info("run_data_0")
+        print("run_data_0")
         rst = data[0]
         truth = data[1]
         ids = data[2]
@@ -301,7 +301,7 @@ class DataSet:
                 nt += 1
                 if nt%2000==0:
                     # (self.data[0][2])
-                    logger.info('subtract_avg {} {} {}'.format(nt, len(self.id_list), len(self.data)))
+                    print('subtract_avg {} {} {}'.format(nt, len(self.id_list), len(self.data)))
 
         if save_im:
             tmp_file = '{}/tmp/t_pairs.p'.format(HOME)
@@ -310,7 +310,7 @@ class DataSet:
 
 
     def prepare(self, count=None, clear=False):
-        #logger.info("Prepare data")
+        #print("Prepare data")
         if self.cfg.mode > 0:
             return self.prepare_n(count, self.cfg.mode, clear)
         elif self.cfg.mode == -1:
@@ -321,7 +321,7 @@ class DataSet:
                 #if count is None or random.random() < r/2:
                 rst.append(b[0])
                 truth.append(b[1])
-            # logger.info("load: {}".format(len(truth)))
+            # print("load: {}".format(len(truth)))
             return np.array(rst), truth
         else:
             raise Exception('Unknown mode {}'.format(cfg.mode))
@@ -428,7 +428,7 @@ class DataSet:
                         raise Exception("Unknown n={}".format(n))
 
                 # if nc%100000==0 and nc>0:
-                #    logger.info("prepare {} {}".format(n, len(out)))
+                #    print("prepare {} {}".format(n, len(out)))
         return out
 
     def prepare_n(self, count, n, clear):
@@ -450,7 +450,7 @@ class DataSet:
             #if count is None or random.random() < r/2:
             rst.append(b[0])
             truth.append(b[1])
-        # logger.info("load: {}".format(len(truth)))
+        # print("load: {}".format(len(truth)))
         return np.array(rst), truth
 
     def get_data4(self, P1, P2, d, swap):
@@ -577,7 +577,7 @@ class DataSet:
                         out.append(data_form_3(xyz2, T2, A2, p2, p1, P2, P1, a[4], a[3]))
 
                     # if nc%100000==0 and nc>0:
-                    #    logger.info("prepare {} {}".format(n, len(out)))
+                    #    print("prepare {} {}".format(n, len(out)))
 
             self.out = out
         return self.out
@@ -595,7 +595,7 @@ class DataSet:
             if ID1 > P1.id >= ID0:
                 out.append(self.get_data5(d, True))
             if len(out)%1000==0:
-                logger.info("prepare5 {} from {}".format(len(out), len(self.data)))
+                print("prepare5 {} from {}".format(len(out), len(self.data)))
 
         rst = []
         truth = []
@@ -791,7 +791,7 @@ def create_net(cfg):
 def run(cfg, iterations):
 
     #terations = 50
-    logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
     #
     # input_dic = {}
     # outputs = []
@@ -932,7 +932,7 @@ def run(cfg, iterations):
 
             fp.close()
 
-            logger.info("Err {2} {0:.6f} {1:.6f} {3}".
+            print("Err {2} {0:.6f} {1:.6f} {3}".
                         format(t_loss/t_count, te_loss/te_count, a, np.median(np.array(td0))))
             saver.save(sess, cfg.netFile)
 

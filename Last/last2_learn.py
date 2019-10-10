@@ -7,10 +7,15 @@ import numpy as np
 import random
 import logging
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s')
+#logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
+#logger = logging.getLogger("last2")
+logging.basicConfig(format='%(asctime)s %(message)s')
 logger = logging.getLogger("last2")
-logger.setLevel(logging.INFO)
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+
+# logging.basicConfig(format='%(asctime)s - %(name)s ')
+# logger = logging.getLogger("last2")
+# logger.setLevel(logging.INFO)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
 #logger.setFormatter(formatter)
 
 sys.path.append('..')
@@ -23,8 +28,9 @@ from last2 import create_net, DataSet2
 def run(cfg, iterations):
 
     cfg.num_output = [3]
-    cfg.mode = -1
-    logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    # cfg.mode = -1
+    # logging.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
 
     net = create_net(cfg)
     init = net[0]
@@ -40,7 +46,7 @@ def run(cfg, iterations):
     tr = DataSet2(cfg.tr_data[0], cfg)
     tr.get_avg(avg_file)
     tr.subtract_avg(avg_file)
-
+    T0 = datetime.datetime.now()
 
     with tf.compat.v1.Session() as sess:
         sess.run(init)
@@ -48,11 +54,7 @@ def run(cfg, iterations):
             saver.save(sess, cfg.netFile)
             exit(0)
 
-        if cfg.mode > 0:
-            saver.restore(sess, cfg.netFile)
-
-        t00 = datetime.datetime.now()
-        st1 = ''
+        saver.restore(sess, cfg.netFile)
 
         mode = cfg.mode
         print(outputs)
@@ -145,9 +147,9 @@ def run(cfg, iterations):
                     te_count += len(th)
 
                 # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)
-
-            logger.info("Err {2} {0:.6f} {1:.6f} {3} {4} {5}".
-                        format(t_loss/t_count, te_loss/te_count, a,
+            T = datetime.datetime.now()
+            print("Err {0} {1} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}".
+                        format(T-T0, a, t_loss/t_count, te_loss/te_count,
                                dist, diff_loss1/te_count, diff_loss2/te_count))
             saver.save(sess, cfg.netFile)
 

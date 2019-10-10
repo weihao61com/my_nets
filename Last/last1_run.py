@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     cfg = Config(config_file)
 
-    logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
 
     input_dic = {}
     output = []
@@ -163,10 +163,10 @@ if __name__ == '__main__':
                             clu_dic[a[0]][a[1]] = []
                 if len(p_list)>1:
                     #if len(p_list)>30:
-                    #    logger.info('{}'.format(p_list))
+                    #    print('{}'.format(p_list))
                     clusters.append(p_list)
 
-        logger.info("Cluster: {}".format(len(clusters)))
+        print("Cluster: {}".format(len(clusters)))
         filename = 'c:/Projects/tmp/cloud.p'
         with open(filename, 'wb') as fp:
             pickle.dump(clusters, fp)

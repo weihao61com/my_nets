@@ -101,7 +101,7 @@ def cv_process(data):
         rs2.append(abs(dr[2]))
         angs.append(np.linalg.norm(a))
         if len(rs)%200 == 0:
-            logger.info("{}: {}".format(len(rs), len(data)))
+            print("{}: {}".format(len(rs), len(data)))
 
         if random.random() > 200.0/len(data):
             continue
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         te_file = cfg.te_data
     else:
         te_file = cfg.tr_data
-    logger.info("test {} ".format(te_file))
+    print("test {} ".format(te_file))
 
     te = DataSet(te_file, cfg)
     # te.data = te.data[:20]

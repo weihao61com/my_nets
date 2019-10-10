@@ -27,12 +27,12 @@ def distance_cal(dist, n=3, verbose=False):
         mm = np.mean(dist)
         st = np.std(dist)
         if verbose:
-            logger.info("mm, st: {} {} {}".format(len(dist), mm, st))
+            print("mm, st: {} {} {}".format(len(dist), mm, st))
         th = mm + st*n
         if th>=np.max(dist):
             break
     length1 = len(dist)
-    logger.info("TH/mean/fraction {} {} {}".format(th, mm, float(length1)/length))
+    print("TH/mean/fraction {} {} {}".format(th, mm, float(length1)/length))
     return th
 
 
@@ -42,11 +42,11 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         test_file = sys.argv[1]
 
-    logger.info("File: {}".format(test_file))
+    print("File: {}".format(test_file))
 
     with open(test_file, 'rb') as fp:
         dist = pickle.load(fp)
-    logger.info("Data: {}".format(len(dist)))
+    print("Data: {}".format(len(dist)))
     dist = np.array(dist)
 
     th = distance_cal(dist, 5, True)

@@ -51,10 +51,10 @@ if __name__ == '__main__':
     output_file = '{}/pairs_2.p'.format(project_dir)
     model_file = '{}/sparse/align_0'.format(project_dir)
 
-    logger.info("Model {}".format(model_file))
+    print("Model {}".format(model_file))
     cameras, images, points3D = read_model(path=model_file, ext='bin')
 
-    logger.info("DB file {}".format(db_file))
+    print("DB file {}".format(db_file))
     db = Colmap_DB(db_file)
     db.get_image_list()
     db.get_image_feature()

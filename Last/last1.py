@@ -58,14 +58,14 @@ class DataSet:
             d[1].add_inv(1)
 
             nt += len(d[2])
-        logger.info("Total match {}".format(nt))
+        print("Total match {}".format(nt))
         self.nt = nt
         self.dists_dic = {}
         self.out = None
 
 
     def run_data_0(self, data, inputs, sess, xy):
-        logger.info("run_data_0")
+        print("run_data_0")
         rst = data[0]
         truth = data[1]
         ids = data[2]
@@ -169,7 +169,7 @@ class DataSet:
 
                 if nt%2000==0:
                     # (self.data[0][2])
-                    logger.info('subtract_avg {} {} {}'.format(nt, len(self.id_list), len(self.data)))
+                    print('subtract_avg {} {} {}'.format(nt, len(self.id_list), len(self.data)))
                 nt += 1
 
         if save_im:
@@ -179,7 +179,7 @@ class DataSet:
 
 
     def prepare(self, count=None, clear=False):
-        #logger.info("Prepare data")
+        #print("Prepare data")
         if self.cfg.mode == 1:
             return self.prepare_n(count, 1, clear)
         elif self.cfg.mode == 2:
@@ -240,13 +240,13 @@ class DataSet:
                         raise Exception("Unknown n={}".format(n))
 
                     #if nc%100000==0 and nc>0:
-                    #    logger.info("prepare {} {}".format(n, len(out)))
+                    #    print("prepare {} {}".format(n, len(out)))
 
             self.out = out
             self.data = None
 
         np.random.shuffle(self.out)
-        # logger.info("prepare {} {} {}".format(n, len(out), nc))
+        # print("prepare {} {} {}".format(n, len(out), nc))
         if clear:
             self.data = None
 
@@ -392,7 +392,7 @@ class DataSet:
             if ID1 > P1.id >= ID0:
                 out.append(self.get_data5(d, True))
             if len(out)%1000==0:
-                logger.info("prepare5 {} from {}".format(len(out), len(self.data)))
+                print("prepare5 {} from {}".format(len(out), len(self.data)))
 
         rst = []
         truth = []
@@ -564,7 +564,7 @@ if __name__ == '__main__':
         cfg.mode = mode
 
     iterations = 200
-    logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
 
     input_dic = {}
     output = []
@@ -727,7 +727,7 @@ if __name__ == '__main__':
                     t_count += len(th)
 
                 threshold = distance_cal(distances, 10, False)
-                logger.info("Err {0:.6f} {1:.6f} {2}".format(error/total_count, t_loss/t_count, threshold))
+                print("Err {0:.6f} {1:.6f} {2}".format(error/total_count, t_loss/t_count, threshold))
             saver.save(sess, cfg.netFile)
 
             with open('c:\\tmp\\distance.p', 'wb') as fp:

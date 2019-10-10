@@ -242,7 +242,7 @@ if __name__ == '__main__':
     tr.subtract_avg(avg_file, save_im=False)
     iterations = 1000000
     loop = cfg.loop
-    logger.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
 
     inputs = {}
     output = {}
@@ -313,7 +313,7 @@ if __name__ == '__main__':
             run_test(input_dic, sess, xy, tr, cfg, mul)
 
         if cfg.renetFile:
-            logger.info("Re net: {}".format(cfg.renetFile))
+            print("Re net: {}".format(cfg.renetFile))
             saver.restore(sess, cfg.renetFile)
 
         str1 = ''
