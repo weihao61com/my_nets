@@ -56,7 +56,7 @@ class DataSet2:
                 self.images = d[0]
                 self.matches = d[1]
                 self.poses = d[2]
-                print("Total data {} {}".format(len(self.images), len(self.matches)))
+                print("Total data {} {} in {}".format(len(self.images), len(self.matches), p_file))
         else:
             with open(os.path.join(HOME, imf), 'rb') as fp:
                 A = pickle.load(fp)
@@ -760,7 +760,8 @@ def create_net(cfg):
     for num_output in num_outputs:
         output = tf.compat.v1.placeholder(tf.float32, [None, num_output])
         outputs.append(output)
-        input_dic['data_{}'.format(nt)] = tf.compat.v1.placeholder(tf.float32, [None, 13-num_output])
+        input_dic['data_{}'.format(nt)] = tf.compat.v1.placeholder(tf.float32, [None, 10])
+        # input_dic['data_{}'.format(nt)] = tf.compat.v1.placeholder(tf.float32, [None, 13-num_output])
         nt += 1
 
     net = P1Net1(input_dic)
