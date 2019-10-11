@@ -27,7 +27,7 @@ from last2 import create_net, DataSet2
 
 def run(cfg, iterations):
 
-    cfg.num_output = [3]
+    cfg.num_output = [2, 1]
     # cfg.mode = -1
     # logging.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
     print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
@@ -36,10 +36,10 @@ def run(cfg, iterations):
     init = net[0]
     saver = net[1]
     input_dic = net[2]
-    outputs = net[3][0]
-    losses = net[4][0]
-    opts = net[5][0]
-    xyz = net[6][0]
+    outputs = net[3]
+    losses = net[4]
+    opts = net[5]
+    xyz = net[6]
 
     avg_file = Utils.avg_file_name(cfg.netFile)
 
@@ -56,8 +56,8 @@ def run(cfg, iterations):
 
         saver.restore(sess, cfg.netFile)
 
-        mode = cfg.mode
-        print(outputs)
+        # mode = cfg.mode
+        # print(outputs)
 
         for a in range(iterations):
             # filename = '/home/weihao/Projects/tmp/rst_learn.csv'.format(cfg.mode)
@@ -75,12 +75,15 @@ def run(cfg, iterations):
                 truth = tr_pre[1]
                 length = data.shape[0]
                 xyz0 = {}
+                trt0 = {}
                 sz = 100000
                 for c in range(0, length, sz):
                     dd = data[c:c +sz]
                     th = truth[c:c + sz]
-                    feed = {input_dic['data_1']: np.array(dd)}
+                    dd = np.array(dd)
+                    feed = {input_dic['data_1']: dd, input_dic['data_2']: dd}
                     A = sess.run(xyz, feed_dict=feed)
+                    A = np.concatenate((A[0], A[1]), axis=1)
                     for d in range(len(th)):
                         xyz1 = A[d, :]
                         t1 = th[d]
@@ -88,20 +91,33 @@ def run(cfg, iterations):
                         ip1 = t1[0][1]
                         id2 = t1[1][0]
                         ip2 = t1[1][1]
+                        #if id1 == 1 and ip1 < 200:
+                        #    print(ip1, t1[2])
+                        #if id2 == 1 and ip2 < 200:
+                        #    print(ip2, t1[2])
                         P1 = tr.poses[id1]
                         xyz1 = Utils.xyz_tran_R(xyz1)
                         xyz1 = Utils.transfor_T(P1, xyz1, w2c=False)
                         if id1 not in xyz0:
                             xyz0[id1] = {}
+                            trt0[id1] = {}
                         if ip1 not in xyz0[id1]:
                             xyz0[id1][ip1] = []
+                            trt0[id1][ip1] = []
                         xyz0[id1][ip1].append(xyz1)
+                        trt0[id1][ip1].append(t1[2])
                         if id2 not in xyz0:
                             xyz0[id2] = {}
+                            trt0[id2] = {}
                         if ip2 not in xyz0[id2]:
                             xyz0[id2][ip2] = []
+                            trt0[id2][ip2] = []
                         xyz0[id2][ip2].append(xyz1)
+                        trt0[id2][ip2].append(t1[2])
 
+                fp = None
+                if lp == 0:
+                    fp = open('/home/weihao/tmp/xyz.csv', 'w')
                 count = 0
                 for img_id in xyz0:
                     for p_id in xyz0[img_id]:
@@ -112,6 +128,8 @@ def run(cfg, iterations):
                             t_loss += np.linalg.norm(np.std(xyz1, axis=0))
                             t_count += 1
                             xyz0[img_id][p_id] = np.mean(xyz1, axis=0)
+                            a0 = trt0[img_id][p_id]
+                            a1 = xyz0[img_id][p_id]
                         else:
                             xyz0[img_id][p_id] = xyz1[0]
                 dist = 0
@@ -130,20 +148,24 @@ def run(cfg, iterations):
                 dist /= length
                 for c in range(0, length, cfg.batch_size):
                     dd = data[c:c + cfg.batch_size]
-                    th = []
+                    th1 = []
+                    th2 = []
+
                     # for d in range(c, c+dd.shape[0]):
                     for d in truth[c:c + cfg.batch_size]:
                         t = d[2]
                         t = Utils.transfor_T(tr.poses[d[0][0]], t, w2c=True)
                         t = Utils.xyz_tran(t)
-                        th.append(t)
-                    th = np.array(th)
-
-                    feed = {input_dic['data_1'.format(mode)]: np.array(dd), outputs: th}
-                    A, _, B = sess.run([losses, opts, xyz], feed_dict=feed)
-                    te_loss += A
-                    diff_loss1 += np.sum((B[:, :2]-th[:, :2])*(B[:, :2]-th[:,:2]))
-                    diff_loss2 += np.sum((B[:, 2]-th[:, 2])*(B[:, 2]-th[:, 2]))
+                        th1.append(t[:2])
+                        th2.append(t[2])
+                    th1 = np.array(th1)
+                    th2 = np.array(th2).reshape((len(dd), 1))
+                    dd = np.array(dd)
+                    feed = {input_dic['data_1']: dd, input_dic['data_2']: dd,
+                            outputs[0]: th1, outputs[1]: th2}
+                    A, _ = sess.run([losses, opts], feed_dict=feed)
+                    diff_loss1 += A[0]*100
+                    diff_loss2 += A[1]*100
                     te_count += len(th)
 
                 # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)
