@@ -7,225 +7,31 @@ import numpy as np
 import random
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(message)s')
-logger = logging.getLogger("last2_run")
+#logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
+#logger = logging.getLogger("last2")
+logging.basicConfig(format='%(asctime)s %(message)s')
+logger = logging.getLogger("last2")
+
+# logging.basicConfig(format='%(asctime)s - %(name)s ')
+# logger = logging.getLogger("last2")
+# logger.setLevel(logging.INFO)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+#logger.setFormatter(formatter)
 
 sys.path.append('..')
 sys.path.append('.')
 from utils import Utils, Config, HOME
 from network import Network
-from last2 import P1Net1, create_net, DataSet2
+from distance import distance_cal
+from last2 import create_net, DataSet2
 
-F1 = 0.1
-F2 = 1-F1
+def run(cfg, t):
 
-def compare_truth(data):
-
-    err = 0
-    nt = 0
-    for d in data:
-        for id in range(2):
-            dd = d[id]
-            tran = dd.Q4[:3, 3]
-            distance = np.linalg.norm(tran-dd.tran)
-            err += distance*distance
-            nt += 1
-    logger.warn("Compare Error: {} {}".format(np.sqrt(err/nt), nt))
-
-def set_pose(data, Q):
-    data.Q4 = Q
-    data.inv = np.linalg.inv(Q)
-    # data.m3x3 = Q[:3, :3]
-    # data.tran = Q[:3, 3]
-
-
-def run_data(n, xyz, data,  input_dic, sess):
-    pr = DataSet2.prepare_data(data, n)
-    inputs = []
-    for p in pr:
-        inputs.append(p[0])
-    inputs = np.array(inputs)
-
-    feed = {input_dic['data_{}'.format(n)]: inputs}
-    A = sess.run(xyz, feed_dict=feed)
-    return A
-
-
-def update_A(data, input_dic, sess, xyz, n):
-    A0 = run_data(n, xyz, data, input_dic, sess)
-    logger.warn("update A {} {}".format(n, A0.shape))
-
-    cloud = {}
-    nt = 0
-    for d in data:
-        id1 = d[0].id
-        id2 = d[1].id
-        if id1 not in cloud:
-            cloud[id1] = []
-        if id2 not in cloud:
-            cloud[id2] = []
-
-        length = len(d[2])
-        for b in range(length):
-            A, T = Utils.get_relative(d[0], d[1])
-            A[n-3] = A0[nt]
-            Q = d[0].Q4.dot(Utils.create_Q(A, T))
-            A = Utils.get_A(Q)
-            cloud[id2].append(A)
-            nt += 1
-
-            A, T = Utils.get_relative(d[1], d[0])
-            A[n-3] = A0[nt]
-            Q = d[1].Q4.dot(Utils.create_Q(A, T))
-            A = Utils.get_A(Q)
-            cloud[id1].append(A)
-            nt += 1
-
-    err = 0
-    nt = 0
-    for id in cloud:
-        d = np.array(cloud[id])
-        st = np.std(d, axis=0)
-        nt += d.shape[0]
-        err += np.sum(st*st)
-        cloud[id] = np.mean(d, axis=0)
-    logger.warn('A error {} {} {}'.format(np.sqrt(n, err/nt), nt))
-
-    for d in data:
-        id1 = d[0].id
-        id2 = d[1].id
-        A, T = Utils.get_A_T(d[0].Q4)
-        A = cloud[id1]
-        d[0].Q4 = Utils.create_Q(A, T)
-        d[0].inv = np.linalg.inv(d[0].Q4)
-        A, T = Utils.get_A_T(d[1].Q4)
-        A = cloud[id2]
-        d[1].Q4 = Utils.create_Q(A, T)
-        d[1].inv = np.linalg.inv(d[1].Q4)
-
-
-def update_T(data, input_dic, sess, xyz):
-    A = run_data(2, xyz, data, input_dic, sess)
-    logger.warn("update T {}".format(A.shape))
-
-    cloud = {}
-    nt = 0
-    for d in data:
-        id1 = d[0].id
-        id2 = d[1].id
-        if id1 not in cloud:
-            cloud[id1] = []
-        if id2 not in cloud:
-            cloud[id2] = []
-
-        length = len(d[2])
-        for b in range(length):
-            xyz = transfor_T(d[0], A[nt, :], w2c=False)
-            cloud[id2].append(xyz)
-            nt += 1
-            xyz = transfor_T(d[1], A[nt, :], w2c=False)
-            cloud[id1].append(xyz)
-            nt += 1
-
-    err = 0
-    nt = 0
-    for id in cloud:
-        d = np.array(cloud[id])
-        st = np.std(d, axis=0)
-        nt += d.shape[0]
-        err += np.sum(st*st)
-        cloud[id] = np.mean(d, axis=0)
-    logger.warn('T error {} {}'.format(np.sqrt(err/nt), nt))
-
-    for d in data:
-        id1 = d[0].id
-        id2 = d[1].id
-        A, T0 = Utils.get_A_T(d[0].Q4)
-        T = cloud[id1]
-        T = T*F1+T0*F2
-        d[0].Q4 = Utils.create_Q(A, T)
-        d[0].inv = np.linalg.inv(d[0].Q4)
-        A, T0 = Utils.get_A_T(d[1].Q4)
-        T = cloud[id2]
-        T = T*F1+T0*F2
-        d[1].Q4 = Utils.create_Q(A, T)
-        d[1].inv = np.linalg.inv(d[1].Q4)
-
-
-
-def update_C(data, input_dic, sess, xyz):
-    A = run_data(1, xyz, data, input_dic, sess)
-    logger.warn("update cloud {}".format(A.shape))
-
-    cloud = {}
-    nt = 0
-    for d in data:
-        id1 = d[0].id
-        id2 = d[1].id
-        if id1 not in cloud:
-            cloud[id1] = {}
-        if id2 not in cloud:
-            cloud[id2] = {}
-        length = len(d[2])
-        for b in range(length):
-            c = d[2][b]
-            p_id1 = int(c[3])
-            p_id2 = int(c[4])
-            if p_id1 not in cloud[id1]:
-                cloud[id1][p_id1] = []
-            if p_id2 not in cloud[id2]:
-                cloud[id2][p_id2] = []
-
-            xyz = transfor_T(d[0], A[nt, :], w2c=False)
-            cloud[id1][p_id1].append(xyz)
-            cloud[id2][p_id2].append(xyz)
-            nt += 1
-
-            xyz = transfor_T(d[1], A[nt, :], w2c=False)
-            cloud[id1][p_id1].append(xyz)
-            cloud[id2][p_id2].append(xyz)
-            nt += 1
-
-    err = 0
-    nt = 0
-    for id in cloud:
-        for p_id in cloud[id]:
-            d = np.array(cloud[id][p_id])
-            st = np.std(d, axis=0)
-            nt += d.shape[0]
-            err += np.sum(st*st)
-            cloud[id][p_id] = np.mean(d, axis=0)
-    logger.warn('Cloud error {} {}'.format(np.sqrt(err/nt), nt))
-
-    nt = 0
-    err = 0
-    for d in data:
-        length = len(d[2])
-        id1 = d[0].id
-        id2 = d[1].id
-        for b in range(length):
-            c = d[2][b]
-            p_id1 = int(c[3])
-            p_id2 = int(c[4])
-            xyz1 = cloud[id1][p_id1]
-            xyz2 = cloud[id2][p_id2]
-            xyz = (xyz1 + xyz2)/2
-            xyz0 = d[2][b][0]
-            err += np.linalg.norm(xyz1-xyz2)
-            nt += 1
-            m1 = d[2][b][1]
-            m2 = d[2][b][2]
-            xyz = xyz*F1+xyz0*F2
-            d[2][b] = xyz, m1, m2, p_id1, p_id2
-    logger.warn('Cloud distance {} {}'.format(err / nt, nt))
-
-if __name__ == '__main__':
-
-    config_file = "config.json"
-
-    cfg = Config(config_file)
-    cfg.mode = -1
-    cfg.num_output = list(map(int, cfg.num_output.split(',')))
+    iterations = 1
+    cfg.num_output = [2, 1]
+    # cfg.mode = -1
+    # logging.info("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
+    print("LR {} num_out {} mode {}".format(cfg.lr, cfg.num_output, cfg.mode))
 
     net = create_net(cfg)
     init = net[0]
@@ -234,29 +40,149 @@ if __name__ == '__main__':
     outputs = net[3]
     losses = net[4]
     opts = net[5]
-    xys = net[6]
+    xyz = net[6]
 
     avg_file = Utils.avg_file_name(cfg.netFile)
-    tr = DataSet2(cfg.tr_data[0], cfg)
-    Utils.create_cloud(tr)
-    tr.get_avg(avg_file)
-    tr.subtract_avg(avg_file)
+
+    if t=='te':
+        tr = DataSet2(cfg.te_data[0], cfg)
+    else:
+        tr = DataSet2(cfg.tr_data[0], cfg)
+    if cfg.mode==0:
+        tr.get_avg(avg_file)
+    else:
+        tr.subtract_avg(avg_file)
+    T0 = datetime.datetime.now()
 
     with tf.compat.v1.Session() as sess:
         sess.run(init)
-        # saver.restore(sess, cfg.netFile)
+        if cfg.mode == 0:
+            saver.save(sess, cfg.netFile)
+            exit(0)
 
-        t00 = datetime.datetime.now()
-        st1 = ''
+        saver.restore(sess, cfg.netFile)
+
+        # mode = cfg.mode
+        # print(outputs)
+        # fp = None
+        # if lp == 0:
+        fp = open('/home/weihao/tmp/xyz.csv', 'w')
+        for a in range(iterations):
+            # filename = '/home/weihao/Projects/tmp/rst_learn.csv'.format(cfg.mode)
+
+            for lp in range(1):
+                tr_pre = tr.prepare(200000, clear=True)
+                t_loss = 0
+                t_count = 0
+                te_loss = 0
+                te_count = 0
+                diff_loss1 = 0
+                diff_loss2 = 0
+
+                data = tr_pre[0]
+                truth = tr_pre[1]
+                length = data.shape[0]
+                xyz0 = {}
+                trt0 = {}
+                sz = 100000
+                for c in range(0, length, sz):
+                    dd = data[c:c +sz]
+                    th = truth[c:c + sz]
+                    dd = np.array(dd)
+                    feed = {input_dic['data_1']: dd, input_dic['data_2']: dd}
+                    A = sess.run(xyz, feed_dict=feed)
+                    A = np.concatenate((A[0], A[1]), axis=1)
+                    for d in range(len(th)):
+                        xyz1 = A[d, :]
+                        t1 = th[d]
+                        id1 = t1[0][0]
+                        ip1 = t1[0][1]
+                        id2 = t1[1][0]
+                        ip2 = t1[1][1]
+                        #if id1 == 1 and ip1 < 200:
+                        #    print(ip1, t1[2])
+                        #if id2 == 1 and ip2 < 200:
+                        #    print(ip2, t1[2])
+                        P1 = tr.poses[id1]
+                        xyz1 = Utils.xyz_tran_R(xyz1)
+                        xyz1 = Utils.transfor_T(P1, xyz1, w2c=False)
+                        xyzt = np.array(t1[2])
+                        xyzt = Utils.xyz_tran_R(xyzt)
+                        xyzt = Utils.transfor_T(P1, xyzt, w2c=False)
+                        if id1 not in xyz0:
+                            xyz0[id1] = {}
+                            trt0[id1] = {}
+                        if ip1 not in xyz0[id1]:
+                            xyz0[id1][ip1] = []
+                            trt0[id1][ip1] = []
+                        xyz0[id1][ip1].append(xyz1)
+                        trt0[id1][ip1].append(xyzt)
+                        if id2 not in xyz0:
+                            xyz0[id2] = {}
+                            trt0[id2] = {}
+                        if ip2 not in xyz0[id2]:
+                            xyz0[id2][ip2] = []
+                            trt0[id2][ip2] = []
+                        xyz0[id2][ip2].append(xyz1)
+                        trt0[id2][ip2].append(xyzt)
+
+                count = 0
+                for img_id in xyz0:
+                    for p_id in xyz0[img_id]:
+                        count += 1
+                        xyz1 = xyz0[img_id][p_id]
+                        if len(xyz1)>1:
+                            xyz1 = np.array(xyz1)
+                            a2 = np.std(xyz1, axis=0)
+                            t_loss += np.linalg.norm(a2)
+                            t_count += 1
+                            xyz0[img_id][p_id] = np.mean(xyz1, axis=0)
+                            a0 = trt0[img_id][p_id]
+                            a0 = np.mean(a0, axis=0)
+                            a1 = xyz0[img_id][p_id]
+                            if fp is not None:
+                                if random.random()<0.01:
+                                    fp.write('{},{},{},'.format(a0[0], a1[0], a2[0]))
+                                    fp.write('{},{},{},'.format(a0[1], a1[1], a2[1]))
+                                    fp.write('{},{},{}'.format(a0[2], a1[2], a2[2]))
+                                    fp.write('\n')
+                        else:
+                            xyz0[img_id][p_id] = xyz1[0]
+                # if fp:
+                #    fp.close()
+                dist = 0
+                for c in range(length):
+                    t1 = truth[c]
+                    img_id = t1[0][0]
+                    p_id = t1[0][1]
+                    x1 = xyz0[img_id][p_id]
+                    img_id = t1[1][0]
+                    p_id = t1[1][1]
+                    x2 = xyz0[img_id][p_id]
+                    dist += np.linalg.norm(x1-x2)
+                    xyz1 = (x1+x2)/2
+                    # xyz1 = Utils.transfor_T(tr.poses[img_id], xyz1, w2c=True)
+                    truth[c] = t1[:3] + (xyz1,)
+                dist /= length
+
+                # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)
+            T = datetime.datetime.now()
+            # print("Err {0} {1} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}".
+            #             format(T-T0, a, t_loss/t_count, te_loss/te_count,
+            #                    dist, diff_loss1/te_count, diff_loss2/te_count))
+        fp.close()
+
+if __name__ == '__main__':
+
+    config_file = "config.json"
+
+    cfg = Config(config_file)
+    cfg.num_output = list(map(int, cfg.num_output.split(',')))
+
+    t = 'te'
+
+    if len(sys.argv)>1:
+       t = sys.argv[1]
 
 
-        for lp in range(cfg.loop):
-            update_C(data, input_dic, sess, xys[0])
-            update_T(data, input_dic, sess, xys[1])
-            update_A(data, input_dic, sess, xys[2], 3)
-            update_A(data, input_dic, sess, xys[3], 4)
-            update_A(data, input_dic, sess, xys[4], 5)
-            
-            compare_truth(data)
-            #with open(os.path.join(HOME, cfg.t_out), 'wb') as fp:
-            #    pickle.dump(data, fp)
+    run(cfg, t)

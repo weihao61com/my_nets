@@ -69,13 +69,13 @@ class DataSet2:
                 # self.data = pickle.load(fp)
                 self.id_list = A[1]
         self.cfg = cfg
-        nt = 0
-        for ids in self.matches:
-            for mm in self.matches[ids]:
-                if ids[0]==1 and mm[3][0]<100:
-                    print(ids, mm)
-                if ids[1]==1 and mm[3][1]<100:
-                    print(ids, mm)
+        # nt = 0
+        # for ids in self.matches:
+        #     for mm in self.matches[ids]:
+        #         if ids[0]==1 and mm[3][0]<100:
+        #             print(ids, mm)
+        #         if ids[1]==1 and mm[3][1]<100:
+        #             print(ids, mm)
 
         for id in self.images:
             img = self.images[id]
@@ -142,16 +142,20 @@ class DataSet2:
             r = 1.1
 
         if self.cfg.mode > 0:
-            out = self.prepare_data(r)
+            self.prepare_data(r)
         elif self.cfg.mode == -1:
-            out = self.prepare4(2)
+            self.prepare4(r)
         rst = []
         truth = []
-        for b in out:
+        for b in self.out:
             #if count is None or random.random() < r/2:
             rst.append(b[0])
             truth.append(b[1])
         # print("load: {}".format(len(truth)))
+        if clear:
+            self.matches = None
+        else:
+            self.out = None
         return np.array(rst), truth
 
 
@@ -279,14 +283,44 @@ class DataSet2:
 
     def prepare4(self,  r):
         if self.out is None:
-            out = []
-            num = 20
+            # xyz = []
+            # for id in self.poses:
+            #     pose = self.poses[id]
+            #     xyz.append(pose.Q4[:3, 3])
+            # Utils.create_ply(xyz, '/home/weihao/tmp/xyz.ply')
+            #
+            # image_id = 10
+            # xyz = {}
+            # for imgs in self.matches:
+            #     img1 = imgs[0]
+            #     img2 = imgs[1]
+            #     if img1==image_id or img2==image_id:
+            #         for a in self.matches[imgs]:
+            #             p = a[0]
+            #             if img1 == image_id:
+            #                 if a[3][1] not in xyz:
+            #                     P1 = self.poses[img1]
+            #                     xyz1 = Utils.transfor_T(P1, p, w2c=True)
+            #                     xyz1 = Utils.xyz_tran(xyz1)
+            #                     # xyz1[2] *=100
+            #                     xyz[a[3][1]] = xyz1
+            #             if img2 == image_id:
+            #                 if a[4][1] not in xyz:
+            #                     P1 = self.poses[img2]
+            #                     xyz1 = Utils.transfor_T(P1, p, w2c=True)
+            #                     xyz1 = Utils.xyz_tran(xyz1)
+            #                     # xyz1[2] *=100
+            #                     xyz[a[4][1]] = xyz1
+            #
+            #             #a0 = [a[3][0], a[4][0]]
+            #             #a1 = [a[3][1], a[4][1]]
+            # xyz = list(xyz.values())
+            # Utils.create_ply(xyz, '/home/weihao/tmp/cloud.ply')
 
+            out = []
             for imgs in self.matches:
                 id1 = imgs[0]
                 id2 = imgs[1]
-                if id1 > num or id2 > num:
-                    continue
                 P1 = self.poses[id1]
                 P2 = self.poses[id2]
                 A1, T1 = Utils.get_relative(P1, P2)
@@ -297,9 +331,13 @@ class DataSet2:
                         p1 = a[1]
                         p2 = a[2]
                         xyz1 = Utils.transfor_T(P1, xyz)
-                        xyz2 = Utils.transfor_T(P2, xyz)
                         xyz1 = Utils.xyz_tran(xyz1)
+                        xyz2 = Utils.transfor_T(P2, xyz)
                         xyz2 = Utils.xyz_tran(xyz2)
+                        # if a[3][0] == 1 and a[4][0] == 108:
+                        #     print()
+                        # if a[3][1] == 1 and a[4][1] == 108:
+                        #     print()
                         a0 = [a[3][0], a[4][0]]
                         a1 = [a[3][1], a[4][1]]
                         out.append(data_form_3(xyz1, T1, A1, p1, p2, a0, a1))
@@ -876,19 +914,6 @@ def run_data_t(data, inputs, sess, xy, fname, cfg):
     diff = np.array(cmap) - np.array(truth)
     dist0 = np.linalg.norm(diff, axis=1)
     return np.sqrt(np.mean(dist * dist)), np.median(dist), np.sqrt(np.mean(dist0 * dist0)), np.median(dist0)
-
-
-def save_ply(rst_dic, filename, fraction, idx=0):
-    nt = 0
-    xyz = []
-    for image_id in rst_dic:
-        for point_id in rst_dic[image_id]:
-            nt += 1
-            if random.random()<fraction:
-                xyz.append(rst_dic[image_id][point_id][idx])
-
-    print("PLY {} out of {}".format(len(xyz), nt))
-    Utils.create_ply(filename, xyz)
 
 
 def create_net(cfg):

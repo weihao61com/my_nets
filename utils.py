@@ -622,8 +622,8 @@ class Utils:
     @staticmethod
     def xyz_tran_R(x):
         r = x[2]
-        if r<0.1:
-            r = 0.1
+        if r < 0.001:
+            r = 0.001
         r = 1.0/r
         x = x[:2]/PIR
         a = r * np.tan(x[0])

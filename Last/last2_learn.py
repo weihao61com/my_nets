@@ -44,8 +44,10 @@ def run(cfg, iterations):
     avg_file = Utils.avg_file_name(cfg.netFile)
 
     tr = DataSet2(cfg.tr_data[0], cfg)
-    tr.get_avg(avg_file)
-    tr.subtract_avg(avg_file)
+    if cfg.mode==0:
+        tr.get_avg(avg_file)
+    else:
+        tr.subtract_avg(avg_file)
     T0 = datetime.datetime.now()
 
     with tf.compat.v1.Session() as sess:
@@ -63,7 +65,7 @@ def run(cfg, iterations):
             # filename = '/home/weihao/Projects/tmp/rst_learn.csv'.format(cfg.mode)
 
             for lp in range(cfg.loop):
-                tr_pre = tr.prepare(2000, clear=True)
+                tr_pre = tr.prepare(60000, clear=True)
                 t_loss = 0
                 t_count = 0
                 te_loss = 0
@@ -98,6 +100,9 @@ def run(cfg, iterations):
                         P1 = tr.poses[id1]
                         xyz1 = Utils.xyz_tran_R(xyz1)
                         xyz1 = Utils.transfor_T(P1, xyz1, w2c=False)
+                        xyzt = np.array(t1[2])
+                        xyzt = Utils.xyz_tran_R(xyzt)
+                        xyzt = Utils.transfor_T(P1, xyzt, w2c=False)
                         if id1 not in xyz0:
                             xyz0[id1] = {}
                             trt0[id1] = {}
@@ -105,7 +110,7 @@ def run(cfg, iterations):
                             xyz0[id1][ip1] = []
                             trt0[id1][ip1] = []
                         xyz0[id1][ip1].append(xyz1)
-                        trt0[id1][ip1].append(t1[2])
+                        trt0[id1][ip1].append(xyzt)
                         if id2 not in xyz0:
                             xyz0[id2] = {}
                             trt0[id2] = {}
@@ -113,7 +118,7 @@ def run(cfg, iterations):
                             xyz0[id2][ip2] = []
                             trt0[id2][ip2] = []
                         xyz0[id2][ip2].append(xyz1)
-                        trt0[id2][ip2].append(t1[2])
+                        trt0[id2][ip2].append(xyzt)
 
                 fp = None
                 if lp == 0:
@@ -125,13 +130,23 @@ def run(cfg, iterations):
                         xyz1 = xyz0[img_id][p_id]
                         if len(xyz1)>1:
                             xyz1 = np.array(xyz1)
-                            t_loss += np.linalg.norm(np.std(xyz1, axis=0))
+                            a2 = np.std(xyz1, axis=0)
+                            t_loss += np.linalg.norm(a2)
                             t_count += 1
                             xyz0[img_id][p_id] = np.mean(xyz1, axis=0)
                             a0 = trt0[img_id][p_id]
+                            a0 = np.mean(a0, axis=0)
                             a1 = xyz0[img_id][p_id]
+                            if fp is not None:
+                                if random.random()<0.1:
+                                    fp.write('{},{},{},'.format(a0[0], a1[0], a2[0]))
+                                    fp.write('{},{},{},'.format(a0[1], a1[1], a2[1]))
+                                    fp.write('{},{},{}'.format(a0[2], a1[2], a2[2]))
+                                    fp.write('\n')
                         else:
                             xyz0[img_id][p_id] = xyz1[0]
+                if fp:
+                    fp.close()
                 dist = 0
                 for c in range(length):
                     t1 = truth[c]
@@ -164,8 +179,8 @@ def run(cfg, iterations):
                     feed = {input_dic['data_1']: dd, input_dic['data_2']: dd,
                             outputs[0]: th1, outputs[1]: th2}
                     A, _ = sess.run([losses, opts], feed_dict=feed)
-                    diff_loss1 += A[0]*100
-                    diff_loss2 += A[1]*100
+                    diff_loss1 += A[0]
+                    diff_loss2 += A[1]
                     te_count += len(th)
 
                 # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)

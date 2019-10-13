@@ -14,7 +14,7 @@
     "nodes_1_out": "16",
     "nodes_2_feature": "16",
     "num_output": "2, 1, 2, 1, 2, 1",
-    "loop": 10,
+    "loop": 1,
     "mode": -1,
     "_inter_file": "tmp/t_pairs_0.p",
     "t_out": "tmp/t_out.p",
