@@ -616,15 +616,12 @@ class Utils:
     def xyz_tran(x):
         a = np.arctan2(x[0], x[2])*PIR
         b = np.arctan2(x[1], x[2])*PIR
-        c = 1/x[2]
+        c = np.log(x[2]/30.0)
         return [a, b, c]
 
     @staticmethod
     def xyz_tran_R(x):
-        r = x[2]
-        if r < 0.001:
-            r = 0.001
-        r = 1.0/r
+        r = 30.0*np.exp(x[2])
         x = x[:2]/PIR
         a = r * np.tan(x[0])
         b = r * np.tan(x[1])

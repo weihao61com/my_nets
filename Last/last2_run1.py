@@ -64,6 +64,7 @@ def run(cfg, t):
         batch_size = 10000
         r = 2000.0/length
         fp = open('/home/weihao/tmp/xyz1.csv', 'w')
+        fp1 = open('/home/weihao/tmp/dist.csv', 'w')
 
         for c in range(0, length, batch_size):
             dd = data[c:c + batch_size]
@@ -93,6 +94,23 @@ def run(cfg, t):
                     t2 = th2[a]
                     fp.write('{},{},{},{},{},{}\n'.format( t1[0], d1[0], t1[1], d1[1], t2, d2))
 
+            A = np.concatenate((A[0], A[1]), axis=1)
+            for a in range(len(th)):
+                if random.random() < r:
+                    t1 = truth[c + a]
+                    x0 = A[a, :]
+                    id1 = t1[0][0]
+                    P1 = tr.poses[id1]
+                    t1 = t1[2]
+                    xyz1 = Utils.xyz_tran_R(x0)
+                    xyz1 = Utils.transfor_T(P1, xyz1, w2c=False)
+                    xyzt = np.array(t1)
+                    xyzt = Utils.xyz_tran_R(xyzt)
+                    depth = xyzt[2]
+                    xyzt = Utils.transfor_T(P1, xyzt, w2c=False)
+                    dist = np.linalg.norm(xyz1-xyzt)
+                    fp1.write('{},{},{},{},{},{},{},{}\n'.
+                              format(t1[0], x0[0], t1[1], x0[1], t1[2], x0[2], depth, dist))
         fp.close()
 
         # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)

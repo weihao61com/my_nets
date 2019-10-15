@@ -53,7 +53,7 @@ def run(cfg, t):
         sess.run(init)
         saver.restore(sess, cfg.netFile)
 
-        tr_pre = tr.prepare(None, clear=True)
+        tr_pre = tr.prepare(2000000, clear=True)
         te_count = 0
         diff_loss1 = 0
         diff_loss2 = 0
@@ -73,7 +73,9 @@ def run(cfg, t):
         xyz0 = {}
         trt0 = {}
         hist = np.zeros(200)
-        dr = 0.1
+        dr = 1
+        hist1 = np.zeros(200)
+        dr1 = .1
 
         for c in range(0, length, batch_size):
             dd = data[c:c + batch_size]
@@ -116,9 +118,8 @@ def run(cfg, t):
                     trt0[id1] = {}
                 if ip1 not in xyz0[id1]:
                     xyz0[id1][ip1] = []
-                    trt0[id1][ip1] = []
+                    trt0[id1][ip1] = xyzt
                 xyz0[id1][ip1].append(xyz1)
-                trt0[id1][ip1].append(xyzt)
                 # if id1 == 1 and ip1 == 108:
                 #     print('1', xyz1, xyzt, id2, ip2)
                 # if id2 == 1 and ip2 == 108:
@@ -128,9 +129,8 @@ def run(cfg, t):
                     trt0[id2] = {}
                 if ip2 not in xyz0[id2]:
                     xyz0[id2][ip2] = []
-                    trt0[id2][ip2] = []
+                    trt0[id2][ip2] = xyzt
                 xyz0[id2][ip2].append(xyz1)
-                trt0[id2][ip2].append(xyzt)
 
         for img_id in xyz0:
             for p_id in xyz0[img_id]:
@@ -143,7 +143,7 @@ def run(cfg, t):
                     t1_count += 1
                     d1 = np.mean(xyz1, axis=0)
                     xyz0[img_id][p_id] = [d1, d0]
-                    diff = trt0[img_id][p_id][0] - d1
+                    diff = trt0[img_id][p_id] - d1
                     dist = np.linalg.norm(diff)
                     ch = int(dist/dr)
                     if ch > 199:
@@ -163,11 +163,18 @@ def run(cfg, t):
             ip1 = t1[0][1]
             id2 = t1[1][0]
             ip2 = t1[1][1]
-            diff = xyz0[id1][ip1] - xyz0[id2][ip2]
+            diff = xyz0[id1][ip1][0] - xyz0[id2][ip2][0]
+            dist = np.linalg.norm(diff)
+            ch = int(dist / dr1)
+            if ch > 199:
+                ch = 199
+            hist1[ch] += 1
             t3_loss += np.linalg.norm(diff)
             t3_count += 1
+        with open('/home/weihao/tmp/hist_1.csv', 'w') as fp:
+            for ch in range(len(hist1)):
+                fp.write("{}, {}\n".format(ch, hist1[ch]))
 
-        # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)
     T = datetime.datetime.now()
     print("Err {0} {1} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}".
                 format(T-T0, te_count, diff_loss1/te_count, diff_loss2/te_count,
