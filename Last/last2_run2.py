@@ -53,15 +53,15 @@ def run(cfg, t):
         sess.run(init)
         saver.restore(sess, cfg.netFile)
 
-        tr_pre = tr.prepare(2000000, clear=True)
+        tr_pre = tr.prepare(None, clear=True, mx=100)
         te_count = 0
-        diff_loss1 = 0
-        diff_loss2 = 0
-        t1_loss = 0
+        c2_loss1 = 0
+        c2_loss2 = 0
+        w_deviation = 0
         t1_count = 0
-        t2_loss = 0
+        w_distance_truth = 0
         t2_count = 0
-        t3_loss = 0
+        w_distance_2 = 0
         t3_count = 0
         t4_loss = 0
         t4_count = 0
@@ -69,6 +69,7 @@ def run(cfg, t):
         data = tr_pre[0]
         truth = tr_pre[1]
         length = data.shape[0]
+        print("Total data", length)
         batch_size = 10000
         xyz0 = {}
         trt0 = {}
@@ -76,6 +77,7 @@ def run(cfg, t):
         dr = 1
         hist1 = np.zeros(200)
         dr1 = .1
+        removed = 0
 
         for c in range(0, length, batch_size):
             dd = data[c:c + batch_size]
@@ -94,22 +96,25 @@ def run(cfg, t):
             #        outputs[0]: th1, outputs[1]: th2}
             A = sess.run(xyz, feed_dict=feed)
             diff1 = A[0] - th1
-            diff_loss1 += np.sum(diff1*diff1)
+            c2_loss1 += np.sum(diff1*diff1)
             diff2 = A[1] - th2
-            diff_loss2 += np.sum(diff2*diff2)
+            c2_loss2 += np.sum(diff2*diff2)
+            A = np.concatenate((A[0], A[1]), axis=1)
 
             for a in range(len(th)):
-                d1 = A[0][a, :]
-                d2 = A[1][a]
-                xyz1 = np.array([d1[0], d1[1], d2[0]])
+                xyz3 = A[a, :]
                 t1 = truth[c+a]
                 id1 = t1[0][0]
                 ip1 = t1[0][1]
                 id2 = t1[1][0]
                 ip2 = t1[1][1]
                 P1 = tr.poses[id1]
-                xyz1 = Utils.xyz_tran_R(xyz1)
-                xyz1 = Utils.transfor_T(P1, xyz1, w2c=False)
+                xyz2 = Utils.xyz_tran_R(xyz3)
+                if xyz2[2] > 500:
+                    removed += 1
+                    #print('removed: ', id1, id2, ip1, ip2, xyz3, xyz2[2])
+                    continue
+                xyz1 = Utils.transfor_T(P1, xyz2, w2c=False)
                 xyzt = np.array(t1[2])
                 xyzt = Utils.xyz_tran_R(xyzt)
                 xyzt = Utils.transfor_T(P1, xyzt, w2c=False)
@@ -120,10 +125,13 @@ def run(cfg, t):
                     xyz0[id1][ip1] = []
                     trt0[id1][ip1] = xyzt
                 xyz0[id1][ip1].append(xyz1)
-                # if id1 == 1 and ip1 == 108:
-                #     print('1', xyz1, xyzt, id2, ip2)
-                # if id2 == 1 and ip2 == 108:
-                #     print('2', xyz1, xyzt, id1, ip1)
+                #if abs(xyz1[0])>1e8:
+                #    print('1  ', xyz1, xyz2, xyz3, xyzt, id1, ip1, id2, ip2)
+                #
+                # if id1 == 72 and ip1 == 6186:
+                #     print('1  ', xyz1, xyzt, id2, ip2)
+                # if id2 == 72 and ip2 == 6186:
+                #     print('2  ', xyz1, xyzt, id1, ip1)
                 if id2 not in xyz0:
                     xyz0[id2] = {}
                     trt0[id2] = {}
@@ -132,6 +140,7 @@ def run(cfg, t):
                     trt0[id2][ip2] = xyzt
                 xyz0[id2][ip2].append(xyz1)
 
+        print("Removed", removed)
         for img_id in xyz0:
             for p_id in xyz0[img_id]:
                 xyz1 = xyz0[img_id][p_id]
@@ -139,7 +148,9 @@ def run(cfg, t):
                     xyz1 = np.array(xyz1)
                     a2 = np.std(xyz1, axis=0)
                     d0 = np.linalg.norm(a2)
-                    t1_loss += d0
+                    #if d0 > 5000:
+                    #    print(img_id, p_id, d0)
+                    w_deviation += d0
                     t1_count += 1
                     d1 = np.mean(xyz1, axis=0)
                     xyz0[img_id][p_id] = [d1, d0]
@@ -149,7 +160,7 @@ def run(cfg, t):
                     if ch > 199:
                         ch = 199
                     hist[ch] += 1
-                    t2_loss += dist
+                    w_distance_truth += dist
                     t2_count += 1
                 else:
                     xyz0[img_id][p_id] = xyz1[0]
@@ -169,16 +180,19 @@ def run(cfg, t):
             if ch > 199:
                 ch = 199
             hist1[ch] += 1
-            t3_loss += np.linalg.norm(diff)
+            w_distance_2 += dist
             t3_count += 1
         with open('/home/weihao/tmp/hist_1.csv', 'w') as fp:
             for ch in range(len(hist1)):
                 fp.write("{}, {}\n".format(ch, hist1[ch]))
 
     T = datetime.datetime.now()
+    # deviation, dist, to_truth
     print("Err {0} {1} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}".
-                format(T-T0, te_count, diff_loss1/te_count, diff_loss2/te_count,
-                       t1_loss/t1_count, t2_loss/t2_count, t3_loss/t3_count))
+                format(T-T0, te_count,
+                       w_deviation/t1_count, w_distance_2/t3_count, w_distance_truth/t2_count,
+                       c2_loss1 / te_count, c2_loss2 / te_count
+                       ))
 
 
 if __name__ == '__main__':

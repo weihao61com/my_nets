@@ -22,8 +22,8 @@ sys.path.append('..')
 sys.path.append('.')
 from utils import Utils, Config, HOME
 from network import Network
-from distance import distance_cal
-from last2 import create_net, DataSet2
+from Last.distance import distance_cal
+from Last.last2 import create_net, DataSet2
 
 def run(cfg, t):
 
@@ -53,7 +53,7 @@ def run(cfg, t):
         sess.run(init)
         saver.restore(sess, cfg.netFile)
 
-        tr_pre = tr.prepare(None, clear=True)
+        tr_pre = tr.prepare(None, clear=True, rd=False)
         te_count = 0
         diff_loss1 = 0
         diff_loss2 = 0
@@ -61,10 +61,11 @@ def run(cfg, t):
         data = tr_pre[0]
         truth = tr_pre[1]
         length = data.shape[0]
+        print('data', length)
         batch_size = 10000
         r = 2000.0/length
-        fp = open('/home/weihao/tmp/xyz1.csv', 'w')
-        fp1 = open('/home/weihao/tmp/dist.csv', 'w')
+        fp = open('/home/weihao/tmp/xyz1_{}.csv'.format(t), 'w')
+        fp1 = open('/home/weihao/tmp/dist_{}.csv'.format(t), 'w')
 
         for c in range(0, length, batch_size):
             dd = data[c:c + batch_size]
@@ -88,11 +89,13 @@ def run(cfg, t):
             diff_loss2 += np.sum(diff2*diff2)
             for a in range(len(th)):
                 if random.random()<r:
-                    d1 = A[0][a]
                     d2 = A[1][a]
+                    d1 = A[0][a]
                     t1 = th1[a]
                     t2 = th2[a]
-                    fp.write('{},{},{},{},{},{}\n'.format( t1[0], d1[0], t1[1], d1[1], t2, d2))
+                    f = dd[a]
+                    fp.write('{},{},{},{},{},{},{},{}\n'.
+                             format(t1[0], d1[0], t1[1], d1[1], t2, d2, f[6], f[7]))
 
             A = np.concatenate((A[0], A[1]), axis=1)
             for a in range(len(th)):

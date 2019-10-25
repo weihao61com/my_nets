@@ -133,7 +133,7 @@ class DataSet2:
                     # (self.data[0][2])
                     print('subtract_avg {} {}'.format(nt, len(self.matches)))
 
-    def prepare(self, count=None, clear=False):
+    def prepare(self, count=None, clear=False, mx=200, rd=True):
         #print("Prepare data")
 
         if count is not None:
@@ -144,7 +144,11 @@ class DataSet2:
         if self.cfg.mode > 0:
             self.prepare_data(r)
         elif self.cfg.mode == -1:
-            self.prepare4(r)
+            self.prepare4(r, mx)
+
+        if rd:
+            np.random.shuffle(self.out)
+
         rst = []
         truth = []
         for b in self.out:
@@ -281,7 +285,7 @@ class DataSet2:
         # fp.close()
         return out
 
-    def prepare4(self,  r):
+    def prepare4(self,  r, mx=100):
         if self.out is None:
             # xyz = []
             # for id in self.poses:
@@ -321,6 +325,9 @@ class DataSet2:
             for imgs in self.matches:
                 id1 = imgs[0]
                 id2 = imgs[1]
+                if mx is not None and id1>mx and id2>mx:
+                    continue
+
                 P1 = self.poses[id1]
                 P2 = self.poses[id2]
                 A1, T1 = Utils.get_relative(P1, P2)
@@ -819,6 +826,21 @@ class DataSet2:
 #                 trans.append(b[4])
 #         return rst, np.array(truth), ids, Ts, trans
 
+class P1Nets(Network):
+
+    def setup(self):
+        pass
+
+    def real_setup(self, nodes, num_outputs):
+        nt = 1
+        for num_output in num_outputs:
+            self.feed('data_{}'.format(nt))
+            for a in range(len(nodes[nt-1])):
+                name = 'fc_{}_{}'.format(a, nt)
+                self.fc_s(nodes[nt-1][a], name=name)
+            # self.dropout(0.4, name='drop_{}'.format(a))
+            self.fc_s(num_output, sig=False, name='output_{}'.format(nt))
+            nt += 1
 
 class P1Net1(Network):
 
@@ -829,9 +851,9 @@ class P1Net1(Network):
         nt = 1
         for num_output in num_outputs:
             self.feed('data_{}'.format(nt))
-            for a in range(len(nodes)):
+            for a in range(len(nodes[nt-1])):
                 name = 'fc_{}_{}'.format(a, nt)
-                self.fc(nodes[a], name=name)
+                self.fc(nodes[nt-1][a], name=name)
             # self.dropout(0.4, name='drop_{}'.format(a))
             self.fc(num_output, relu=False, name='output_{}'.format(nt))
             nt += 1
@@ -931,8 +953,11 @@ def create_net(cfg):
         input_dic['data_{}'.format(nt)] = tf.compat.v1.placeholder(tf.float32, [None, num_in])
         nt += 1
 
-    net = P1Net1(input_dic)
-    net.real_setup(cfg.nodes[0], num_outputs)
+    if cfg.SIG:
+        net = P1Nets(input_dic)
+    else:
+        net = P1Net1(input_dic)
+    net.real_setup(cfg.nodes, num_outputs)
 
     xys = []
     losses = []

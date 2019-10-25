@@ -59,7 +59,7 @@ def run(cfg, iterations):
         for a in range(iterations):
 
             for lp in range(cfg.loop):
-                tr_pre = tr.prepare(None, True)
+                tr_pre = tr.prepare(None, True, mx=100)
                 t_loss = 0
                 t_count = 0
                 te_loss = 0

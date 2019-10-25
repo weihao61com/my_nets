@@ -206,7 +206,8 @@ class Network(object):
             biases = self.make_var('biases', [num_out])
             fc = op(input, weights, biases, name=scope.name)
             if sig:
-                return tf.nn.sigmoid(fc, scope.name+'_sig')
+                #return tf.nn.sigmoid(fc, scope.name+'_sig')
+                return tf.nn.softsign(fc, scope.name+'_ss')
             return fc
 
     @layer

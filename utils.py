@@ -12,7 +12,7 @@ import evo.core.transformations as tr
 # from bluenotelib.common.bluenote_sensor_rotation \
 #    import BlueNoteSensorRotation, RotationSequence
 
-PIR = 180/np.pi
+PIR = 1 # 180/np.pi
 
 HOME = '/home/weihao/Projects/'
 if sys.platform=='darwin':
@@ -616,8 +616,12 @@ class Utils:
     def xyz_tran(x):
         a = np.arctan2(x[0], x[2])*PIR
         b = np.arctan2(x[1], x[2])*PIR
+        #if b>80:
+        #    print(a,b,x)
+        if x[2]<0:
+            raise Exception()
         c = np.log(x[2]/30.0)
-        return [a, b, c]
+        return np.array([a, b, c])
 
     @staticmethod
     def xyz_tran_R(x):
@@ -625,7 +629,7 @@ class Utils:
         x = x[:2]/PIR
         a = r * np.tan(x[0])
         b = r * np.tan(x[1])
-        return [a, b, r]
+        return np.array([a, b, r])
 
     @staticmethod
     def create_cloud(data):
