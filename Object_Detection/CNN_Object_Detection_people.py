@@ -8,20 +8,30 @@ import matplotlib
 import matplotlib.pyplot as plt
 import glob
 
+HOME = '/home/weihao/'
+HOME = 'C:\\'
 
 # Root directory of the project
-ROOT_DIR = os.path.abspath("/media/weihao/DISK0/Object_detection/Mask_RCNN-master")
+out_folder = os.path.join(HOME, 'Projects', 'tmp', 'people')
+in_dir = os.path.join(HOME, 'Users', 'weiha', 'Downloads')
+
+MODEL_DIR = os.path.join(HOME, 'GITHUB', 'Mask_RCNN-master', 'samples', 'coco')
+print('COCO model', MODEL_DIR)
+sys.path.append(MODEL_DIR)  # To find local version
 
 # Import Mask RCNN
-sys.path.append(ROOT_DIR)  # To find local version of the library
+# sys.path.append(LIB_DIR)  # To find local version of the library
 from mrcnn import utils
 import mrcnn.model as modellib
 from mrcnn import visualize
 # Import COCO config
-sys.path.append(os.path.join(ROOT_DIR, "samples/coco/"))  # To find local version
-import coco
+ROOT_DIR = os.path.join(HOME, 'GITHUB', 'Mask_RCNN-master')
+sys.path.append(os.path.join(ROOT_DIR, "samples", "coco"))  # To find local version
+import pycocotools.coco
 import shutil
+import coco
 
+SIZE = 416
 
 def save_region(image, regions, scores, ids, out_dir):
     print("Total detection", len(regions))
@@ -38,17 +48,16 @@ def save_region(image, regions, scores, ids, out_dir):
 # matplotlib inline
 
 # Directory to save logs and trained model
-MODEL_DIR = os.path.join(ROOT_DIR, "logs")
+# MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
 # Local path to trained weights file
-COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+COCO_MODEL_PATH = os.path.join(HOME, "Projects", "mask_rcnn_coco.h5")
 # Download COCO trained weights from Releases if needed
 if not os.path.exists(COCO_MODEL_PATH):
-    utils.download_trained_weights(COCO_MODEL_PATH)
+    utils.download_trained_weights(os.path.join(HOME, "Projects"))
 
 # Directory of images to run detection on
-IMAGE_DIR = os.path.join(ROOT_DIR, "images")
-
+# IMAGE_DIR = os.path.join(ROOT_DIR, "images")
 
 class InferenceConfig(coco.CocoConfig):
     # Set batch size to 1 since we'll be running inference on
@@ -57,8 +66,7 @@ class InferenceConfig(coco.CocoConfig):
     IMAGES_PER_GPU = 1
 
 config = InferenceConfig()
-config.display()
-
+# config.display()
 
 # Create model object in inference mode.
 model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
@@ -91,14 +99,12 @@ class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
 #file_names = next(os.walk(IMAGE_DIR))[2]
 #filename = os.path.join(IMAGE_DIR, random.choice(file_names))
 
-out_folder = '/home/weihao/Projects/tmp/images/'
 if os.path.exists(out_folder):
     shutil.rmtree(out_folder)
 os.mkdir(out_folder)
 
 #filename = '/home/weihao/Downloads/IMG_1134.JPG'
 
-in_dir = '/home/weihao/Downloads/*'
 for filename in glob.glob(in_dir):
     if filename[-3:] in ['jpg', 'JPG']:
         print('image', filename)

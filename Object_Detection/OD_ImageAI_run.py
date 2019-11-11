@@ -29,13 +29,13 @@ if __name__ == "__main__":
 
     HOME = '/home/weihao/Projects'
 
-    model_dir = "{}/tag".format(HOME)
-    model = model_dir + "/models/" + "detection_model-ex-003--loss-0010.670" + ".h5"
+    model_dir = "C:\\tmp\\hololens"
+    model = model_dir + "/models/" + "detection_model-ex-002--loss-0009.175" + ".h5"
     image_in = "/home/weihao/Projects/tmp/images"
     #
     # model_dir = "C:\\Projects\\hololens\\"
     # model = model_dir + "models\\" + "detection_model-ex-001--loss-0031.707.h5"
-    # image_in = "C:\\Projects\\hololens\\validation\\images\\image (297).jpg"
+    image_in = "C:\\tmp\\validation\\images\\image (297).jpg"
 
     json = model_dir + "/json/detection_config.json"
 
@@ -43,6 +43,7 @@ if __name__ == "__main__":
     # json = "C:\\Users\\weiha\\Downloads\\detection_config.json"
 
     detector = CustomObjectDetection()
+    detector.__input_size = 104
     detector.setModelTypeAsYOLOv3()
     detector.setModelPath(model)
     detector.setJsonPath(json)
@@ -50,7 +51,7 @@ if __name__ == "__main__":
 
     # image_in = "C:\\Projects\\tmp\\test.jpg"
     # image_in = "C:\\Projects\\hololens\\validation\\images\\image (297).jpg"
-    image_out = "{}/tmp/image_out".format(HOME)
+    image_out = "C:\\tmp\image_out"
 
     if image_in.endswith('jpg'):
         process(detector, image_in, image_out + ".jpg")
