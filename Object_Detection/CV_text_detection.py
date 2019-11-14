@@ -4,34 +4,10 @@ import math
 import sys
 import glob
 import os
+import pytesseract
 
-# import argparse
-#
-# parser = argparse.ArgumentParser(description='Use this script to run text detection deep learning networks using OpenCV.')
-# # Input argument
-# parser.add_argument('--input', help='Path to input image or video file. Skip this argument to capture frames from a camera.')
-# # Model argument
-# parser.add_argument('--model', default="frozen_east_text_detection.pb",
-#                     help='Path to a binary .pb file of model contains trained weights.'
-#                     )
-# # Width argument
-# parser.add_argument('--width', type=int, default=320,
-#                     help='Preprocess input image by resizing to a specific width. It should be multiple by 32.'
-#                    )
-# # Height argument
-# parser.add_argument('--height',type=int, default=320,
-#                     help='Preprocess input image by resizing to a specific height. It should be multiple by 32.'
-#                    )
-# # Confidence threshold
-# parser.add_argument('--thr',type=float, default=0.5,
-#                     help='Confidence threshold.'
-#                    )
-# # Non-maximum suppression threshold
-# parser.add_argument('--nms',type=float, default=0.4,
-#                     help='Non-maximum suppression threshold.'
-#                    )
-#
-# args = parser.parse_args()
+sys.path.append("/media/weihao/DISK0/GITHUB/Street-View-House-Numbers-SVHN-Detection-and-Classification-using-CNN-master")  # To find local version
+from combi_models import find_box_and_predict_digit
 
 
 ############ Utility functions ############
@@ -63,7 +39,7 @@ def decode(scores, geometry, scoreThresh):
             score = scoresData[x]
 
             # If score is lower than threshold score, move to next x
-            if(score < scoreThresh):
+            if (score < scoreThresh):
                 continue
 
             # Calculate offset
@@ -78,44 +54,55 @@ def decode(scores, geometry, scoreThresh):
             w = x1_data[x] + x3_data[x]
 
             # Calculate offset
-            offset = ([offsetX + cosA * x1_data[x] + sinA * x2_data[x], offsetY - sinA * x1_data[x] + cosA * x2_data[x]])
+            offset = (
+                [offsetX + cosA * x1_data[x] + sinA * x2_data[x], offsetY - sinA * x1_data[x] + cosA * x2_data[x]])
 
             # Find points for rectangle
             p1 = (-sinA * h + offset[0], -cosA * h + offset[1])
-            p3 = (-cosA * w + offset[0],  sinA * w + offset[1])
-            center = (0.5*(p1[0]+p3[0]), 0.5*(p1[1]+p3[1]))
-            detections.append((center, (w,h), -1*angle * 180.0 / math.pi))
+            p3 = (-cosA * w + offset[0], sinA * w + offset[1])
+            center = (0.5 * (p1[0] + p3[0]), 0.5 * (p1[1] + p3[1]))
+            detections.append((center, (w, h), -1 * angle * 180.0 / math.pi))
             confidences.append(float(score))
 
     # Return detections and confidences
     return [detections, confidences]
 
+
 if __name__ == "__main__":
     # Read and store arguments
-    confThreshold = 0.5 #args.thr
-    nmsThreshold = 0.4 # args.nms
-    #inpWidth = args.width
-    #inpHeight = args.height
-    model ="C:\\GITHUB\\learnopencv-master\\TextDetectionEAST\\frozen_east_text_detection.pb"
+    confThreshold = 0.5  # args.thr
+    nmsThreshold = 0.4  # args.nms
+    detect_model = None
+    classification_model = None
+    # inpWidth = args.width
+    # inpHeight = args.height
+    model_path = '/media/weihao/DISK0/Object_detection'
+    # model ="C:\\GITHUB\\learnopencv-master\\TextDetectionEAST\\frozen_east_text_detection.pb"
+
+    model = os.path.join(model_path, "frozen_east_text_detection.pb")
     print(confThreshold, nmsThreshold, model)
 
     # Create a new named window
-    # kWinName = "EAST: An Efficient and Accurate Scene Text Detector"
-    # cv.namedWindow(kWinName) #, cv.WINDOW_NORMAL)
+    #kWinName = "EAST: An Efficient and Accurate Scene Text Detector"
+    #cv.namedWindow(kWinName)  # , cv.WINDOW_NORMAL)
     outputLayers = []
     outputLayers.append("feature_fusion/Conv_7/Sigmoid")
     outputLayers.append("feature_fusion/concat_3")
 
+    config = ('-l eng --oem 1 --psm 3')
+
     # Open a video file or an image file or a camera stream
     # cap = cv.VideoCapture(sys.argv[1])
-    location = 'E:\\flickr_images\\persons' #sys.argv[1]
-    #if len(sys.argv) > 2:
+    location = '/home/weihao/tmp/persons/t'  # sys.argv[1]
+    # location = '/media/weihao/DISK0/flickr_images/persons'  # sys.argv[1]
+    # if len(sys.argv) > 2:
     #    scale = float(sys.argv[2])
+    #location = "/media/weihao/DISK0/flickr_images/testing_persons"
 
     max_width = 200
     for filename in glob.glob(os.path.join(location, 'images', '*')):
         if filename[-3:] in ['jpg', 'JPG']:
-            #frame = cv.imread(filename)
+            # frame = cv.imread(filename)
             print(filename)
             cap = cv.VideoCapture(filename)
             hasFrame, frame = cap.read()
@@ -127,11 +114,11 @@ if __name__ == "__main__":
             height_ = frame.shape[0]
             width_ = frame.shape[1]
 
-            if width_>max_width:
-                scale = max_width/width_
+            if width_ > max_width:
+                scale = max_width / width_
 
-            inpWidth = int(width_/32*scale)*32
-            inpHeight = int(height_/32*scale)*32
+            inpWidth = int(width_ / 32 * scale) * 32
+            inpHeight = int(height_ / 32 * scale) * 32
 
             rW = width_ / float(inpWidth)
             rH = height_ / float(inpHeight)
@@ -149,26 +136,63 @@ if __name__ == "__main__":
             scores = output[0]
             geometry = output[1]
             [boxes, confidences] = decode(scores, geometry, confThreshold)
+            t, _ = net.getPerfProfile()
+            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
+
             # Apply NMS
-            indices = cv.dnn.NMSBoxesRotated(boxes, confidences, confThreshold,nmsThreshold)
+            indices = cv.dnn.NMSBoxesRotated(boxes, confidences, confThreshold, nmsThreshold)
             for i in indices:
                 # get 4 corners of the rotated rect
                 vertices = cv.boxPoints(boxes[i[0]])
                 # scale the bounding box coordinates based on the respective ratios
+                xmin = 1e6
+                ymin = 1e6
+                xmax = -1
+                ymax = -1
                 for j in range(4):
                     vertices[j][0] *= rW
                     vertices[j][1] *= rH
+                    if vertices[j][0] < xmin:
+                        xmin = vertices[j][0]
+                    if vertices[j][0] > xmax:
+                        xmax = vertices[j][0]
+                    if vertices[j][1] < ymin:
+                        ymin = vertices[j][1]
+                    if vertices[j][1] > ymax:
+                        ymax = vertices[j][1]
+                xmin = int(xmin)# - 10
+                ymin = int(ymin)# - 10
+                xmax = int(xmax)# + 10
+                ymax = int(ymax)# + 10
+                print(xmin, xmax, ymin, ymax)
+                if xmin<0:
+                    xmin = 0
+                if ymin<0:
+                    ymin = 0
+                ig = frame[ymin:ymax, xmin:xmax, :]
+                if ig.shape[0]==0 or ig.shape[1]==0:
+                    continue
+                text = pytesseract.image_to_string(ig, config=config)
+                val,detect_model, classification_model\
+                    = find_box_and_predict_digit(ig, detect_model, classification_model)
+
+                print('Detection {}, {}, {}'.format(i[0], text, val))
+                #cv.imshow(kWinName, ig)
+                # cv.waitKey()
+                text = val
+                if len(text)==0:
+                    text = 'None'
+                print(basename, ':', height_, width_, inpHeight, inpWidth, label, text)
+
                 for j in range(4):
                     p1 = (vertices[j][0], vertices[j][1])
                     p2 = (vertices[(j + 1) % 4][0], vertices[(j + 1) % 4][1])
-                    cv.line(frame, p1, p2, (0, 255, 0), 2, cv.LINE_AA)
-                    # cv.putText(frame, "{:.3f}".format(confidences[i[0]]), (vertices[0][0], vertices[0][1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv.LINE_AA)
+                    cv.line(frame, p1, p2, (0, 0, 255), 2, cv.LINE_AA)
+                cv.putText(frame, "{}".format(text), (vertices[0][0], vertices[0][1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv.LINE_AA)
 
             # Put efficiency information
-            #cv.putText(frame, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-            t, _ = net.getPerfProfile()
-            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
-            print(basename, ':', height_, width_, inpHeight, inpWidth, label)
+            # cv.putText(frame, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+
 
             # Display the frame
             # cv.imshow(kWinName,frame)

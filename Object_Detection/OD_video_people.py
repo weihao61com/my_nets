@@ -1,12 +1,13 @@
 import os
 import sys
-import random
+import cv2
 import math
 import numpy as np
 import skimage.io
 import matplotlib
 import matplotlib.pyplot as plt
 import glob
+import pickle
 
 SIZE = 416
 # Root directory of the project
@@ -22,7 +23,7 @@ sys.path.append(os.path.join(ROOT_DIR, "samples/coco/"))  # To find local versio
 import coco
 import shutil
 import xml.etree.ElementTree as ET
-import copy
+import datetime
 
 
 def get_values(c):
@@ -104,49 +105,27 @@ def inside(vs, region):
     return vs
 
 
-def save_region(image, regions, scores, ids, out_dir, basename, tree):
+def save_region(image, regions, scores, ids):
 
     print("Total detection", len(regions))
     for a in range(len(regions)):
         if (ids[a]) != 1:
             continue
         r0 = regions[a]
-        r = r0 #recenter(image.shape, r0)
+        r = r0 #recenter(image.shape, r0)draw
         w = r[2]-r[0]
         h = r[3]-r[1]
-        if h<100:
-            continue
+        #if h<100:
+        #    continue
         area = (r[2]-r[0])*(r[3]-r[1])
         print('region {0:4d} {4:4d} {5:4d}, {1:4d} {2:4d}, {3:8d}'.format(a, w, h, area, r[0], r[1]))
         img = image[r[0]:r[2], r[1]:r[3], :]
-        file_name = '{}_{}_{}_{}.jpg'.format(basename, a, ids[a], int(scores[a]*10000))
-        skimage.io.imsave(os.path.join(out_dir, 'images', file_name), img)
-        if tree is not None:
-            root = copy.deepcopy(tree.getroot())
 
-            for a in root.getchildren():
-                if a.tag == 'filename':
-                    a.text = file_name
-                if a.tag == 'object':
-                    vs = get_values(a)
-                    print(vs)
-                    nr = inside(vs, r)
-                    if nr is None:
-                        root.remove(a)
-                    else:
-                        set_values(vs, a)
-                        for b in a:
-                            if b.tag == 'name':
-                                b.text = 't'
+        cv2.line(image, (r[1], r[0]), (r[3], r[0]), (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.line(image, (r[3], r[0]), (r[3], r[2]), (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.line(image, (r[3], r[2]), (r[1], r[2]), (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.line(image, (r[1], r[2]), (r[1], r[0]), (0, 0, 255), 1, cv2.LINE_AA)
 
-            #for a in root.getchildren():
-             #   print(a.tag)
-
-            mydata = ET.tostring(root)
-            filename = os.path.join(out_folder, 'annotations', file_name[:-3]+'xml')
-            myfile = open(filename, "wb")
-            myfile.write(mydata)
-            myfile.close()
 
 def get_anno(in_dir, basename):
     filename = os.path.join(in_dir, 'annotations', basename[:-3]+'xml')
@@ -163,6 +142,18 @@ class InferenceConfig(coco.CocoConfig):
     # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+
+def redo(m):
+    msk = []
+    regions = m['rois']
+    for a in range(len(regions)):
+        box = regions[a]
+        mask = m['masks'][:, :, a]
+        submask = mask[box[0]:box[2], box[1]:box[3]]
+        msk.append(submask)
+    m['masks'] = msk
+
+    return m
 
 
 if __name__ == '__main__':
@@ -190,57 +181,47 @@ if __name__ == '__main__':
     # COCO Class names
     # Index of the class in the list is its ID. For example, to get ID of
     # the teddy bear class, use: class_names.index('teddy bear')
-    class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
-                   'bus', 'train', 'truck', 'boat', 'traffic light',
-                   'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
-                   'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
-                   'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
-                   'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
-                   'kite', 'baseball bat', 'baseball glove', 'skateboard',
-                   'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
-                   'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-                   'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
-                   'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
-                   'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-                   'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
-                   'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
-                   'teddy bear', 'hair drier', 'toothbrush']
+    class_names = ['person']
 
+    filename = '/media/weihao/DISK0/flickr_images/BOLDERBoulder 10K livestream at finish line.mp4'
+    if len(sys.argv)>1:
+        filename = sys.argv[1]
 
-    #in_dir = '/media/weihao/DISK0/flickr_images' # '/home/weihao/tmp'
+    cap = cv2.VideoCapture(filename)
 
-    #img_folder = 'testing_images'
-    #out_folder = '/home/weihao/tmp/persons'
-
-    img_folder = '/media/weihao/DISK0/flickr_images/testing_images'
     out_folder = '/media/weihao/DISK0/flickr_images/testing_square'
-
 
     if os.path.exists(out_folder):
         shutil.rmtree(out_folder)
     os.mkdir(out_folder)
     ig_folder = os.path.join(out_folder, 'images')
     os.mkdir(ig_folder)
-    ann_folder = os.path.join(out_folder, 'annotations')
-    os.mkdir(ann_folder)
 
-    #filename = '/home/weihao/Downloads/IMG_1134.JPG'
+    md = {}
+    nt = 0
+    objs = 0
+    t0 = datetime.datetime.now()
+    while True:
+        hasFrame, frame = cap.read()
+        print(nt)
+        if not hasFrame:
+            break
 
+        # Run detection
+        results = model.detect([frame], verbose=1)
+        r = results[0]
+        save_region(frame, r['rois'], r['scores'], r['class_ids'])
+        objs += len(r['rois'])
+        md[nt] = redo(r)
+        cv2.imshow('t',frame)
+        k = cv2.waitKey(1) & 0xff
+        if k == 27:
+            break
 
-    for filename in glob.glob(os.path.join(img_folder, '*')):
-        if filename[-3:] in ['jpg', 'JPG']:
-            print('image', filename)
-            image = skimage.io.imread(filename)
-            annotation = get_anno(img_folder, os.path.basename(filename))
+        nt += 1
 
-            # Run detection
-            results = model.detect([image], verbose=1)
-            basename = os.path.basename(filename)[:-4]
-
-            # Visualize results
-            r = results[0]
-            #visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'],
-            #                            class_names, r['scores'])
-
-            save_region(image, r['rois'], r['scores'], r['class_ids'], out_folder, basename, annotation)
-
+    print('total frames', nt)
+    print('total object', objs)
+    print('Processing time', datetime.datetime.now()-t0)
+    with open(filename+'.p', 'wb') as fp:
+        pickle.dump(md, fp)

@@ -60,7 +60,7 @@ def load_data(data_dir, r = 0.1):
     p_files = []
     for subdir, dirs, files in os.walk(data_dir):
         for file in files:
-            if file.endswith('png'):
+            if file[-3:] in ('png', 'jpg'):
                 # print(subdir, file)
                 p_files.append(os.path.join(subdir, file[:-4]))
                 #if len(p_files)>50:
@@ -232,7 +232,7 @@ if __name__ == '__main__':
     config = ShapesConfig()
     # config.display()
 
-    data_dir = '/home/weihao/tmp/data/'
+    data_dir = '/media/weihao/DISK0/flickr_images/square/' #'/home/weihao/tmp/data/'
     data_train, data_val = load_data(data_dir)
     dataset_train = WordDataset()
     dataset_val = WordDataset()
@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
 
     # Which weights to start with?
-    init_with = "last"  # imagenet, coco, or last
+    init_with = "coco"  # imagenet, coco, or last
 
     if init_with == "imagenet":
         model.load_weights(model.get_imagenet_weights(), by_name=True)
