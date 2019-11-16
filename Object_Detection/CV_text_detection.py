@@ -5,6 +5,7 @@ import sys
 import glob
 import os
 import pytesseract
+import shutil
 
 sys.path.append("/media/weihao/DISK0/GITHUB/Street-View-House-Numbers-SVHN-Detection-and-Classification-using-CNN-master")  # To find local version
 from combi_models import find_box_and_predict_digit
@@ -93,14 +94,22 @@ if __name__ == "__main__":
 
     # Open a video file or an image file or a camera stream
     # cap = cv.VideoCapture(sys.argv[1])
-    location = '/home/weihao/tmp/persons/t'  # sys.argv[1]
+    location = '/home/weihao/tmp/ps/1'  #
+    if len(sys.argv)>1:
+        location = sys.argv[1]
+    #  sys.argv[1]
     # location = '/media/weihao/DISK0/flickr_images/persons'  # sys.argv[1]
     # if len(sys.argv) > 2:
     #    scale = float(sys.argv[2])
     #location = "/media/weihao/DISK0/flickr_images/testing_persons"
 
     max_width = 200
-    for filename in glob.glob(os.path.join(location, 'images', '*')):
+    out_path = os.path.join(location, 'texts')
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
+    os.mkdir(out_path
+              )
+    for filename in glob.glob(os.path.join(location, '*')):
         if filename[-3:] in ['jpg', 'JPG']:
             # frame = cv.imread(filename)
             print(filename)
