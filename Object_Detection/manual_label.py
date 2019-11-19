@@ -8,11 +8,12 @@ import wx
 import numpy as np
 
 def GetBitmap(array ):
+
     height, width, _ = array.shape
     a = array.copy()
     a[:, :, 0] = array[:, :, 2]
     a[:, :, 2] = array[:, :, 0]
-    image = wx.EmptyImage(width, height)
+    image = wx.Image(width, height)
     image.SetData( a.tostring())
     # wxBitmap = image.ConvertToBitmap()       # OR:  wx.BitmapFromImage(image)
     return image
@@ -31,7 +32,7 @@ def get_files(location):
 
 class Detection:
 
-    def __init__(self, location='/home/weihao/tmp/ps'):
+    def __init__(self, location):
 
         # Read and store arguments
         self.confThreshold = 0.5  # args.thr
@@ -63,110 +64,139 @@ class Detection:
         self.current_list = []
         self.boxes = []
         self.frame = []
+        self.not_skip = False
+        self.done_list = {}
+
+        out_txt = location + '.txt'
+        self.done_list = {}
+        if os.path.exists(out_txt):
+            with open(out_txt, 'r') as fp:
+                for line in fp.readlines():
+                    strs = line.split(' ')
+                    self.done_list[strs[0]] = strs[1]
+            self.fp = open(out_txt, 'a+')
+        else:
+            self.fp = open(out_txt, 'w')
 
     def get_next_person(self):
         if self.idx == len(self.files):
             return None
 
-        _, self.current_list = self.files[self.idx]
-        self.idx += 1
+        while True:
+            A, self.current_list = self.files[self.idx]
+            self.idx += 1
+            if A not in self.done_list:
+                break
+
         self.idx_photo = 0
         return self.get_next_photo()
 
     def set_value(self, value):
         A = self.files[self.idx-1]
-        print('Label', A[0], value)
-
+        print(A[0], value)
+        self.done_list[A[0]] = value
+        self.fp.write('{} {} {}\n'.format(A[0], value, A[1].values()[self.idx_photo-1]))
 
     def get_next_photo(self):
         if self.idx_photo==len(self.current_list):
+            self.set_value('None')
             return self.get_next_person()
 
         key = self.current_list.keys()[self.idx_photo]
         f = self.current_list[key]
         self.idx_photo += 1
 
-        max_width = 200
-
         cap = cv.VideoCapture(f)
         hasFrame, frame = cap.read()
         self.frame = frame
-        scale = 1.0
 
-        # Get frame height and width
-        height_ = frame.shape[0]
-        width_ = frame.shape[1]
+        if self.not_skip:
+            max_width = 200
 
-        if width_ > max_width:
-            scale = max_width / width_
+            scale = 1.0
 
-        inpWidth = int(width_ / 32 * scale) * 32
-        inpHeight = int(height_ / 32 * scale) * 32
+            # Get frame height and width
+            height_ = frame.shape[0]
+            width_ = frame.shape[1]
 
-        rW = width_ / float(inpWidth)
-        rH = height_ / float(inpHeight)
+            if width_ > max_width:
+                scale = max_width / width_
 
-        # Create a 4D blob from frame.
-        blob = cv.dnn.blobFromImage(frame, 1.0, (inpWidth, inpHeight), (123.68, 116.78, 103.94), True, False)
+            inpWidth = int(width_ / 32 * scale) * 32
+            inpHeight = int(height_ / 32 * scale) * 32
 
-        # Load network
-        net = cv.dnn.readNet(self.model)
-        # Run the model
-        net.setInput(blob)
-        output = net.forward(self.outputLayers)
+            rW = width_ / float(inpWidth)
+            rH = height_ / float(inpHeight)
 
-        # Get scores and geometry
-        scores = output[0]
-        geometry = output[1]
-        [boxes, confidences] = decode(scores, geometry, self.confThreshold)
-        t, _ = net.getPerfProfile()
-        label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
+            # Create a 4D blob from frame.
+            blob = cv.dnn.blobFromImage(frame, 1.0, (inpWidth, inpHeight), (123.68, 116.78, 103.94), True, False)
 
-        self.boxes = []
+            # Load network
+            net = cv.dnn.readNet(self.model)
+            # Run the model
+            net.setInput(blob)
+            output = net.forward(self.outputLayers)
 
-        # Apply NMS
-        indices = cv.dnn.NMSBoxesRotated(boxes, confidences, self.confThreshold, self.nmsThreshold)
-        for i in indices:
-            # get 4 corners of the rotated rect
-            vertices = cv.boxPoints(boxes[i[0]])
-            # scale the bounding box coordinates based on the respective ratios
-            xmin = 1e6
-            ymin = 1e6
-            xmax = -1
-            ymax = -1
-            for j in range(4):
-                vertices[j][0] *= rW
-                vertices[j][1] *= rH
-                if vertices[j][0] < xmin:
-                    xmin = vertices[j][0]
-                if vertices[j][0] > xmax:
-                    xmax = vertices[j][0]
-                if vertices[j][1] < ymin:
-                    ymin = vertices[j][1]
-                if vertices[j][1] > ymax:
-                    ymax = vertices[j][1]
-            xmin = int(xmin) - 10
-            ymin = int(ymin) - 10
-            xmax = int(xmax) + 10
-            ymax = int(ymax) + 10
-            if xmin < 0:
-                xmin = 0
-            if ymin < 0:
-                ymin = 0
+            # Get scores and geometry
+            scores = output[0]
+            geometry = output[1]
+            [boxes, confidences] = decode(scores, geometry, self.confThreshold)
+            t, _ = net.getPerfProfile()
+            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
 
-            ig = frame[ymin:ymax, xmin:xmax, :]
-            if ig.shape[0] == 0 or ig.shape[1] == 0:
-                continue
-            self.boxes.append(ig)
+            self.boxes = []
 
-        self.idx_box = 0
+            # Apply NMS
+            indices = cv.dnn.NMSBoxesRotated(boxes, confidences, self.confThreshold, self.nmsThreshold)
+            for i in indices:
+                # get 4 corners of the rotated rect
+                vertices = cv.boxPoints(boxes[i[0]])
+                # scale the bounding box coordinates based on the respective ratios
+                xmin = 1e6
+                ymin = 1e6
+                xmax = -1
+                ymax = -1
+                for j in range(4):
+                    vertices[j][0] *= rW
+                    vertices[j][1] *= rH
+                    if vertices[j][0] < xmin:
+                        xmin = vertices[j][0]
+                    if vertices[j][0] > xmax:
+                        xmax = vertices[j][0]
+                    if vertices[j][1] < ymin:
+                        ymin = vertices[j][1]
+                    if vertices[j][1] > ymax:
+                        ymax = vertices[j][1]
+                xmin = int(xmin) - 10
+                ymin = int(ymin) - 10
+                xmax = int(xmax) + 10
+                ymax = int(ymax) + 10
+                if xmin < 0:
+                    xmin = 0
+                if ymin < 0:
+                    ymin = 0
+
+                ig = frame[ymin:ymax, xmin:xmax, :]
+                if ig.shape[0] == 0 or ig.shape[1] == 0:
+                    continue
+                self.boxes.append(ig)
+
+            self.idx_box = 0
+        else:
+            self.idx_box = -2
+
         return self.get_next_box()
 
     def get_next_box(self):
-        if self.idx_box==len(self.boxes):
+        if self.idx_box==len(self.boxes) or self.idx_box==-1:
             return self.get_next_photo()
 
         self.idx_box += 1
+        print('Get', self.files[self.idx-1][0],
+              self.current_list.values()[self.idx_photo-1], self.idx_box-1)
+
+        if self.idx_box==-1:
+            return self.frame, None
         return self.frame, self.boxes[self.idx_box-1]
 
 
@@ -181,7 +211,9 @@ class PhotoCtrl(wx.App):
         self.PhotoMaxSize = 512
 
         self.createWidgets()
-        self.data = Detection()
+
+        location = '/media/weihao/DISK0/flickr_images/ps'
+        self.data = Detection(location)
 
         self.frame.Show()
 
@@ -195,6 +227,8 @@ class PhotoCtrl(wx.App):
         self.panel.Refresh()
 
     def add_image(self, B, imageCtrl, scale):
+        if B is None:
+            return
         A = GetBitmap(B)
 
         W = A.GetWidth()
@@ -207,11 +241,13 @@ class PhotoCtrl(wx.App):
             NewW = self.PhotoMaxSize * W / H
         img = A.Scale(NewW, NewH/scale)
 
-        imageCtrl.SetBitmap(wx.BitmapFromImage(img))
+        imageCtrl.SetBitmap(wx.Bitmap(img))
 
     def save_and_next(self, A):
         value = self.photoTxt.GetValue()
         self.photoTxt.SetValue("")
+        if value=='':
+            value='None'
         self.data.set_value(value)
         self.set_next_person()
 
