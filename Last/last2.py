@@ -133,7 +133,7 @@ class DataSet2:
                     # (self.data[0][2])
                     print('subtract_avg {} {}'.format(nt, len(self.matches)))
 
-    def prepare(self, count=None, clear=False, mx=200, rd=True):
+    def prepare(self, count=None, clear=False, mx=None, rd=True):
         #print("Prepare data")
 
         if count is not None:

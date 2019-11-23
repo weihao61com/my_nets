@@ -1,5 +1,5 @@
 {
-    "batch_size": 200,
+    "batch_size": 2000,
     "_te": "tmp/heads_Test/pairs.p",
     "_tr": "tmp/heads_Train/pairs.p",
     "te1": "tmp/kitti_02_Test/pairs_2.p",

@@ -11,7 +11,7 @@ import pickle
 
 SIZE = 416
 # Root directory of the project
-ROOT_DIR = os.path.abspath("/media/weihao/DISK0/Object_detection/Mask_RCNN-master")
+ROOT_DIR = os.path.abspath("/home/weihao/GITHUB/Mask_RCNN-master")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     # the teddy bear class, use: class_names.index('teddy bear')
     class_names = ['person']
 
-    filename = '/media/weihao/DISK0/flickr_images/BOLDERBoulder 10K livestream at finish line.mp4'
+    filename = '/media/weihao/DISK0/flickr_images/BOLDERBoulder_10K_livestream_at_finish_line.mp4'
     if len(sys.argv)>1:
         filename = sys.argv[1]
 
@@ -196,14 +196,20 @@ if __name__ == '__main__':
     os.mkdir(out_folder)
     ig_folder = os.path.join(out_folder, 'images')
     os.mkdir(ig_folder)
-
-    md = {}
+    skip = 23500
     nt = 0
+
+    while nt<skip:
+        hasFrame, frame = cap.read()
+        nt += 1
+
+    scale = 4
+    md = {}
     objs = 0
     t0 = datetime.datetime.now()
     while True:
         hasFrame, frame = cap.read()
-        print(nt)
+        print(nt, datetime.datetime.now()-t0)
         if not hasFrame:
             break
 
@@ -219,9 +225,14 @@ if __name__ == '__main__':
             break
 
         nt += 1
+        if nt % 500 == 0:
+            with open(filename[:-4] + '_{}.p'.format(nt), 'wb') as fp:
+                pickle.dump(md, fp)
+            md= {}
+
 
     print('total frames', nt)
     print('total object', objs)
     print('Processing time', datetime.datetime.now()-t0)
-    with open(filename+'.p', 'wb') as fp:
+    with open(filename[:-4] + '_{}.p'.format(nt), 'wb') as fp:
         pickle.dump(md, fp)

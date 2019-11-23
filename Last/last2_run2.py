@@ -53,7 +53,7 @@ def run(cfg, t):
         sess.run(init)
         saver.restore(sess, cfg.netFile)
 
-        tr_pre = tr.prepare(None, clear=True, mx=100)
+        tr_pre = tr.prepare(None, clear=True)
         te_count = 0
         c2_loss1 = 0
         c2_loss2 = 0
@@ -188,6 +188,7 @@ def run(cfg, t):
 
     T = datetime.datetime.now()
     # deviation, dist, to_truth
+    print("deviation, distance, to_truth, d1, d2")
     print("Err {0} {1} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}".
                 format(T-T0, te_count,
                        w_deviation/t1_count, w_distance_2/t3_count, w_distance_truth/t2_count,

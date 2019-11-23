@@ -50,7 +50,13 @@ def run(cfg, iterations):
         tr.subtract_avg(avg_file)
     T0 = datetime.datetime.now()
 
-    with tf.compat.v1.Session() as sess:
+    n_cpus = 8
+    with tf.Session(config=tf.ConfigProto(
+            device_count={"CPU": n_cpus},
+            inter_op_parallelism_threads=n_cpus,
+            intra_op_parallelism_threads=n_cpus-2,
+    )) as sess:
+        #with tf.compat.v1.Session() as sess:
         sess.run(init)
         if cfg.mode == 0:
             saver.save(sess, cfg.netFile)
@@ -218,16 +224,18 @@ def run(cfg, iterations):
 
                 sum2 -= sum1*sum1
                 sum2 = np.sqrt(sum2)
-
-                min_scales = [10.0, 5.0, 0.4]
-                real_scales = [0, 0, 0]
+                #
+                min_scales = [0.3, 0.07, 0.6]
+                real_scales = [1.0, 1.0, 1.0]
                 for c in range(len(min_scales)):
                     if sum2[c]<min_scales[c]:
-                        real_scales[c] = min_scales[c]/sum2[c]
+                        real_scales[c] = 1.1 #min_scales[c]/sum2[c]
                 print('Stdev', sum1, sum2)
                 print("scale", real_scales)
 
-                for _ in range(10):
+                for loop in range(30):
+                    diff_loss1 = 0
+                    diff_loss2 = 0
                     for c in range(0, length, cfg.batch_size):
                         dd = data[c:c + cfg.batch_size]
                         th1 = []
@@ -237,11 +245,12 @@ def run(cfg, iterations):
                         for d in truth[c:c + cfg.batch_size]:
                             #t = (d[3]-sum1)*real_scales + sum1
                             t2 = d[3]
-                            t3 = d[3]# -sum1[2]
+                            t3 = d[3]  # - sum1[2]
                             # t = Utils.transfor_T(tr.poses[d[0][0]], t, w2c=True)
                             # t = Utils.xyz_tran(t)
+                            t3_2 = (t3[2] - sum1[2])*real_scales[2] + sum1[2]
                             th1.append(t2[:2])
-                            th2.append(t3[2])
+                            th2.append(t3_2)
                         th1 = np.array(th1)
                         th2 = np.array(th2).reshape((len(dd), 1))
                         dd = np.array(dd)
@@ -253,7 +262,10 @@ def run(cfg, iterations):
                         diff_loss2 += A[1]
                         # diff_loss2t += np.sum((B[1]-th2)*(B[1]-th2))
                         # diff_loss1t += np.sum((B[0]-th1)*(B[0]-th1))
-
+                    if loop%10==0:
+                        T = datetime.datetime.now()
+                        print("Loop {0} {1} {2} {3}".
+                              format(T-T0, loop, diff_loss1/te_count, diff_loss2/te_count))
                 # print(count, t_count, t_loss/t_count, te_count, te_loss/te_count)
             T = datetime.datetime.now()
             # deviation, distance, to_trurth

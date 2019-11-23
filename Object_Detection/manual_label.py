@@ -6,8 +6,11 @@ import cv2 as cv
 from CV_text_detection import decode
 import wx
 import numpy as np
+import datetime
 
 def GetBitmap(array ):
+    if array is None:
+        return
 
     height, width, _ = array.shape
     a = array.copy()
@@ -64,8 +67,9 @@ class Detection:
         self.current_list = []
         self.boxes = []
         self.frame = []
-        self.not_skip = False
+        self.skip = True
         self.done_list = {}
+        self.T0 = datetime.datetime.now()
 
         out_txt = location + '.txt'
         self.done_list = {}
@@ -93,7 +97,9 @@ class Detection:
 
     def set_value(self, value):
         A = self.files[self.idx-1]
-        print(A[0], value)
+        T = datetime.datetime.now()
+        print(A[0], value, T-self.T0)
+        self.T0 = T
         self.done_list[A[0]] = value
         self.fp.write('{} {} {}\n'.format(A[0], value, A[1].values()[self.idx_photo-1]))
 
@@ -110,93 +116,87 @@ class Detection:
         hasFrame, frame = cap.read()
         self.frame = frame
 
-        if self.not_skip:
-            max_width = 200
+        if self.skip:
+            return frame, None, self.idx/float(len(self.files))
 
-            scale = 1.0
+        max_width = 200
 
-            # Get frame height and width
-            height_ = frame.shape[0]
-            width_ = frame.shape[1]
+        scale = 1.0
 
-            if width_ > max_width:
-                scale = max_width / width_
+        # Get frame height and width
+        height_ = frame.shape[0]
+        width_ = frame.shape[1]
 
-            inpWidth = int(width_ / 32 * scale) * 32
-            inpHeight = int(height_ / 32 * scale) * 32
+        if width_ > max_width:
+            scale = max_width / width_
 
-            rW = width_ / float(inpWidth)
-            rH = height_ / float(inpHeight)
+        inpWidth = int(width_ / 32 * scale) * 32
+        inpHeight = int(height_ / 32 * scale) * 32
 
-            # Create a 4D blob from frame.
-            blob = cv.dnn.blobFromImage(frame, 1.0, (inpWidth, inpHeight), (123.68, 116.78, 103.94), True, False)
+        rW = width_ / float(inpWidth)
+        rH = height_ / float(inpHeight)
 
-            # Load network
-            net = cv.dnn.readNet(self.model)
-            # Run the model
-            net.setInput(blob)
-            output = net.forward(self.outputLayers)
+        # Create a 4D blob from frame.
+        blob = cv.dnn.blobFromImage(frame, 1.0, (inpWidth, inpHeight), (123.68, 116.78, 103.94), True, False)
 
-            # Get scores and geometry
-            scores = output[0]
-            geometry = output[1]
-            [boxes, confidences] = decode(scores, geometry, self.confThreshold)
-            t, _ = net.getPerfProfile()
-            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
+        # Load network
+        net = cv.dnn.readNet(self.model)
+        # Run the model
+        net.setInput(blob)
+        output = net.forward(self.outputLayers)
 
-            self.boxes = []
+        # Get scores and geometry
+        scores = output[0]
+        geometry = output[1]
+        [boxes, confidences] = decode(scores, geometry, self.confThreshold)
+        t, _ = net.getPerfProfile()
+        label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
 
-            # Apply NMS
-            indices = cv.dnn.NMSBoxesRotated(boxes, confidences, self.confThreshold, self.nmsThreshold)
-            for i in indices:
-                # get 4 corners of the rotated rect
-                vertices = cv.boxPoints(boxes[i[0]])
-                # scale the bounding box coordinates based on the respective ratios
-                xmin = 1e6
-                ymin = 1e6
-                xmax = -1
-                ymax = -1
-                for j in range(4):
-                    vertices[j][0] *= rW
-                    vertices[j][1] *= rH
-                    if vertices[j][0] < xmin:
-                        xmin = vertices[j][0]
-                    if vertices[j][0] > xmax:
-                        xmax = vertices[j][0]
-                    if vertices[j][1] < ymin:
-                        ymin = vertices[j][1]
-                    if vertices[j][1] > ymax:
-                        ymax = vertices[j][1]
-                xmin = int(xmin) - 10
-                ymin = int(ymin) - 10
-                xmax = int(xmax) + 10
-                ymax = int(ymax) + 10
-                if xmin < 0:
-                    xmin = 0
-                if ymin < 0:
-                    ymin = 0
+        self.boxes = []
 
-                ig = frame[ymin:ymax, xmin:xmax, :]
-                if ig.shape[0] == 0 or ig.shape[1] == 0:
-                    continue
-                self.boxes.append(ig)
+        # Apply NMS
+        indices = cv.dnn.NMSBoxesRotated(boxes, confidences, self.confThreshold, self.nmsThreshold)
+        for i in indices:
+            # get 4 corners of the rotated rect
+            vertices = cv.boxPoints(boxes[i[0]])
+            # scale the bounding box coordinates based on the respective ratios
+            xmin = 1e6
+            ymin = 1e6
+            xmax = -1
+            ymax = -1
+            for j in range(4):
+                vertices[j][0] *= rW
+                vertices[j][1] *= rH
+                if vertices[j][0] < xmin:
+                    xmin = vertices[j][0]
+                if vertices[j][0] > xmax:
+                    xmax = vertices[j][0]
+                if vertices[j][1] < ymin:
+                    ymin = vertices[j][1]
+                if vertices[j][1] > ymax:
+                    ymax = vertices[j][1]
+            xmin = int(xmin) - 10
+            ymin = int(ymin) - 10
+            xmax = int(xmax) + 10
+            ymax = int(ymax) + 10
+            if xmin < 0:
+                xmin = 0
+            if ymin < 0:
+                ymin = 0
 
-            self.idx_box = 0
-        else:
-            self.idx_box = -2
+            ig = frame[ymin:ymax, xmin:xmax, :]
+            if ig.shape[0] == 0 or ig.shape[1] == 0:
+                continue
+            self.boxes.append(ig)
 
+        self.idx_box = 0
         return self.get_next_box()
 
     def get_next_box(self):
-        if self.idx_box==len(self.boxes) or self.idx_box==-1:
+        if self.idx_box==len(self.boxes):
             return self.get_next_photo()
 
         self.idx_box += 1
-        print('Get', self.files[self.idx-1][0],
-              self.current_list.values()[self.idx_photo-1], self.idx_box-1)
-
-        if self.idx_box==-1:
-            return self.frame, None
         return self.frame, self.boxes[self.idx_box-1]
 
 
@@ -220,15 +220,21 @@ class PhotoCtrl(wx.App):
         self.set_next_person()
 
     def set_next_person(self):
-        A, B = self.data.get_next_person()
+        A, B, C = self.data.get_next_person()
+        if A is None:
+            print('done"')
+            exit()
+
         self.add_image(A, self.imageCtrl, 1)
         self.add_image(B, self.imageCtrl1, 2)
+        self.label.SetLabel('{}'.format(C))
 
         self.panel.Refresh()
 
     def add_image(self, B, imageCtrl, scale):
         if B is None:
             return
+
         A = GetBitmap(B)
 
         W = A.GetWidth()
@@ -269,6 +275,8 @@ class PhotoCtrl(wx.App):
         browseBtn = wx.Button(self.panel, label='Next image')
         browseBtn.Bind(wx.EVT_BUTTON, self.onBrowse)
 
+        self.label = wx.StaticText(self.panel)
+
         # self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -280,6 +288,7 @@ class PhotoCtrl(wx.App):
         self.sizer.Add(self.imageCtrl1, 0, wx.ALL, 5)
         self.sizer.Add(self.photoTxt, 0, wx.ALL, 5)
         self.sizer.Add(browseBtn, 0, wx.ALL, 5)
+        self.sizer.Add(self.label, 0, wx.ALL, 5)
         self.mainSizer.Add(self.sizer, 0, wx.ALL, 5)
 
         self.panel.SetSizer(self.mainSizer)
@@ -288,9 +297,11 @@ class PhotoCtrl(wx.App):
         self.panel.Layout()
 
     def onBrowse(self, event):
-        A, B = self.data.get_next_box()
+        A, B, C = self.data.get_next_photo()
         self.add_image(A, self.imageCtrl, 1)
         self.add_image(B, self.imageCtrl1, 2)
+        self.label.SetLabel('{}'.format(C))
+
         self.panel.Refresh()
 
 
